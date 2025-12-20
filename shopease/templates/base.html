@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{% block title %}ShopEase{% endblock %}</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+    <header>
+        <h1>ShopEase</h1>
+        {% if user.is_authenticated %}
+            <p>Welcome, {{ user.username }}! Role: {{ user.get_role_display }}</p>
+        {% endif %}
+    </header>
+    
+    <main>
+        {% block content %}
+        {% endblock %}
+    </main>
+    
+    <footer>
+        <p>&copy; 2024 ShopEase</p>
+    </footer>
+</body>
+</html>
