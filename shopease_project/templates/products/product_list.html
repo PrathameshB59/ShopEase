@@ -1,0 +1,711 @@
+{% extends 'base.html' %}
+{% load static %}
+
+<!-- 
+PRODUCT LIST PAGE
+==================
+Shows all products with filtering, sorting, and pagination.
+Uses FakeStore API for demo products if database is empty.
+-->
+
+{% block title %}All Products - ShopEase{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* PRODUCT LIST PAGE STYLES */
+
+    .page-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 3rem 0;
+        margin-bottom: 3rem;
+    }
+
+    .page-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        text-align: center;
+        margin: 0;
+    }
+
+    .products-wrapper {
+        display: flex;
+        gap: 2rem;
+        margin-bottom: 3rem;
+    }
+
+    /* SIDEBAR FILTERS */
+    .filters-sidebar {
+        flex: 0 0 280px;
+        position: sticky;
+        top: 100px;
+        height: fit-content;
+    }
+
+    .filter-card {
+        background: white;
+        border-radius: 1rem;
+        padding: 1.5rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        margin-bottom: 1.5rem;
+    }
+
+    .filter-title {
+        font-size: 1.125rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .filter-options {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .filter-option {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        cursor: pointer;
+    }
+
+    .filter-option input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+    }
+
+    .filter-option label {
+        cursor: pointer;
+        color: #4b5563;
+        flex: 1;
+    }
+
+    /* PRODUCTS MAIN */
+    .products-main {
+        flex: 1;
+    }
+
+    .products-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .products-count {
+        font-size: 1.125rem;
+        color: #4b5563;
+    }
+
+    .sort-dropdown {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .sort-select {
+        padding: 0.75rem 1rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 0.5rem;
+        font-size: 1rem;
+        font-family: var(--font-body);
+        cursor: pointer;
+        background: white;
+    }
+
+    .sort-select:focus {
+        outline: none;
+        border-color: #2563eb;
+    }
+
+    /* PRODUCT GRID */
+    .product-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 2rem;
+        margin-bottom: 3rem;
+    }
+
+    .product-card {
+        background: white;
+        border-radius: 1rem;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+        position: relative;
+    }
+
+    .product-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+    }
+
+    .product-image-wrapper {
+        position: relative;
+        overflow: hidden;
+        padding-top: 100%;
+        background: #f3f4f6;
+    }
+
+    .product-image {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        padding: 1rem;
+        transition: transform 0.5s ease;
+    }
+
+    .product-card:hover .product-image {
+        transform: scale(1.1);
+    }
+
+    .product-badge {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: #ef4444;
+        color: white;
+        padding: 0.375rem 0.75rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        z-index: 2;
+    }
+
+    .product-info {
+        padding: 1.5rem;
+    }
+
+    .product-category {
+        font-size: 0.875rem;
+        color: #6b7280;
+        margin-bottom: 0.5rem;
+        text-transform: capitalize;
+    }
+
+    .product-name {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 0.75rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        min-height: 2.7rem;
+    }
+
+    .product-price {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .price-current {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #2563eb;
+    }
+
+    .product-rating {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .stars {
+        color: #fbbf24;
+    }
+
+    .rating-count {
+        color: #6b7280;
+        font-size: 0.875rem;
+    }
+
+    .product-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .btn-add-cart {
+        flex: 1;
+        background: #2563eb;
+        color: white;
+        padding: 0.75rem 1rem;
+        border: none;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .btn-add-cart:hover {
+        background: #1e40af;
+        transform: scale(1.02);
+    }
+
+    .btn-wishlist {
+        background: #f3f4f6;
+        color: #6b7280;
+        padding: 0.75rem;
+        border: none;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .btn-wishlist:hover {
+        background: #ef4444;
+        color: white;
+    }
+
+    /* LOADING SKELETON */
+    .skeleton {
+        background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+        background-size: 200% 100%;
+        animation: loading 1.5s ease-in-out infinite;
+        border-radius: 0.5rem;
+    }
+
+    @keyframes loading {
+        0% {
+            background-position: 200% 0;
+        }
+
+        100% {
+            background-position: -200% 0;
+        }
+    }
+
+    .skeleton-card {
+        background: white;
+        border-radius: 1rem;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    }
+
+    .skeleton-image {
+        width: 100%;
+        padding-top: 100%;
+        background: #f3f4f6;
+    }
+
+    .skeleton-content {
+        padding: 1.5rem;
+    }
+
+    .skeleton-text {
+        height: 1rem;
+        margin-bottom: 0.75rem;
+        border-radius: 0.25rem;
+    }
+
+    /* EMPTY STATE */
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+    }
+
+    .empty-icon {
+        font-size: 5rem;
+        color: #d1d5db;
+        margin-bottom: 1rem;
+    }
+
+    .empty-text {
+        color: #6b7280;
+        font-size: 1.25rem;
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 768px) {
+        .products-wrapper {
+            flex-direction: column;
+        }
+
+        .filters-sidebar {
+            position: static;
+        }
+
+        .product-grid {
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- PAGE HEADER -->
+<section class="page-header">
+    <div class="container">
+        <h1 class="page-title">
+            <i class="fas fa-shopping-bag"></i>
+            All Products
+        </h1>
+    </div>
+</section>
+
+<!-- PRODUCTS SECTION -->
+<section class="section">
+    <div class="container">
+        <div class="products-wrapper">
+            <!-- SIDEBAR FILTERS -->
+            <aside class="filters-sidebar">
+                <div class="filter-card">
+                    <h3 class="filter-title">
+                        <i class="fas fa-filter"></i>
+                        Filters
+                    </h3>
+                    <button class="btn btn-outline" onclick="clearFilters()" style="width: 100%; margin-top: 0.5rem;">
+                        Clear All
+                    </button>
+                </div>
+
+                <div class="filter-card">
+                    <h3 class="filter-title">
+                        <i class="fas fa-list"></i>
+                        Categories
+                    </h3>
+                    <div class="filter-options" id="categoryFilters">
+                        <!-- Categories will be loaded here -->
+                        <div class="skeleton skeleton-text"></div>
+                        <div class="skeleton skeleton-text"></div>
+                        <div class="skeleton skeleton-text"></div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- MAIN PRODUCTS AREA -->
+            <main class="products-main">
+                <!-- PRODUCTS HEADER -->
+                <div class="products-header">
+                    <div class="products-count">
+                        <strong id="productCount">Loading...</strong> products found
+                    </div>
+
+                    <div class="sort-dropdown">
+                        <label for="sortSelect">
+                            <i class="fas fa-sort"></i>
+                            Sort by:
+                        </label>
+                        <select id="sortSelect" class="sort-select" onchange="sortProducts(this.value)">
+                            <option value="default">Default</option>
+                            <option value="price-low">Price: Low to High</option>
+                            <option value="price-high">Price: High to Low</option>
+                            <option value="name">Name: A to Z</option>
+                            <option value="rating">Rating: High to Low</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- PRODUCT GRID -->
+                <div class="product-grid" id="productGrid">
+                    <!-- Loading skeletons -->
+                    <div class="skeleton-card">
+                        <div class="skeleton skeleton-image"></div>
+                        <div class="skeleton-content">
+                            <div class="skeleton skeleton-text"></div>
+                            <div class="skeleton skeleton-text" style="width: 60%;"></div>
+                            <div class="skeleton skeleton-text" style="width: 40%;"></div>
+                        </div>
+                    </div>
+                    <div class="skeleton-card">
+                        <div class="skeleton skeleton-image"></div>
+                        <div class="skeleton-content">
+                            <div class="skeleton skeleton-text"></div>
+                            <div class="skeleton skeleton-text" style="width: 60%;"></div>
+                            <div class="skeleton skeleton-text" style="width: 40%;"></div>
+                        </div>
+                    </div>
+                    <div class="skeleton-card">
+                        <div class="skeleton skeleton-image"></div>
+                        <div class="skeleton-content">
+                            <div class="skeleton skeleton-text"></div>
+                            <div class="skeleton skeleton-text" style="width: 60%;"></div>
+                            <div class="skeleton skeleton-text" style="width: 40%;"></div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // GLOBAL VARIABLES
+    let allProducts = [];
+    let filteredProducts = [];
+    let selectedCategories = [];
+
+    // FETCH PRODUCTS FROM FAKESTORE API
+    async function fetchProducts() {
+        try {
+            console.log('Fetching products from FakeStore API...');
+            const response = await fetch('https://fakestoreapi.com/products');
+            const data = await response.json();
+
+            console.log('Products fetched:', data);
+            allProducts = data;
+            filteredProducts = data;
+
+            renderProducts(filteredProducts);
+            loadCategories();
+            updateProductCount();
+        } catch (error) {
+            console.error('Error fetching products:', error);
+            showError();
+        }
+    }
+
+    // RENDER PRODUCTS
+    function renderProducts(products) {
+        const grid = document.getElementById('productGrid');
+
+        if (products.length === 0) {
+            grid.innerHTML = `
+            <div class="empty-state" style="grid-column: 1/-1;">
+                <div class="empty-icon">
+                    <i class="fas fa-box-open"></i>
+                </div>
+                <p class="empty-text">No products found</p>
+            </div>
+        `;
+            return;
+        }
+
+        grid.innerHTML = products.map(product => `
+        <div class="product-card" data-category="${product.category}">
+            <div class="product-image-wrapper">
+                <img src="${product.image}" alt="${product.title}" class="product-image">
+                ${product.rating.rate >= 4.5 ? '<span class="product-badge">Top Rated</span>' : ''}
+            </div>
+            
+            <div class="product-info">
+                <div class="product-category">${product.category}</div>
+                
+                <h3 class="product-name">
+                    <a href="#" style="color: inherit;">
+                        ${product.title}
+                    </a>
+                </h3>
+                
+                <div class="product-price">
+                    <span class="price-current">$${product.price.toFixed(2)}</span>
+                </div>
+                
+                <div class="product-rating">
+                    <div class="stars">
+                        ${generateStars(product.rating.rate)}
+                    </div>
+                    <span class="rating-count">(${product.rating.count})</span>
+                </div>
+                
+                <div class="product-actions">
+                    <button class="btn-add-cart" onclick="addToCart(${product.id}, '${escapeHtml(product.title)}')">
+                        <i class="fas fa-shopping-cart"></i>
+                        Add to Cart
+                    </button>
+                    <button class="btn-wishlist" onclick="addToWishlist(${product.id})">
+                        <i class="far fa-heart"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+    }
+
+    // GENERATE STAR RATING
+    function generateStars(rating) {
+        const fullStars = Math.floor(rating);
+        const hasHalfStar = rating % 1 >= 0.5;
+        let stars = '';
+
+        for (let i = 0; i < fullStars; i++) {
+            stars += '<i class="fas fa-star"></i>';
+        }
+
+        if (hasHalfStar) {
+            stars += '<i class="fas fa-star-half-alt"></i>';
+        }
+
+        const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+        for (let i = 0; i < emptyStars; i++) {
+            stars += '<i class="far fa-star"></i>';
+        }
+
+        return stars;
+    }
+
+    // LOAD CATEGORIES
+    async function loadCategories() {
+        try {
+            const response = await fetch('https://fakestoreapi.com/products/categories');
+            const categories = await response.json();
+
+            const container = document.getElementById('categoryFilters');
+            container.innerHTML = categories.map(category => `
+            <div class="filter-option">
+                <input 
+                    type="checkbox" 
+                    id="cat-${category}" 
+                    value="${category}"
+                    onchange="filterByCategory()"
+                >
+                <label for="cat-${category}">${capitalizeFirst(category)}</label>
+            </div>
+        `).join('');
+        } catch (error) {
+            console.error('Error loading categories:', error);
+        }
+    }
+
+    // FILTER BY CATEGORY
+    function filterByCategory() {
+        const checkboxes = document.querySelectorAll('#categoryFilters input[type="checkbox"]');
+        selectedCategories = Array.from(checkboxes)
+            .filter(cb => cb.checked)
+            .map(cb => cb.value);
+
+        if (selectedCategories.length === 0) {
+            filteredProducts = allProducts;
+        } else {
+            filteredProducts = allProducts.filter(product =>
+                selectedCategories.includes(product.category)
+            );
+        }
+
+        renderProducts(filteredProducts);
+        updateProductCount();
+    }
+
+    // SORT PRODUCTS
+    function sortProducts(sortType) {
+        let sorted = [...filteredProducts];
+
+        switch (sortType) {
+            case 'price-low':
+                sorted.sort((a, b) => a.price - b.price);
+                break;
+            case 'price-high':
+                sorted.sort((a, b) => b.price - a.price);
+                break;
+            case 'name':
+                sorted.sort((a, b) => a.title.localeCompare(b.title));
+                break;
+            case 'rating':
+                sorted.sort((a, b) => b.rating.rate - a.rating.rate);
+                break;
+            default:
+                sorted = filteredProducts;
+        }
+
+        renderProducts(sorted);
+    }
+
+    // CLEAR FILTERS
+    function clearFilters() {
+        const checkboxes = document.querySelectorAll('#categoryFilters input[type="checkbox"]');
+        checkboxes.forEach(cb => cb.checked = false);
+        document.getElementById('sortSelect').value = 'default';
+
+        selectedCategories = [];
+        filteredProducts = allProducts;
+        renderProducts(filteredProducts);
+        updateProductCount();
+    }
+
+    // UPDATE PRODUCT COUNT
+    function updateProductCount() {
+        document.getElementById('productCount').textContent = filteredProducts.length;
+    }
+
+    // ADD TO CART
+    function addToCart(productId, productName) {
+        console.log('Adding to cart:', productId, productName);
+        showToast(`${productName} added to cart! 🛒`, 'success');
+    }
+
+    // ADD TO WISHLIST
+    function addToWishlist(productId) {
+        console.log('Adding to wishlist:', productId);
+        showToast('Added to wishlist! ❤️', 'success');
+    }
+
+    // SHOW TOAST NOTIFICATION
+    function showToast(message, type = 'success') {
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        toast.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+        <span>${message}</span>
+    `;
+
+        toast.style.cssText = `
+        position: fixed;
+        top: 100px;
+        right: 20px;
+        background: ${type === 'success' ? '#10b981' : '#ef4444'};
+        color: white;
+        padding: 1rem 1.5rem;
+        border-radius: 0.5rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        z-index: 9999;
+        animation: slideInRight 0.3s ease;
+    `;
+
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+            toast.style.animation = 'slideOutRight 0.3s ease';
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+
+    // SHOW ERROR
+    function showError() {
+        const grid = document.getElementById('productGrid');
+        grid.innerHTML = `
+        <div class="empty-state" style="grid-column: 1/-1;">
+            <div class="empty-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <p class="empty-text">Failed to load products. Please try again later.</p>
+        </div>
+    `;
+    }
+
+    // UTILITY FUNCTIONS
+    function capitalizeFirst(str) {
+        return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // INITIALIZE ON PAGE LOAD
+    document.addEventListener('DOMContentLoaded', function () {
+        console.log('Page loaded, fetching products...');
+        fetchProducts();
+    });
+</script>
+{% endblock %}

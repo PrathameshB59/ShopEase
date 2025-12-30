@@ -1,0 +1,492 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <!-- SEO Meta Tags -->
+    <meta name="description"
+        content="ShopEase - Your one-stop shop for quality products at great prices. Electronics, fashion, home goods and more.">
+    <meta name="keywords" content="online shopping, e-commerce, electronics, fashion, deals">
+    <meta name="author" content="ShopEase">
+
+    <!-- Page Title -->
+    <title>{% block title %}ShopEase - Shop Online{% endblock %}</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{% static 'images/favicon.ico' %}">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Sans:wght@400;500;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+
+    <!-- Extra CSS Block -->
+    {% block extra_css %}{% endblock %}
+
+    <!-- Inline Styles -->
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --primary-dark: #1e40af;
+            --secondary-color: #f59e0b;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+            --warning-color: #f59e0b;
+            --info-color: #3b82f6;
+            --dark: #1f2937;
+            --gray-dark: #4b5563;
+            --gray: #6b7280;
+            --gray-light: #d1d5db;
+            --gray-lighter: #f3f4f6;
+            --white: #ffffff;
+            --font-heading: 'Outfit', sans-serif;
+            --font-body: 'DM Sans', sans-serif;
+            --spacing-xs: 0.25rem;
+            --spacing-sm: 0.5rem;
+            --spacing-md: 1rem;
+            --spacing-lg: 1.5rem;
+            --spacing-xl: 2rem;
+            --spacing-2xl: 3rem;
+            --radius-sm: 0.375rem;
+            --radius-md: 0.5rem;
+            --radius-lg: 0.75rem;
+            --radius-xl: 1rem;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+            --transition-fast: 150ms ease-in-out;
+            --transition-normal: 300ms ease-in-out;
+            --transition-slow: 500ms ease-in-out;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-body);
+            font-size: 16px;
+            line-height: 1.6;
+            color: var(--dark);
+            background-color: var(--white);
+            overflow-x: hidden;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            font-family: var(--font-heading);
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: var(--spacing-md);
+            color: var(--dark);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+        }
+
+        h2 {
+            font-size: 2rem;
+        }
+
+        h3 {
+            font-size: 1.75rem;
+        }
+
+        h4 {
+            font-size: 1.5rem;
+        }
+
+        h5 {
+            font-size: 1.25rem;
+        }
+
+        h6 {
+            font-size: 1rem;
+        }
+
+        a {
+            color: var(--primary-color);
+            text-decoration: none;
+            transition: color var(--transition-fast);
+        }
+
+        a:hover {
+            color: var(--primary-dark);
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 var(--spacing-lg);
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .mt-1 {
+            margin-top: var(--spacing-md);
+        }
+
+        .mt-2 {
+            margin-top: var(--spacing-lg);
+        }
+
+        .mt-3 {
+            margin-top: var(--spacing-xl);
+        }
+
+        .mb-1 {
+            margin-bottom: var(--spacing-md);
+        }
+
+        .mb-2 {
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .mb-3 {
+            margin-bottom: var(--spacing-xl);
+        }
+    </style>
+</head>
+
+<body>
+    <!-- HEADER SECTION -->
+    <header class="site-header">
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <div class="container">
+                <p class="top-bar-text">
+                    <i class="fas fa-truck"></i>
+                    Free shipping on orders over $50!
+                    <a href="#" class="top-bar-link">Shop Now</a>
+                </p>
+            </div>
+        </div>
+
+        <!-- Main Header -->
+        <div class="main-header">
+            <div class="container">
+                <div class="header-content">
+                    <!-- Logo -->
+                    <div class="logo">
+                        <a href="{% url 'home' %}" style="display: flex; align-items: center; gap: 1rem;">
+                            <img src="{% static 'images/logo.png' %}" alt="ShopEase Logo"
+                                style="height: 60px; width: auto;">
+                            <h1 class="logo-text" style="margin: 0; font-size: 2rem;">
+                                ShopEase
+                            </h1>
+                        </a>
+                    </div>
+
+                    <!-- Search Bar -->
+                    <div class="search-bar">
+                        <form action="#" method="GET" class="search-form">
+                            <input type="text" name="q" placeholder="Search for products..." class="search-input">
+                            <button type="submit" class="search-button">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Header Actions -->
+                    <div class="header-actions">
+                        <!-- User Account -->
+                        <div class="header-action">
+                            {% if user.is_authenticated %}
+                            <a href="{% url 'accounts:profile' %}" class="action-link">
+                                <i class="fas fa-user"></i>
+                                <span>{{ user.username }}</span>
+                            </a>
+                            {% else %}
+                            <a href="{% url 'accounts:auth' %}" class="action-link">
+                                <i class="fas fa-user"></i>
+                                <span>Login</span>
+                            </a>
+                            {% endif %}
+                        </div>
+
+                        <!-- Shopping Cart -->
+                        <div class="header-action">
+                            <a href="#" class="action-link cart-link">
+                                <i class="fas fa-shopping-cart"></i>
+                                <span>Cart</span>
+                                <span class="cart-badge">0</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Mobile Menu Toggle -->
+                    <button class="mobile-menu-toggle" id="mobileMenuToggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Menu -->
+        <nav class="main-nav">
+            <div class="container">
+                <ul class="nav-menu" id="navMenu">
+                    <li class="nav-item">
+                        <a href="{% url 'home' %}" class="nav-link">
+                            <i class="fas fa-home"></i> Home
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{% url 'products:product_list' %}" class="nav-link">
+                            <i class="fas fa-th"></i> All Products
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a href="#" class="nav-link">
+                            <i class="fas fa-list"></i> Categories
+                            <i class="fas fa-chevron-down"></i>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a href="#" class="dropdown-link">Loading...</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <i class="fas fa-fire"></i> Hot Deals
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <i class="fas fa-star"></i> New Arrivals
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <i class="fas fa-info-circle"></i> About
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                            <i class="fas fa-envelope"></i> Contact
+                        </a>
+                    </li>
+                    {% if user.is_authenticated %}
+                    <li class="nav-item">
+                        <a href="{% url 'accounts:logout' %}" class="nav-link">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+    <!-- MESSAGES SECTION -->
+    {% if messages %}
+    <div class="messages-container">
+        <div class="container">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}" role="alert">
+                <i class="fas fa-check-circle"></i>
+                {{ message }}
+                <button class="alert-close">&times;</button>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="main-content">
+        {% block content %}
+        <!-- Child templates will fill this area -->
+        {% endblock %}
+    </main>
+
+    <!-- FOOTER SECTION -->
+    <footer class="site-footer">
+        <div class="footer-main">
+            <div class="container">
+                <div class="footer-grid">
+                    <!-- About Column -->
+                    <div class="footer-column">
+                        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                            <img src="{% static 'images/logo.png' %}" alt="ShopEase Logo"
+                                style="height: 50px; width: auto;">
+                            <h3 class="footer-title" style="margin: 0; font-size: 1.75rem;">
+                                ShopEase
+                            </h3>
+                        </div>
+                        <p class="footer-text">
+                            Your trusted online shopping destination for quality products
+                            at unbeatable prices. Shop with confidence!
+                        </p>
+                        <div class="social-links">
+                            <a href="#" class="social-link" aria-label="Facebook">
+                                <i class="fab fa-facebook-f"></i>
+                            </a>
+                            <a href="#" class="social-link" aria-label="Twitter">
+                                <i class="fab fa-twitter"></i>
+                            </a>
+                            <a href="#" class="social-link" aria-label="Instagram">
+                                <i class="fab fa-instagram"></i>
+                            </a>
+                            <a href="#" class="social-link" aria-label="YouTube">
+                                <i class="fab fa-youtube"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Quick Links Column -->
+                    <div class="footer-column">
+                        <h4 class="footer-heading">Quick Links</h4>
+                        <ul class="footer-links">
+                            <li><a href="{% url 'home' %}">Home</a></li>
+                            <li><a href="{% url 'products:product_list' %}">All Products</a></li>
+                            <li><a href="#">Hot Deals</a></li>
+                            <li><a href="#">New Arrivals</a></li>
+                            <li><a href="#">About Us</a></li>
+                            <li><a href="#">Contact</a></li>
+                        </ul>
+                    </div>
+
+                    <!-- Customer Service Column -->
+                    <div class="footer-column">
+                        <h4 class="footer-heading">Customer Service</h4>
+                        <ul class="footer-links">
+                            <li><a href="#">Help Center</a></li>
+                            <li><a href="#">Track Order</a></li>
+                            <li><a href="#">Returns & Refunds</a></li>
+                            <li><a href="#">Shipping Info</a></li>
+                            <li><a href="#">Terms & Conditions</a></li>
+                            <li><a href="#">Privacy Policy</a></li>
+                        </ul>
+                    </div>
+
+                    <!-- Newsletter Column -->
+                    <div class="footer-column">
+                        <h4 class="footer-heading">Newsletter</h4>
+                        <p class="footer-text">
+                            Subscribe to get special offers and updates!
+                        </p>
+                        <form class="newsletter-form" action="#" method="POST">
+                            {% csrf_token %}
+                            <input type="email" name="email" placeholder="Enter your email" class="newsletter-input"
+                                required>
+                            <button type="submit" class="newsletter-button">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </form>
+                        <div class="payment-methods">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" alt="Visa"
+                                class="payment-logo">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg"
+                                alt="Mastercard" class="payment-logo">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" alt="PayPal"
+                                class="payment-logo">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer Bottom -->
+        <div class="footer-bottom">
+            <div class="container">
+                <p class="copyright">
+                    &copy; 2024 ShopEase. All rights reserved.
+                    Made with <i class="fas fa-heart" style="color: #ef4444;"></i> by ShopEase Team
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- SCROLL TO TOP BUTTON -->
+    <button class="scroll-to-top" id="scrollToTop" aria-label="Scroll to top">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
+    <!-- JAVASCRIPT -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="{% static 'js/main.js' %}"></script>
+
+    <!-- Extra JavaScript Block -->
+    {% block extra_js %}{% endblock %}
+
+    <!-- Inline JavaScript -->
+    <script>
+        document.getElementById('mobileMenuToggle').addEventListener('click', function () {
+            const navMenu = document.getElementById('navMenu');
+            navMenu.classList.toggle('active');
+            const icon = this.querySelector('i');
+            if (navMenu.classList.contains('active')) {
+                icon.classList.remove('fa-bars');
+                icon.classList.add('fa-times');
+            } else {
+                icon.classList.remove('fa-times');
+                icon.classList.add('fa-bars');
+            }
+        });
+
+        window.addEventListener('scroll', function () {
+            const scrollBtn = document.getElementById('scrollToTop');
+            if (window.pageYOffset > 300) {
+                scrollBtn.classList.add('visible');
+            } else {
+                scrollBtn.classList.remove('visible');
+            }
+        });
+
+        document.getElementById('scrollToTop').addEventListener('click', function () {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+
+        document.querySelectorAll('.alert-close').forEach(function (button) {
+            button.addEventListener('click', function () {
+                this.parentElement.style.display = 'none';
+            });
+        });
+
+        setTimeout(function () {
+            document.querySelectorAll('.alert').forEach(function (alert) {
+                alert.style.opacity = '0';
+                setTimeout(function () {
+                    alert.style.display = 'none';
+                }, 500);
+            });
+        }, 5000);
+    </script>
+</body>
+
+</html>
