@@ -1,0 +1,1210 @@
+<!--
+=============================================================================
+PRODUCT DETAIL PAGE TEMPLATE - ShopEase E-Commerce Platform
+=============================================================================
+
+This template displays a single product's complete information page.
+It's where customers make their final purchase decision.
+
+TEMPLATE INHERITANCE:
+- This template extends base.html (gets navbar, footer, etc.)
+- We override specific blocks to customize content
+
+CONTEXT VARIABLES (passed from views.py):
+- product: ProductData object with all product info
+- related_products: List of similar products
+- page_title: Browser tab title
+
+FILE LOCATION: templates/products/product_detail.html
+RENDERED BY: products/views.py → product_detail() function
+URL: /products/<id>/  (e.g., /products/42/)
+-->
+
+<!--
+TEMPLATE INHERITANCE - Extend the base template
+==============================================
+
+{% extends %} tag: Inherit layout from another template
+- Gets navigation bar, footer, CSS links, JavaScript
+- We only fill in the 'content' block
+
+Think of it like this:
+base.html provides: <html>, <head>, <navbar>, <footer>
+This template provides: What goes in the <main> section
+-->
+{% extends 'base.html' %}
+
+<!--
+LOAD STATIC FILES - Access CSS, JavaScript, images
+================================================
+
+{% load static %} makes the {% static %} template tag available
+This tag generates proper URLs for static files
+
+Without {% static %}:  <img src="/static/images/logo.png">
+With {% static %}:     <img src="{% static 'images/logo.png' %}">
+
+Why use {% static %}?
+- Works correctly even if STATIC_URL changes
+- Handles cache busting (adding version numbers to URLs)
+- Works with CDNs in production
+-->
+{% load static %}
+
+<!--
+TITLE BLOCK - Browser tab title
+===============================
+
+{% block title %} overrides the title block from base.html
+Whatever we put here appears in the browser tab
+
+Example result: <title>iPhone 14 Pro - ShopEase</title>
+-->
+{% block title %}{{ product.title }} - ShopEase{% endblock %}
+
+<!--
+CONTENT BLOCK - Main page content
+=================================
+
+This is where our unique page content goes
+Everything inside replaces {% block content %} in base.html
+-->
+{% block content %}
+
+<!--
+PRODUCT DETAIL CONTAINER - Main wrapper
+========================================
+
+<div> elements group content together
+Classes are CSS styling hooks (defined in <style> below)
+
+container-fluid: Full-width container (Bootstrap class)
+px-3, py-4: Padding (p=padding, x=horizontal, y=vertical, 3/4=size)
+-->
+<div class="container-fluid px-3 px-md-4 py-4">
+
+    <!--
+    PRODUCT DETAIL LAYOUT - Two column layout
+    =========================================
+
+    Bootstrap Grid System:
+    - .row: Creates horizontal group of columns
+    - .col-*: Defines column width
+    - g-4: Gap/gutter between columns
+
+    Responsive breakpoints:
+    - md (medium): 768px and up (tablets)
+    - lg (large): 992px and up (desktops)
+
+    On mobile: Columns stack vertically (100% width each)
+    On tablet+: Side by side (50-50 or custom ratio)
+    -->
+    <div class="row g-4">
+
+        <!-- ========================================================
+             LEFT COLUMN: Product Images Gallery
+             ======================================================== -->
+
+        <!--
+        col-md-6: 50% width on medium screens and up
+        On mobile (<768px): Full width
+        On tablet+ (≥768px): Half width
+        -->
+        <div class="col-md-6">
+            <!--
+            PRODUCT IMAGES SECTION
+            =====================
+
+            E-commerce best practice: Show multiple product images
+            - Main large image for detail viewing
+            - Thumbnail gallery for switching between images
+            - Zoom capability (can add with JavaScript)
+            -->
+            <div class="product-images">
+
+                <!--
+                MAIN PRODUCT IMAGE
+                ==================
+
+                This is the large, prominent product photo
+                Customers should be able to see product details clearly
+                -->
+                <div class="main-image-container">
+                    <!--
+                    {% if %} TEMPLATE TAG: Conditional rendering
+                    =============================================
+
+                    Check if product has a primary image
+                    - If yes: Display it
+                    - If no: Show placeholder
+
+                    Syntax:
+                    {% if condition %} ... {% else %} ... {% endif %}
+                    -->
+                    {% if product.primary_image %}
+                        <!--
+                        <img> tag attributes explained:
+
+                        src="{{ product.primary_image }}"
+                        - {{ }} outputs a variable's value
+                        - product.primary_image returns image URL
+                        - Example: "https://api.example.com/images/product.jpg"
+
+                        alt="{{ product.title }}"
+                        - Alternative text for accessibility
+                        - Screen readers read this to blind users
+                        - Shows if image fails to load
+                        - Important for SEO
+
+                        class="product-main-image"
+                        - CSS class for styling (defined below)
+
+                        loading="lazy"
+                        - Lazy loading: Image loads only when scrolled into view
+                        - Improves page load speed
+                        - Saves bandwidth
+
+                        onerror="..."
+                        - JavaScript runs if image fails to load
+                        - Replaces broken image with placeholder
+                        - Prevents broken image icon from showing
+                        -->
+                        <img
+                            src="{{ product.primary_image }}"
+                            alt="{{ product.title }}"
+                            class="product-main-image"
+                            loading="lazy"
+                            onerror="this.src='https://via.placeholder.com/600x600?text=Product+Image'"
+                        >
+                    {% else %}
+                        <!-- Placeholder image when no product image exists -->
+                        <div class="no-image-placeholder">
+                            <!--
+                            Font Awesome icon classes:
+                            - fas: Font Awesome Solid style
+                            - fa-image: Image icon
+                            - fa-5x: 5x size (very large)
+                            - text-muted: Gray color (Bootstrap utility class)
+                            -->
+                            <i class="fas fa-image fa-5x text-muted"></i>
+                            <p>No image available</p>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!--
+                IMAGE GALLERY THUMBNAILS
+                ========================
+
+                Small clickable images to switch the main image
+                Common in e-commerce for showing multiple angles
+                -->
+                {% if product.all_images %}
+                    <!--
+                    Only show thumbnail gallery if product has images
+                    product.all_images returns list of all image URLs
+                    -->
+                    <div class="image-thumbnails">
+                        <!--
+                        {% for %} TEMPLATE TAG: Loop through list
+                        ==========================================
+
+                        Syntax: {% for item in list %} ... {% endfor %}
+
+                        Loops through each image in product.all_images
+                        On each iteration, 'image' holds the current image URL
+
+                        Like Python:
+                        for image in product.all_images:
+                            # Do something with image
+                        -->
+                        {% for image in product.all_images %}
+                            <!--
+                            Each thumbnail image
+                            Clicking should swap the main image (requires JavaScript)
+                            -->
+                            <img
+                                src="{{ image }}"
+                                alt="{{ product.title }}"
+                                class="thumbnail-image"
+                                <!--
+                                onclick: JavaScript event handler
+                                When clicked, changes main image source to this image
+
+                                JavaScript explained:
+                                document.querySelector('.product-main-image')
+                                - Find the element with class 'product-main-image'
+
+                                .src = '{{ image }}'
+                                - Set its src attribute to this thumbnail's URL
+                                - This swaps the main image
+                                -->
+                                onclick="document.querySelector('.product-main-image').src='{{ image }}'"
+                                loading="lazy"
+                            >
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+            </div>
+        </div>
+
+        <!-- ========================================================
+             RIGHT COLUMN: Product Information
+             ======================================================== -->
+
+        <div class="col-md-6">
+
+            <!--
+            PRODUCT INFO SECTION
+            ====================
+
+            All the text information about the product
+            - Title, price, description
+            - Stock status
+            - Add to cart button
+            -->
+            <div class="product-info-section">
+
+                <!--
+                CATEGORY BADGE
+                ==============
+                Shows which category this product belongs to
+                Links to category page to see similar products
+                -->
+                {% if product.category_name %}
+                    <!--
+                    <a> tag: Hyperlink
+
+                    href="{% url 'products:product-list' %}?category={{ product.category_id }}"
+                    - {% url %} generates URL from route name
+                    - 'products:product-list' → /products/
+                    - ?category={{ product.category_id }} → query parameter
+                    - Full URL: /products/?category=5
+                    - Shows all products in this category
+
+                    class="category-badge"
+                    - Custom CSS class for styling
+                    -->
+                    <a href="{% url 'products:product-list' %}?category={{ product.category_id }}"
+                       class="category-badge">
+                        <!--
+                        <i> tag: Icon (not italic!)
+                        Font Awesome provides thousands of icons
+                        fas fa-tag: Tag icon
+                        me-2: Margin-end 2 (Bootstrap: small right margin)
+                        -->
+                        <i class="fas fa-tag me-2"></i>
+                        <!-- Output category name: "Electronics", "Clothing", etc. -->
+                        {{ product.category_name }}
+                    </a>
+                {% endif %}
+
+                <!--
+                PRODUCT TITLE
+                =============
+                Main product name - most important text on page
+                <h1>: Heading level 1 (largest, most important)
+                -->
+                <h1 class="product-title">{{ product.title }}</h1>
+
+                <!--
+                PRODUCT PRICE
+                =============
+                Shows how much the product costs
+                -->
+                <div class="product-price-section">
+                    <!--
+                    <span> tag: Inline container
+                    Groups related content without breaking to new line
+
+                    class="product-price"
+                    - CSS styling for price display
+
+                    |: Template filter (modifies output)
+                    ₹{{ product.get_display_price }}
+                    - ₹ symbol (Indian Rupee)
+                    - product.get_display_price: Shows sale price if available, else regular price
+                    - This is a @property method in ProductData class
+                    -->
+                    <span class="product-price">₹{{ product.get_display_price }}</span>
+
+                    <!--
+                    SALE BADGE (only if product is on sale)
+                    =======================================
+
+                    {% if product.is_on_sale %}
+                    - Checks if product has sale price
+                    - is_on_sale is a @property that returns True/False
+                    -->
+                    {% if product.is_on_sale %}
+                        <span class="sale-badge">
+                            SALE -{{ product.discount_percentage }}%
+                        </span>
+                        <!-- Show original price with strikethrough -->
+                        <span class="original-price">
+                            ₹{{ product.price }}
+                        </span>
+                    {% endif %}
+                </div>
+
+                <!--
+                PRODUCT DESCRIPTION
+                ===================
+                Full product details and features
+                -->
+                <div class="product-description">
+                    <!--
+                    <h5>: Heading level 5 (smaller than h1-h4)
+                    mb-3: Margin-bottom 3 (Bootstrap spacing utility)
+                    -->
+                    <h5 class="mb-3">Product Description</h5>
+                    <!--
+                    <p>: Paragraph tag
+
+                    {{ product.description }}
+                    - Outputs the full product description
+                    - This might be multiple sentences or paragraphs
+
+                    Alternative if description contains HTML:
+                    {{ product.description|safe }}
+                    - |safe filter marks content as safe HTML
+                    - Without it, HTML tags display as text
+                    - Only use if you trust the source!
+                    -->
+                    <p>{{ product.description }}</p>
+                </div>
+
+                <!--
+                STOCK STATUS
+                ============
+                Shows if product is available for purchase
+                -->
+                <div class="stock-status">
+                    <!--
+                    Check if product is in stock
+                    product.is_in_stock: Boolean property
+                    -->
+                    {% if product.is_in_stock %}
+                        <!-- In stock - show green checkmark -->
+                        <span class="badge bg-success">
+                            <i class="fas fa-check-circle me-1"></i>
+                            In Stock
+                        </span>
+                    {% else %}
+                        <!-- Out of stock - show red warning -->
+                        <span class="badge bg-danger">
+                            <i class="fas fa-times-circle me-1"></i>
+                            Out of Stock
+                        </span>
+                    {% endif %}
+                </div>
+
+                <!--
+                QUANTITY SELECTOR & ADD TO CART
+                ===============================
+                Let customers choose quantity and add to cart
+                -->
+                <div class="quantity-cart-section">
+                    <!--
+                    <form>: Form for submitting data
+
+                    method="post"
+                    - POST request (for making changes, not just viewing)
+                    - POST data doesn't appear in URL
+                    - More secure than GET for sensitive data
+
+                    action="{% url 'cart:add-to-cart' product.id %}"
+                    - Where to submit form data
+                    - 'cart:add-to-cart' route (defined in cart/urls.py)
+                    - product.id passed as URL parameter
+                    - Example: /cart/add/42/
+
+                    NOTE: This assumes you have a cart app with add-to-cart view
+                    -->
+                    <form method="post" action="#" class="add-to-cart-form">
+                        <!--
+                        {% csrf_token %} SECURITY TOKEN
+                        ==============================
+
+                        CSRF = Cross-Site Request Forgery protection
+                        Required for ALL POST forms in Django
+
+                        What it does:
+                        - Generates hidden input with secret token
+                        - Django validates token on form submission
+                        - Prevents attackers from submitting forms on your behalf
+
+                        Without this, form submission fails with "CSRF verification failed"
+                        -->
+                        {% csrf_token %}
+
+                        <!-- Quantity input group -->
+                        <div class="quantity-selector">
+                            <!--
+                            <label>: Describes input field
+
+                            for="quantity"
+                            - Associates label with input (clicking label focuses input)
+                            - Links to <input id="quantity">
+                            -->
+                            <label for="quantity">Quantity:</label>
+
+                            <!--
+                            <input>: User input field
+
+                            type="number"
+                            - Only accepts numeric input
+                            - Shows up/down arrows
+                            - Validates input is a number
+
+                            id="quantity"
+                            - Unique identifier for this input
+                            - Used by label's 'for' attribute
+                            - Used by JavaScript: document.getElementById('quantity')
+
+                            name="quantity"
+                            - Key name in form data
+                            - When form submits: {'quantity': '2'}
+                            - In Django view: request.POST.get('quantity')
+
+                            value="1"
+                            - Default value when page loads
+                            - Starts at 1 (customer wants at least 1)
+
+                            min="1"
+                            - Minimum allowed value
+                            - Can't order 0 or negative quantities
+
+                            max="10"
+                            - Maximum allowed value
+                            - Prevents ordering too many at once
+                            - Could use: max="{{ product.stock }}" (limited by available stock)
+
+                            class="form-control"
+                            - Bootstrap styling class
+                            - Makes input look nice and consistent
+                            -->
+                            <input
+                                type="number"
+                                id="quantity"
+                                name="quantity"
+                                value="1"
+                                min="1"
+                                max="10"
+                                class="form-control"
+                            >
+                        </div>
+
+                        <!--
+                        ADD TO CART BUTTON
+                        ==================
+
+                        <button>: Clickable button
+
+                        type="submit"
+                        - Clicking submits the form
+                        - Sends POST request to action URL
+                        - Includes all form data (quantity, csrf_token)
+
+                        class="btn btn-primary btn-lg"
+                        - btn: Bootstrap button base class
+                        - btn-primary: Blue color (primary action)
+                        - btn-lg: Large size button
+
+                        {% if not product.is_in_stock %}disabled{% endif %}
+                        - Conditional HTML attribute
+                        - If out of stock, add 'disabled' attribute
+                        - Disabled buttons can't be clicked
+                        - Prevents ordering out-of-stock items
+                        -->
+                        <button
+                            type="submit"
+                            class="btn btn-primary btn-lg"
+                            {% if not product.is_in_stock %}disabled{% endif %}
+                        >
+                            <i class="fas fa-shopping-cart me-2"></i>
+                            <!--
+                            Button text changes based on stock status
+                            If in stock: "Add to Cart"
+                            If out of stock: "Out of Stock"
+                            -->
+                            {% if product.is_in_stock %}
+                                Add to Cart
+                            {% else %}
+                                Out of Stock
+                            {% endif %}
+                        </button>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================
+         RELATED PRODUCTS SECTION
+         ======================================================== -->
+
+    <!--
+    Show related products (from same category)
+    Increases sales through cross-selling
+    "Customers who viewed this also viewed..."
+    -->
+    {% if related_products %}
+        <div class="related-products-section mt-5">
+            <!--
+            Section heading
+            mt-5: Margin-top 5 (Bootstrap: large top margin)
+            mb-4: Margin-bottom 4 (Bootstrap: medium bottom margin)
+            -->
+            <h2 class="mb-4">You May Also Like</h2>
+
+            <!--
+            Product grid for related products
+            Uses same grid system as main page
+            -->
+            <div class="row g-3">
+                <!--
+                Loop through related products
+                Only show first 4 (sliced in view: [:4])
+                -->
+                {% for product in related_products %}
+                    <!--
+                    Responsive column widths:
+                    - col-6: 2 products per row on mobile (6/12 = 50%)
+                    - col-md-3: 4 products per row on tablet+ (3/12 = 25%)
+                    -->
+                    <div class="col-6 col-md-3">
+                        <!--
+                        Product card (same design as product listing page)
+                        -->
+                        <div class="related-product-card">
+                            <!-- Product image -->
+                            <a href="{% url 'products:product-detail' product_id=product.id %}">
+                                {% if product.primary_image %}
+                                    <img
+                                        src="{{ product.primary_image }}"
+                                        alt="{{ product.title }}"
+                                        class="related-product-image"
+                                        loading="lazy"
+                                    >
+                                {% else %}
+                                    <div class="no-image-small">
+                                        <i class="fas fa-image"></i>
+                                    </div>
+                                {% endif %}
+                            </a>
+
+                            <!-- Product info -->
+                            <div class="related-product-info">
+                                <h6 class="related-product-title">
+                                    <a href="{% url 'products:product-detail' product_id=product.id %}">
+                                        {{ product.title }}
+                                    </a>
+                                </h6>
+                                <div class="related-product-price">
+                                    ₹{{ product.get_display_price }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+
+</div>
+
+<!--
+CUSTOM CSS STYLES FOR THIS PAGE
+================================
+
+{% block extra_css %} allows adding page-specific CSS
+Without affecting other pages
+-->
+{% block extra_css %}
+<style>
+    /*
+    ================================================
+    PRODUCT IMAGES STYLING
+    ================================================
+    */
+
+    /* Main image container - holds the large product photo */
+    .main-image-container {
+        /* position: relative allows absolute positioning of child elements */
+        position: relative;
+
+        /* width: 100% makes it fill parent container */
+        width: 100%;
+
+        /* background: light gray shows while image loads */
+        background: #f8f9fa;
+
+        /* border-radius: rounds corners for modern look */
+        border-radius: 12px;
+
+        /* overflow: hidden clips content to rounded corners */
+        overflow: hidden;
+
+        /* margin-bottom: spacing below image */
+        margin-bottom: 1rem;
+
+        /* box-shadow: subtle shadow for depth */
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    /* The main product image itself */
+    .product-main-image {
+        /* width: 100% fills container */
+        width: 100%;
+
+        /* height: auto maintains aspect ratio */
+        height: auto;
+
+        /* max-height: prevents too-tall images */
+        max-height: 600px;
+
+        /* object-fit: cover fills space while maintaining aspect ratio */
+        object-fit: cover;
+
+        /* display: block removes bottom gap (images are inline by default) */
+        display: block;
+    }
+
+    /* Placeholder when no image available */
+    .no-image-placeholder {
+        /* display: flex enables flexbox layout */
+        display: flex;
+
+        /* flex-direction: column stacks children vertically */
+        flex-direction: column;
+
+        /* align-items: center horizontally centers children */
+        align-items: center;
+
+        /* justify-content: center vertically centers children */
+        justify-content: center;
+
+        /* min-height: minimum container height */
+        min-height: 400px;
+
+        /* color: gray text */
+        color: #6c757d;
+    }
+
+    /* Thumbnail images gallery */
+    .image-thumbnails {
+        /* display: flex creates horizontal layout */
+        display: flex;
+
+        /* gap: spacing between thumbnails */
+        gap: 0.5rem;
+
+        /* flex-wrap: wrap allows thumbnails to wrap to next line */
+        flex-wrap: wrap;
+    }
+
+    /* Individual thumbnail image */
+    .thumbnail-image {
+        /* width, height: fixed size for consistency */
+        width: 80px;
+        height: 80px;
+
+        /* object-fit: cover fills square without distortion */
+        object-fit: cover;
+
+        /* border: light border around thumbnail */
+        border: 2px solid #e9ecef;
+
+        /* border-radius: rounded corners */
+        border-radius: 8px;
+
+        /* cursor: pointer shows hand cursor on hover */
+        cursor: pointer;
+
+        /* transition: smooth animation on hover */
+        transition: all 0.2s ease;
+    }
+
+    /* Hover effect on thumbnails */
+    .thumbnail-image:hover {
+        /* border-color: blue border on hover */
+        border-color: #2874f0;
+
+        /* transform: scale slightly enlarges on hover */
+        transform: scale(1.05);
+    }
+
+    /*
+    ================================================
+    PRODUCT INFO STYLING
+    ================================================
+    */
+
+    /* Main product info section */
+    .product-info-section {
+        /* padding: internal spacing */
+        padding: 1rem;
+    }
+
+    /* Category badge */
+    .category-badge {
+        /* display: inline-block allows width/height on inline element */
+        display: inline-block;
+
+        /* padding: internal spacing */
+        padding: 0.375rem 0.75rem;
+
+        /* background: light blue background */
+        background: #e7f3ff;
+
+        /* color: blue text */
+        color: #2874f0;
+
+        /* border-radius: rounded corners */
+        border-radius: 20px;
+
+        /* font-size: smaller text */
+        font-size: 0.875rem;
+
+        /* font-weight: bold text */
+        font-weight: 600;
+
+        /* text-decoration: remove underline */
+        text-decoration: none;
+
+        /* margin-bottom: spacing below */
+        margin-bottom: 1rem;
+
+        /* transition: smooth color change on hover */
+        transition: all 0.2s ease;
+    }
+
+    /* Hover effect on category badge */
+    .category-badge:hover {
+        /* background: darker blue on hover */
+        background: #2874f0;
+
+        /* color: white text on hover */
+        color: white;
+    }
+
+    /* Product title */
+    .product-title {
+        /* font-size: large title */
+        font-size: 2rem;
+
+        /* font-weight: bold text */
+        font-weight: 700;
+
+        /* color: dark gray */
+        color: #1f2937;
+
+        /* margin-bottom: spacing below */
+        margin-bottom: 1.5rem;
+
+        /* line-height: spacing between lines */
+        line-height: 1.3;
+    }
+
+    /* Product price section */
+    .product-price-section {
+        /* margin-bottom: spacing below */
+        margin-bottom: 2rem;
+    }
+
+    /* Product price display */
+    .product-price {
+        /* font-size: very large price */
+        font-size: 2.5rem;
+
+        /* font-weight: bold price */
+        font-weight: 700;
+
+        /* color: green (indicates positive/affordability) */
+        color: #059669;
+    }
+
+    /* Sale badge */
+    .sale-badge {
+        /* display: inline-block for sizing */
+        display: inline-block;
+
+        /* padding: internal spacing */
+        padding: 0.25rem 0.75rem;
+
+        /* background: red background */
+        background: #ff3f6c;
+
+        /* color: white text */
+        color: white;
+
+        /* border-radius: rounded corners */
+        border-radius: 4px;
+
+        /* font-size: smaller text */
+        font-size: 0.875rem;
+
+        /* font-weight: bold */
+        font-weight: 600;
+
+        /* margin-left: spacing from price */
+        margin-left: 0.5rem;
+    }
+
+    /* Original price (strikethrough when on sale) */
+    .original-price {
+        /* text-decoration: line through text */
+        text-decoration: line-through;
+
+        /* color: gray text */
+        color: #6c757d;
+
+        /* font-size: smaller text */
+        font-size: 1.25rem;
+
+        /* margin-left: spacing from sale badge */
+        margin-left: 0.5rem;
+    }
+
+    /* Product description section */
+    .product-description {
+        /* padding: internal spacing */
+        padding: 1.5rem 0;
+
+        /* border-top, border-bottom: separating lines */
+        border-top: 1px solid #e9ecef;
+        border-bottom: 1px solid #e9ecef;
+
+        /* margin-bottom: spacing below */
+        margin-bottom: 1.5rem;
+    }
+
+    /* Stock status section */
+    .stock-status {
+        /* margin-bottom: spacing below */
+        margin-bottom: 2rem;
+    }
+
+    /* Quantity and cart section */
+    .quantity-cart-section {
+        /* display: flex for horizontal layout */
+        display: flex;
+
+        /* gap: spacing between elements */
+        gap: 1rem;
+
+        /* align-items: vertically center elements */
+        align-items: center;
+    }
+
+    /* Quantity selector */
+    .quantity-selector {
+        /* display: flex for horizontal layout */
+        display: flex;
+
+        /* align-items: vertically center label and input */
+        align-items: center;
+
+        /* gap: spacing between label and input */
+        gap: 0.5rem;
+    }
+
+    /* Quantity input field */
+    .quantity-selector input {
+        /* width: fixed width */
+        width: 80px;
+    }
+
+    /* Add to cart form */
+    .add-to-cart-form {
+        /* display: flex for horizontal layout */
+        display: flex;
+
+        /* gap: spacing between quantity and button */
+        gap: 1rem;
+
+        /* align-items: vertically center elements */
+        align-items: flex-end;
+    }
+
+    /*
+    ================================================
+    RELATED PRODUCTS STYLING
+    ================================================
+    */
+
+    /* Related products section */
+    .related-products-section {
+        /* margin-top: large spacing above */
+        margin-top: 4rem;
+
+        /* padding-top: internal top spacing */
+        padding-top: 2rem;
+
+        /* border-top: separating line */
+        border-top: 1px solid #e9ecef;
+    }
+
+    /* Related product card */
+    .related-product-card {
+        /* background: white background */
+        background: white;
+
+        /* border-radius: rounded corners */
+        border-radius: 8px;
+
+        /* overflow: hidden clips to rounded corners */
+        overflow: hidden;
+
+        /* box-shadow: subtle shadow */
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+        /* transition: smooth animation */
+        transition: transform 0.2s ease;
+    }
+
+    /* Hover effect on related product card */
+    .related-product-card:hover {
+        /* transform: slight lift on hover */
+        transform: translateY(-4px);
+
+        /* box-shadow: larger shadow on hover */
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Related product image */
+    .related-product-image {
+        /* width: 100% fills container */
+        width: 100%;
+
+        /* height: fixed height */
+        height: 200px;
+
+        /* object-fit: cover fills space without distortion */
+        object-fit: cover;
+    }
+
+    /* Related product info section */
+    .related-product-info {
+        /* padding: internal spacing */
+        padding: 1rem;
+    }
+
+    /* Related product title */
+    .related-product-title {
+        /* font-size: medium text */
+        font-size: 0.875rem;
+
+        /* margin-bottom: spacing below */
+        margin-bottom: 0.5rem;
+
+        /* Limit to 2 lines with ellipsis */
+        /* display: -webkit-box enables line clamping */
+        display: -webkit-box;
+
+        /* -webkit-line-clamp: max 2 lines */
+        -webkit-line-clamp: 2;
+
+        /* -webkit-box-orient: vertical required for line clamp */
+        -webkit-box-orient: vertical;
+
+        /* overflow: hidden hides extra text */
+        overflow: hidden;
+    }
+
+    /* Related product title link */
+    .related-product-title a {
+        /* color: dark text */
+        color: #1f2937;
+
+        /* text-decoration: no underline */
+        text-decoration: none;
+    }
+
+    /* Hover effect on related product title */
+    .related-product-title a:hover {
+        /* color: blue on hover */
+        color: #2874f0;
+    }
+
+    /* Related product price */
+    .related-product-price {
+        /* font-size: medium text */
+        font-size: 1.125rem;
+
+        /* font-weight: bold */
+        font-weight: 700;
+
+        /* color: green */
+        color: #059669;
+    }
+
+    /*
+    ================================================
+    RESPONSIVE DESIGN - Mobile optimizations
+    ================================================
+    */
+
+    /* Mobile screens (less than 768px) */
+    @media (max-width: 767px) {
+        /* Smaller title on mobile */
+        .product-title {
+            font-size: 1.5rem;
+        }
+
+        /* Smaller price on mobile */
+        .product-price {
+            font-size: 2rem;
+        }
+
+        /* Stack quantity and button vertically on mobile */
+        .add-to-cart-form {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        /* Full width button on mobile */
+        .add-to-cart-form button {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% endblock content %}
+
+<!--
+=============================================================================
+TEMPLATE CONCEPTS SUMMARY
+=============================================================================
+
+DJANGO TEMPLATE LANGUAGE (DTL) BASICS:
+--------------------------------------
+
+1. VARIABLES: {{ variable_name }}
+   - Outputs the value of a variable
+   - Example: {{ product.title }} → "iPhone 14 Pro"
+
+2. TAGS: {% tag_name %}
+   - Performs logic and control flow
+   - Examples: {% if %}, {% for %}, {% url %}
+
+3. FILTERS: {{ variable|filter }}
+   - Modifies variable output
+   - Example: {{ price|floatformat:2 }} → "99.99"
+
+4. COMMENTS: {# comment #} or {% comment %} ... {% endcomment %}
+   - Not rendered in HTML
+
+COMMON TEMPLATE TAGS:
+--------------------
+
+{% extends 'base.html' %}
+- Inherits from parent template
+
+{% block name %} ... {% endblock %}
+- Defines overridable section
+
+{% load static %}
+- Loads template tag library
+
+{% static 'path' %}
+- Generates static file URL
+
+{% url 'app:name' param=value %}
+- Generates URL from route name
+
+{% if condition %} ... {% elif %} ... {% else %} ... {% endif %}
+- Conditional rendering
+
+{% for item in list %} ... {% empty %} ... {% endfor %}
+- Loop through list
+
+{% csrf_token %}
+- CSRF protection for forms
+
+COMMON TEMPLATE FILTERS:
+-----------------------
+
+{{ text|upper }} - Uppercase
+{{ text|lower }} - Lowercase
+{{ text|title }} - Title Case
+{{ num|floatformat:2 }} - Format to 2 decimals
+{{ list|length }} - Get list length
+{{ text|truncatewords:10 }} - Limit to 10 words
+{{ text|safe }} - Mark as safe HTML
+{{ date|date:"Y-m-d" }} - Format date
+
+TEMPLATE INHERITANCE:
+--------------------
+
+base.html (parent):
+    <html>
+    <head>...</head>
+    <body>
+        <nav>...</nav>
+        {% block content %}{% endblock %}
+        <footer>...</footer>
+    </body>
+    </html>
+
+page.html (child):
+    {% extends 'base.html' %}
+    {% block content %}
+        <h1>Page content</h1>
+    {% endblock %}
+
+Result:
+    <html>
+    <head>...</head>
+    <body>
+        <nav>...</nav>
+        <h1>Page content</h1>
+        <footer>...</footer>
+    </body>
+    </html>
+
+BOOTSTRAP CLASSES USED:
+-----------------------
+
+Layout:
+- container-fluid: Full-width container
+- row: Horizontal flex container
+- col-*, col-md-*, col-lg-*: Responsive columns
+- g-3, g-4: Gap between columns
+
+Spacing:
+- m-*, mt-*, mb-*, mx-*, my-*: Margins
+- p-*, pt-*, pb-*, px-*, py-*: Padding
+- Numbers: 0-5 (0=none, 5=most)
+
+Buttons:
+- btn: Base button class
+- btn-primary: Blue button
+- btn-lg: Large button
+
+Badges:
+- badge: Base badge class
+- bg-success: Green background
+- bg-danger: Red background
+
+Text:
+- text-muted: Gray text
+
+LEARNING PATH:
+-------------
+
+1. Master HTML basics (tags, attributes, structure)
+2. Learn CSS (selectors, properties, flexbox, grid)
+3. Understand Django templates (variables, tags, filters)
+4. Practice responsive design (media queries, Bootstrap)
+5. Add JavaScript interactivity
+6. Optimize for performance (lazy loading, caching)
+
+Remember: This template is just the presentation layer.
+The logic happens in views.py, data comes from models.py.
+Templates should be simple and focused on display.
+-->
