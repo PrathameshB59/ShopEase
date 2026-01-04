@@ -2,13 +2,20 @@
 {% load static %}
 
 <!-- 
-PRODUCT LIST PAGE
-==================
-Shows all products with filtering, sorting, and pagination.
-Uses FakeStore API for demo products if database is empty.
+PRODUCT LIST PAGE WITH CATEGORY FILTERING
+==========================================
+This page displays products filtered by category when user selects
+a category from the dropdown menu.
+
+URL Examples:
+- /products/ → Shows all products
+- /products/?category=electronics → Shows only electronics
+- /products/?category=jewelery → Shows only jewelry
 -->
 
-{% block title %}All Products - ShopEase{% endblock %}
+{% block title %}
+{% if selected_category %}{{ selected_category|title }} - Products{% else %}All Products{% endif %} - ShopEase
+{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -19,6 +26,8 @@ Uses FakeStore API for demo products if database is empty.
         color: white;
         padding: 3rem 0;
         margin-bottom: 3rem;
+        position: relative;
+        overflow: hidden;
     }
 
     .page-title {
@@ -26,6 +35,27 @@ Uses FakeStore API for demo products if database is empty.
         font-weight: 800;
         text-align: center;
         margin: 0;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .breadcrumb {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 0.5rem;
+        margin-top: 1rem;
+        font-size: 0.95rem;
+        opacity: 0.9;
+    }
+
+    .breadcrumb a {
+        color: white;
+        text-decoration: none;
+        transition: opacity 0.3s ease;
+    }
+
+    .breadcrumb a:hover {
+        opacity: 0.7;
     }
 
     .products-wrapper {
@@ -43,17 +73,19 @@ Uses FakeStore API for demo products if database is empty.
     }
 
     .filter-card {
-        background: white;
+        background: rgba(30, 41, 59, 0.8);
+        backdrop-filter: blur(10px);
         border-radius: 1rem;
         padding: 1.5rem;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
         margin-bottom: 1.5rem;
+        border: 1px solid rgba(59, 130, 246, 0.2);
     }
 
     .filter-title {
         font-size: 1.125rem;
         font-weight: 700;
-        color: #1f2937;
+        color: #f9fafb;
         margin-bottom: 1rem;
         display: flex;
         align-items: center;
@@ -69,20 +101,47 @@ Uses FakeStore API for demo products if database is empty.
     .filter-option {
         display: flex;
         align-items: center;
-        gap: 0.5rem;
+        gap: 0.75rem;
+        padding: 0.75rem;
+        border-radius: 0.5rem;
         cursor: pointer;
+        transition: all 0.3s ease;
+        background: rgba(15, 23, 42, 0.5);
+        border: 1px solid rgba(59, 130, 246, 0.1);
     }
 
-    .filter-option input[type="checkbox"] {
+    .filter-option:hover {
+        background: rgba(59, 130, 246, 0.15);
+        border-color: rgba(59, 130, 246, 0.3);
+    }
+
+    .filter-option.active {
+        background: rgba(59, 130, 246, 0.2);
+        border-color: #60a5fa;
+    }
+
+    .filter-option input[type="radio"] {
         width: 18px;
         height: 18px;
         cursor: pointer;
+        accent-color: #3b82f6;
     }
 
     .filter-option label {
         cursor: pointer;
-        color: #4b5563;
+        color: #e5e7eb;
         flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .filter-count {
+        font-size: 0.875rem;
+        color: #94a3b8;
+        background: rgba(100, 116, 139, 0.2);
+        padding: 0.25rem 0.5rem;
+        border-radius: 50px;
     }
 
     /* PRODUCTS MAIN */
@@ -97,11 +156,21 @@ Uses FakeStore API for demo products if database is empty.
         margin-bottom: 2rem;
         flex-wrap: wrap;
         gap: 1rem;
+        background: rgba(30, 41, 59, 0.8);
+        backdrop-filter: blur(10px);
+        padding: 1.5rem;
+        border-radius: 1rem;
+        border: 1px solid rgba(59, 130, 246, 0.2);
     }
 
     .products-count {
         font-size: 1.125rem;
-        color: #4b5563;
+        color: #e5e7eb;
+    }
+
+    .products-count strong {
+        color: #60a5fa;
+        font-size: 1.5rem;
     }
 
     .sort-dropdown {
@@ -112,17 +181,20 @@ Uses FakeStore API for demo products if database is empty.
 
     .sort-select {
         padding: 0.75rem 1rem;
-        border: 2px solid #e5e7eb;
+        border: 2px solid rgba(59, 130, 246, 0.3);
         border-radius: 0.5rem;
         font-size: 1rem;
-        font-family: var(--font-body);
+        font-family: 'DM Sans', sans-serif;
         cursor: pointer;
-        background: white;
+        background: rgba(15, 23, 42, 0.8);
+        color: #e5e7eb;
+        transition: all 0.3s ease;
     }
 
     .sort-select:focus {
         outline: none;
-        border-color: #2563eb;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
     }
 
     /* PRODUCT GRID */
@@ -134,24 +206,27 @@ Uses FakeStore API for demo products if database is empty.
     }
 
     .product-card {
-        background: white;
+        background: rgba(30, 41, 59, 0.8);
+        backdrop-filter: blur(10px);
         border-radius: 1rem;
         overflow: hidden;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
         transition: all 0.3s ease;
         position: relative;
+        border: 1px solid rgba(59, 130, 246, 0.1);
     }
 
     .product-card:hover {
         transform: translateY(-8px);
-        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+        border-color: rgba(59, 130, 246, 0.3);
     }
 
     .product-image-wrapper {
         position: relative;
         overflow: hidden;
         padding-top: 100%;
-        background: #f3f4f6;
+        background: rgba(15, 23, 42, 0.5);
     }
 
     .product-image {
@@ -173,13 +248,14 @@ Uses FakeStore API for demo products if database is empty.
         position: absolute;
         top: 1rem;
         right: 1rem;
-        background: #ef4444;
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
         color: white;
         padding: 0.375rem 0.75rem;
         border-radius: 50px;
         font-size: 0.75rem;
         font-weight: 700;
         z-index: 2;
+        box-shadow: 0 2px 8px rgba(239, 68, 68, 0.5);
     }
 
     .product-info {
@@ -188,7 +264,7 @@ Uses FakeStore API for demo products if database is empty.
 
     .product-category {
         font-size: 0.875rem;
-        color: #6b7280;
+        color: #94a3b8;
         margin-bottom: 0.5rem;
         text-transform: capitalize;
     }
@@ -196,7 +272,7 @@ Uses FakeStore API for demo products if database is empty.
     .product-name {
         font-size: 1.125rem;
         font-weight: 600;
-        color: #1f2937;
+        color: #f9fafb;
         margin-bottom: 0.75rem;
         display: -webkit-box;
         -webkit-line-clamp: 2;
@@ -215,7 +291,7 @@ Uses FakeStore API for demo products if database is empty.
     .price-current {
         font-size: 1.5rem;
         font-weight: 700;
-        color: #2563eb;
+        color: #60a5fa;
     }
 
     .product-rating {
@@ -230,7 +306,7 @@ Uses FakeStore API for demo products if database is empty.
     }
 
     .rating-count {
-        color: #6b7280;
+        color: #94a3b8;
         font-size: 0.875rem;
     }
 
@@ -241,7 +317,7 @@ Uses FakeStore API for demo products if database is empty.
 
     .btn-add-cart {
         flex: 1;
-        background: #2563eb;
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
         color: white;
         padding: 0.75rem 1rem;
         border: none;
@@ -252,28 +328,30 @@ Uses FakeStore API for demo products if database is empty.
     }
 
     .btn-add-cart:hover {
-        background: #1e40af;
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
         transform: scale(1.02);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
     }
 
     .btn-wishlist {
-        background: #f3f4f6;
-        color: #6b7280;
+        background: rgba(239, 68, 68, 0.2);
+        color: #fca5a5;
         padding: 0.75rem;
-        border: none;
+        border: 1px solid rgba(239, 68, 68, 0.3);
         border-radius: 0.5rem;
         cursor: pointer;
         transition: all 0.3s ease;
     }
 
     .btn-wishlist:hover {
-        background: #ef4444;
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
         color: white;
+        border-color: transparent;
     }
 
     /* LOADING SKELETON */
     .skeleton {
-        background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+        background: linear-gradient(90deg, rgba(59, 130, 246, 0.1) 25%, rgba(59, 130, 246, 0.2) 50%, rgba(59, 130, 246, 0.1) 75%);
         background-size: 200% 100%;
         animation: loading 1.5s ease-in-out infinite;
         border-radius: 0.5rem;
@@ -289,44 +367,40 @@ Uses FakeStore API for demo products if database is empty.
         }
     }
 
-    .skeleton-card {
-        background: white;
-        border-radius: 1rem;
-        overflow: hidden;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-    }
-
-    .skeleton-image {
-        width: 100%;
-        padding-top: 100%;
-        background: #f3f4f6;
-    }
-
-    .skeleton-content {
-        padding: 1.5rem;
-    }
-
-    .skeleton-text {
-        height: 1rem;
-        margin-bottom: 0.75rem;
-        border-radius: 0.25rem;
-    }
-
     /* EMPTY STATE */
     .empty-state {
         text-align: center;
         padding: 4rem 2rem;
+        grid-column: 1 / -1;
     }
 
     .empty-icon {
         font-size: 5rem;
-        color: #d1d5db;
+        color: #64748b;
         margin-bottom: 1rem;
+        opacity: 0.5;
     }
 
     .empty-text {
-        color: #6b7280;
+        color: #94a3b8;
         font-size: 1.25rem;
+        margin-bottom: 2rem;
+    }
+
+    .btn-browse {
+        display: inline-block;
+        padding: 1rem 2rem;
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        color: white;
+        text-decoration: none;
+        border-radius: 50px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .btn-browse:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
     }
 
     /* RESPONSIVE */
@@ -347,56 +421,105 @@ Uses FakeStore API for demo products if database is empty.
 {% endblock %}
 
 {% block content %}
-<!-- PAGE HEADER -->
+<!-- 
+======================================================================
+PAGE HEADER WITH BREADCRUMB
+======================================================================
+Shows current category and navigation path
+-->
 <section class="page-header">
     <div class="container">
         <h1 class="page-title">
             <i class="fas fa-shopping-bag"></i>
+            {% if selected_category %}
+            {{ selected_category|title }} Products
+            {% else %}
             All Products
+            {% endif %}
         </h1>
+
+        <!-- 
+        BREADCRUMB NAVIGATION
+        =====================
+        Shows: Home > Products > Category Name
+        Helps users understand where they are in the site
+        -->
+        <div class="breadcrumb">
+            <a href="{% url 'home' %}">
+                <i class="fas fa-home"></i> Home
+            </a>
+            <i class="fas fa-chevron-right"></i>
+            <a href="{% url 'products:product_list' %}">Products</a>
+            {% if selected_category %}
+            <i class="fas fa-chevron-right"></i>
+            <span>{{ selected_category|title }}</span>
+            {% endif %}
+        </div>
     </div>
 </section>
 
-<!-- PRODUCTS SECTION -->
+<!-- 
+======================================================================
+PRODUCTS SECTION
+======================================================================
+Main content area with sidebar filters and product grid
+-->
 <section class="section">
     <div class="container">
         <div class="products-wrapper">
-            <!-- SIDEBAR FILTERS -->
+            <!-- 
+            ============================================================
+            SIDEBAR FILTERS
+            ============================================================
+            Category filter sidebar
+            -->
             <aside class="filters-sidebar">
                 <div class="filter-card">
                     <h3 class="filter-title">
                         <i class="fas fa-filter"></i>
-                        Filters
-                    </h3>
-                    <button class="btn btn-outline" onclick="clearFilters()" style="width: 100%; margin-top: 0.5rem;">
-                        Clear All
-                    </button>
-                </div>
-
-                <div class="filter-card">
-                    <h3 class="filter-title">
-                        <i class="fas fa-list"></i>
                         Categories
                     </h3>
+
+                    <!-- 
+                    CATEGORY FILTERS
+                    ================
+                    Radio buttons to filter products by category
+                    Populated dynamically from API
+                    -->
                     <div class="filter-options" id="categoryFilters">
-                        <!-- Categories will be loaded here -->
-                        <div class="skeleton skeleton-text"></div>
-                        <div class="skeleton skeleton-text"></div>
-                        <div class="skeleton skeleton-text"></div>
+                        <!-- Loading skeleton -->
+                        <div class="skeleton" style="height: 50px;"></div>
+                        <div class="skeleton" style="height: 50px;"></div>
+                        <div class="skeleton" style="height: 50px;"></div>
                     </div>
                 </div>
+
+                <!-- Clear Filters Button -->
+                <button class="btn-browse" onclick="clearFilters()" style="width: 100%;">
+                    <i class="fas fa-redo"></i>
+                    Clear Filters
+                </button>
             </aside>
 
-            <!-- MAIN PRODUCTS AREA -->
+            <!-- 
+            ============================================================
+            MAIN PRODUCTS AREA
+            ============================================================
+            Product grid with sorting options
+            -->
             <main class="products-main">
-                <!-- PRODUCTS HEADER -->
+                <!-- 
+                PRODUCTS HEADER
+                ===============
+                Shows product count and sort options
+                -->
                 <div class="products-header">
                     <div class="products-count">
                         <strong id="productCount">Loading...</strong> products found
                     </div>
 
                     <div class="sort-dropdown">
-                        <label for="sortSelect">
+                        <label for="sortSelect" style="color: #94a3b8;">
                             <i class="fas fa-sort"></i>
                             Sort by:
                         </label>
@@ -410,31 +533,36 @@ Uses FakeStore API for demo products if database is empty.
                     </div>
                 </div>
 
-                <!-- PRODUCT GRID -->
+                <!-- 
+                PRODUCT GRID
+                ============
+                Displays product cards in a responsive grid
+                Populated dynamically with JavaScript
+                -->
                 <div class="product-grid" id="productGrid">
-                    <!-- Loading skeletons -->
-                    <div class="skeleton-card">
-                        <div class="skeleton skeleton-image"></div>
-                        <div class="skeleton-content">
-                            <div class="skeleton skeleton-text"></div>
-                            <div class="skeleton skeleton-text" style="width: 60%;"></div>
-                            <div class="skeleton skeleton-text" style="width: 40%;"></div>
+                    <!-- Loading skeletons shown while products are being fetched -->
+                    <div class="product-card">
+                        <div class="skeleton" style="height: 280px;"></div>
+                        <div style="padding: 1.5rem;">
+                            <div class="skeleton" style="height: 20px; margin-bottom: 0.5rem;"></div>
+                            <div class="skeleton" style="height: 60px; margin-bottom: 0.5rem;"></div>
+                            <div class="skeleton" style="height: 30px; width: 60%;"></div>
                         </div>
                     </div>
-                    <div class="skeleton-card">
-                        <div class="skeleton skeleton-image"></div>
-                        <div class="skeleton-content">
-                            <div class="skeleton skeleton-text"></div>
-                            <div class="skeleton skeleton-text" style="width: 60%;"></div>
-                            <div class="skeleton skeleton-text" style="width: 40%;"></div>
+                    <div class="product-card">
+                        <div class="skeleton" style="height: 280px;"></div>
+                        <div style="padding: 1.5rem;">
+                            <div class="skeleton" style="height: 20px; margin-bottom: 0.5rem;"></div>
+                            <div class="skeleton" style="height: 60px; margin-bottom: 0.5rem;"></div>
+                            <div class="skeleton" style="height: 30px; width: 60%;"></div>
                         </div>
                     </div>
-                    <div class="skeleton-card">
-                        <div class="skeleton skeleton-image"></div>
-                        <div class="skeleton-content">
-                            <div class="skeleton skeleton-text"></div>
-                            <div class="skeleton skeleton-text" style="width: 60%;"></div>
-                            <div class="skeleton skeleton-text" style="width: 40%;"></div>
+                    <div class="product-card">
+                        <div class="skeleton" style="height: 280px;"></div>
+                        <div style="padding: 1.5rem;">
+                            <div class="skeleton" style="height: 20px; margin-bottom: 0.5rem;"></div>
+                            <div class="skeleton" style="height: 60px; margin-bottom: 0.5rem;"></div>
+                            <div class="skeleton" style="height: 30px; width: 60%;"></div>
                         </div>
                     </div>
                 </div>
@@ -446,153 +574,306 @@ Uses FakeStore API for demo products if database is empty.
 
 {% block extra_js %}
 <script>
+    // ========================================
     // GLOBAL VARIABLES
-    let allProducts = [];
-    let filteredProducts = [];
-    let selectedCategories = [];
+    // ========================================
 
-    // FETCH PRODUCTS FROM FAKESTORE API
+    // Store all products from API
+    let allProducts = [];
+
+    // Store filtered products based on current category
+    let filteredProducts = [];
+
+    // Current selected category (from URL parameter)
+    let selectedCategory = getURLParameter('category') || 'all';
+
+    // All available categories
+    let categories = [];
+
+
+    // ========================================
+    // GET URL PARAMETER
+    // ========================================
+    /**
+     * getURLParameter(name)
+     * =====================
+     * Extract parameter value from URL query string
+     * 
+     * @param {String} name - Parameter name to extract
+     * @returns {String|null} - Parameter value or null
+     * 
+     * Example URL: /products/?category=electronics&sort=price
+     * getURLParameter('category') → 'electronics'
+     * getURLParameter('sort') → 'price'
+     */
+    function getURLParameter(name) {
+        // Use URLSearchParams API to parse query string
+        const params = new URLSearchParams(window.location.search);
+        return params.get(name);
+    }
+
+
+    // ========================================
+    // FETCH AND DISPLAY PRODUCTS
+    // ========================================
+    /**
+     * fetchProducts()
+     * ===============
+     * Main function that:
+     * 1. Fetches all products from FakeStore API
+     * 2. Filters products by selected category
+     * 3. Renders products in grid
+     * 4. Loads category filters
+     */
     async function fetchProducts() {
         try {
-            console.log('Fetching products from FakeStore API...');
+            console.log('📦 Fetching products from FakeStore API...');
+            console.log('🔍 Selected category:', selectedCategory);
+
+            // ========================================
+            // FETCH ALL PRODUCTS
+            // ========================================
             const response = await fetch('https://fakestoreapi.com/products');
             const data = await response.json();
 
-            console.log('Products fetched:', data);
-            allProducts = data;
-            filteredProducts = data;
+            console.log('✅ Products fetched:', data.length);
 
+            // Store all products globally
+            allProducts = data;
+
+            // ========================================
+            // FILTER BY CATEGORY
+            // ========================================
+            if (selectedCategory && selectedCategory !== 'all') {
+                // Filter products that match selected category
+                filteredProducts = data.filter(product =>
+                    product.category.toLowerCase() === selectedCategory.toLowerCase()
+                );
+                console.log(`🔍 Filtered to ${filteredProducts.length} products in category "${selectedCategory}"`);
+            } else {
+                // Show all products
+                filteredProducts = data;
+                console.log('📋 Showing all products');
+            }
+
+            // ========================================
+            // RENDER PRODUCTS
+            // ========================================
             renderProducts(filteredProducts);
-            loadCategories();
+
+            // ========================================
+            // LOAD CATEGORY FILTERS
+            // ========================================
+            loadCategoryFilters();
+
+            // ========================================
+            // UPDATE PRODUCT COUNT
+            // ========================================
             updateProductCount();
+
         } catch (error) {
-            console.error('Error fetching products:', error);
+            console.error('❌ Error fetching products:', error);
             showError();
         }
     }
 
-    // RENDER PRODUCTS
+
+    // ========================================
+    // RENDER PRODUCTS IN GRID
+    // ========================================
+    /**
+     * renderProducts(products)
+     * ========================
+     * Create HTML cards for each product and display in grid
+     * 
+     * @param {Array} products - Array of product objects to display
+     */
     function renderProducts(products) {
         const grid = document.getElementById('productGrid');
 
+        // ========================================
+        // HANDLE EMPTY STATE
+        // ========================================
         if (products.length === 0) {
             grid.innerHTML = `
-            <div class="empty-state" style="grid-column: 1/-1;">
-                <div class="empty-icon">
-                    <i class="fas fa-box-open"></i>
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="fas fa-box-open"></i>
+                    </div>
+                    <p class="empty-text">
+                        No products found in this category
+                    </p>
+                    <a href="{% url 'products:product_list' %}" class="btn-browse">
+                        <i class="fas fa-th"></i>
+                        Browse All Products
+                    </a>
                 </div>
-                <p class="empty-text">No products found</p>
-            </div>
-        `;
+            `;
             return;
         }
 
+        // ========================================
+        // CREATE PRODUCT CARDS
+        // ========================================
         grid.innerHTML = products.map(product => `
-        <div class="product-card" data-category="${product.category}">
-            <div class="product-image-wrapper">
-                <img src="${product.image}" alt="${product.title}" class="product-image">
-                ${product.rating.rate >= 4.5 ? '<span class="product-badge">Top Rated</span>' : ''}
-            </div>
-            
-            <div class="product-info">
-                <div class="product-category">${product.category}</div>
-                
-                <h3 class="product-name">
-                    <a href="#" style="color: inherit;">
-                        ${product.title}
-                    </a>
-                </h3>
-                
-                <div class="product-price">
-                    <span class="price-current">$${product.price.toFixed(2)}</span>
+            <div class="product-card" data-category="${product.category}">
+                <!-- PRODUCT IMAGE -->
+                <div class="product-image-wrapper">
+                    <img src="${product.image}" alt="${escapeHtml(product.title)}" class="product-image">
+                    ${product.rating.rate >= 4.5 ? '<span class="product-badge">Top Rated</span>' : ''}
                 </div>
                 
-                <div class="product-rating">
-                    <div class="stars">
-                        ${generateStars(product.rating.rate)}
+                <!-- PRODUCT INFO -->
+                <div class="product-info">
+                    <!-- Category Badge -->
+                    <div class="product-category">${capitalizeFirst(product.category)}</div>
+                    
+                    <!-- Product Name -->
+                    <h3 class="product-name">
+                        <a href="#" style="color: inherit; text-decoration: none;">
+                            ${escapeHtml(product.title)}
+                        </a>
+                    </h3>
+                    
+                    <!-- Price -->
+                    <div class="product-price">
+                        <span class="price-current">$${product.price.toFixed(2)}</span>
                     </div>
-                    <span class="rating-count">(${product.rating.count})</span>
+                    
+                    <!-- Rating -->
+                    <div class="product-rating">
+                        <div class="stars">
+                            ${generateStars(product.rating.rate)}
+                        </div>
+                        <span class="rating-count">(${product.rating.count})</span>
+                    </div>
+                    
+                    <!-- Actions -->
+                    <div class="product-actions">
+                        <button class="btn-add-cart" onclick="addToCart(${product.id}, '${escapeHtml(product.title)}')">
+                            <i class="fas fa-shopping-cart"></i>
+                            Add to Cart
+                        </button>
+                        <button class="btn-wishlist" onclick="addToWishlist(${product.id})">
+                            <i class="far fa-heart"></i>
+                        </button>
+                    </div>
                 </div>
-                
-                <div class="product-actions">
-                    <button class="btn-add-cart" onclick="addToCart(${product.id}, '${escapeHtml(product.title)}')">
-                        <i class="fas fa-shopping-cart"></i>
-                        Add to Cart
-                    </button>
-                    <button class="btn-wishlist" onclick="addToWishlist(${product.id})">
-                        <i class="far fa-heart"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-    `).join('');
-    }
-
-    // GENERATE STAR RATING
-    function generateStars(rating) {
-        const fullStars = Math.floor(rating);
-        const hasHalfStar = rating % 1 >= 0.5;
-        let stars = '';
-
-        for (let i = 0; i < fullStars; i++) {
-            stars += '<i class="fas fa-star"></i>';
-        }
-
-        if (hasHalfStar) {
-            stars += '<i class="fas fa-star-half-alt"></i>';
-        }
-
-        const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
-        for (let i = 0; i < emptyStars; i++) {
-            stars += '<i class="far fa-star"></i>';
-        }
-
-        return stars;
-    }
-
-    // LOAD CATEGORIES
-    async function loadCategories() {
-        try {
-            const response = await fetch('https://fakestoreapi.com/products/categories');
-            const categories = await response.json();
-
-            const container = document.getElementById('categoryFilters');
-            container.innerHTML = categories.map(category => `
-            <div class="filter-option">
-                <input 
-                    type="checkbox" 
-                    id="cat-${category}" 
-                    value="${category}"
-                    onchange="filterByCategory()"
-                >
-                <label for="cat-${category}">${capitalizeFirst(category)}</label>
             </div>
         `).join('');
+
+        console.log(`✅ Rendered ${products.length} products`);
+    }
+
+
+    // ========================================
+    // LOAD CATEGORY FILTERS
+    // ========================================
+    /**
+     * loadCategoryFilters()
+     * =====================
+     * Fetch categories from API and create filter radio buttons
+     */
+    async function loadCategoryFilters() {
+        try {
+            // Fetch categories
+            const response = await fetch('https://fakestoreapi.com/products/categories');
+            categories = await response.json();
+
+            console.log('📂 Categories loaded:', categories);
+
+            // Count products in each category
+            const categoryCounts = {};
+            allProducts.forEach(product => {
+                const cat = product.category;
+                categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
+            });
+
+            // Render filter options
+            const container = document.getElementById('categoryFilters');
+
+            let html = '';
+
+            // Add "All Products" option
+            html += `
+                <div class="filter-option ${selectedCategory === 'all' ? 'active' : ''}" onclick="filterByCategory('all')">
+                    <input type="radio" 
+                           id="cat-all" 
+                           name="category" 
+                           value="all"
+                           ${selectedCategory === 'all' ? 'checked' : ''}
+                           onchange="filterByCategory('all')">
+                    <label for="cat-all">
+                        <span>All Products</span>
+                        <span class="filter-count">${allProducts.length}</span>
+                    </label>
+                </div>
+            `;
+
+            // Add category options
+            categories.forEach(category => {
+                const count = categoryCounts[category] || 0;
+                const isSelected = selectedCategory.toLowerCase() === category.toLowerCase();
+
+                html += `
+                    <div class="filter-option ${isSelected ? 'active' : ''}" onclick="filterByCategory('${category}')">
+                        <input type="radio" 
+                               id="cat-${category}" 
+                               name="category" 
+                               value="${category}"
+                               ${isSelected ? 'checked' : ''}
+                               onchange="filterByCategory('${category}')">
+                        <label for="cat-${category}">
+                            <span>${capitalizeFirst(category)}</span>
+                            <span class="filter-count">${count}</span>
+                        </label>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+
         } catch (error) {
-            console.error('Error loading categories:', error);
+            console.error('❌ Error loading category filters:', error);
         }
     }
 
+
+    // ========================================
     // FILTER BY CATEGORY
-    function filterByCategory() {
-        const checkboxes = document.querySelectorAll('#categoryFilters input[type="checkbox"]');
-        selectedCategories = Array.from(checkboxes)
-            .filter(cb => cb.checked)
-            .map(cb => cb.value);
+    // ========================================
+    /**
+     * filterByCategory(category)
+     * ==========================
+     * Filter products by selected category
+     * Updates URL and reloads page with category parameter
+     * 
+     * @param {String} category - Category to filter by
+     */
+    function filterByCategory(category) {
+        console.log('🔍 Filtering by category:', category);
 
-        if (selectedCategories.length === 0) {
-            filteredProducts = allProducts;
+        // Update URL with category parameter
+        if (category === 'all') {
+            // Remove category parameter
+            window.location.href = '{% url "products:product_list" %}';
         } else {
-            filteredProducts = allProducts.filter(product =>
-                selectedCategories.includes(product.category)
-            );
+            // Add category parameter
+            window.location.href = `{% url "products:product_list" %}?category=${encodeURIComponent(category)}`;
         }
-
-        renderProducts(filteredProducts);
-        updateProductCount();
     }
 
+
+    // ========================================
     // SORT PRODUCTS
+    // ========================================
+    /**
+     * sortProducts(sortType)
+     * ======================
+     * Sort filtered products by selected criteria
+     * 
+     * @param {String} sortType - Sort type (price-low, price-high, name, rating)
+     */
     function sortProducts(sortType) {
         let sorted = [...filteredProducts];
 
@@ -614,61 +895,136 @@ Uses FakeStore API for demo products if database is empty.
         }
 
         renderProducts(sorted);
+        console.log('✅ Products sorted by:', sortType);
     }
 
+
+    // ========================================
     // CLEAR FILTERS
+    // ========================================
+    /**
+     * clearFilters()
+     * ==============
+     * Reset all filters and show all products
+     */
     function clearFilters() {
-        const checkboxes = document.querySelectorAll('#categoryFilters input[type="checkbox"]');
-        checkboxes.forEach(cb => cb.checked = false);
-        document.getElementById('sortSelect').value = 'default';
-
-        selectedCategories = [];
-        filteredProducts = allProducts;
-        renderProducts(filteredProducts);
-        updateProductCount();
+        window.location.href = '{% url "products:product_list" %}';
     }
 
+
+    // ========================================
     // UPDATE PRODUCT COUNT
+    // ========================================
+    /**
+     * updateProductCount()
+     * ====================
+     * Update the product count display
+     */
     function updateProductCount() {
         document.getElementById('productCount').textContent = filteredProducts.length;
     }
 
+
+    // ========================================
+    // GENERATE STAR RATING
+    // ========================================
+    /**
+     * generateStars(rating)
+     * =====================
+     * Generate star icons based on rating
+     * 
+     * @param {Number} rating - Rating value (0-5)
+     * @returns {String} - HTML string with star icons
+     */
+    function generateStars(rating) {
+        const fullStars = Math.floor(rating);
+        const hasHalfStar = rating % 1 >= 0.5;
+        let stars = '';
+
+        for (let i = 0; i < fullStars; i++) {
+            stars += '<i class="fas fa-star"></i>';
+        }
+
+        if (hasHalfStar) {
+            stars += '<i class="fas fa-star-half-alt"></i>';
+        }
+
+        const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+        for (let i = 0; i < emptyStars; i++) {
+            stars += '<i class="far fa-star"></i>';
+        }
+
+        return stars;
+    }
+
+
+    // ========================================
     // ADD TO CART
+    // ========================================
+    /**
+     * addToCart(productId, productName)
+     * ==================================
+     * Add product to shopping cart
+     * 
+     * @param {Number} productId - Product ID
+     * @param {String} productName - Product name
+     */
     function addToCart(productId, productName) {
-        console.log('Adding to cart:', productId, productName);
+        console.log('🛒 Adding to cart:', productId, productName);
         showToast(`${productName} added to cart! 🛒`, 'success');
     }
 
+
+    // ========================================
     // ADD TO WISHLIST
+    // ========================================
+    /**
+     * addToWishlist(productId)
+     * =========================
+     * Add product to wishlist
+     * 
+     * @param {Number} productId - Product ID
+     */
     function addToWishlist(productId) {
-        console.log('Adding to wishlist:', productId);
+        console.log('❤️ Adding to wishlist:', productId);
         showToast('Added to wishlist! ❤️', 'success');
     }
 
+
+    // ========================================
     // SHOW TOAST NOTIFICATION
+    // ========================================
+    /**
+     * showToast(message, type)
+     * ========================
+     * Display temporary notification message
+     * 
+     * @param {String} message - Message to display
+     * @param {String} type - Toast type (success, error, warning, info)
+     */
     function showToast(message, type = 'success') {
         const toast = document.createElement('div');
         toast.className = `toast toast-${type}`;
         toast.innerHTML = `
-        <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
-        <span>${message}</span>
-    `;
+            <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+            <span>${message}</span>
+        `;
 
         toast.style.cssText = `
-        position: fixed;
-        top: 100px;
-        right: 20px;
-        background: ${type === 'success' ? '#10b981' : '#ef4444'};
-        color: white;
-        padding: 1rem 1.5rem;
-        border-radius: 0.5rem;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        z-index: 9999;
-        animation: slideInRight 0.3s ease;
-    `;
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            background: ${type === 'success' ? '#10b981' : '#ef4444'};
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            z-index: 9999;
+            animation: slideInRight 0.3s ease;
+        `;
 
         document.body.appendChild(toast);
 
@@ -678,33 +1034,61 @@ Uses FakeStore API for demo products if database is empty.
         }, 3000);
     }
 
-    // SHOW ERROR
+
+    // ========================================
+    // SHOW ERROR MESSAGE
+    // ========================================
+    /**
+     * showError()
+     * ===========
+     * Display error message when products fail to load
+     */
     function showError() {
         const grid = document.getElementById('productGrid');
         grid.innerHTML = `
-        <div class="empty-state" style="grid-column: 1/-1;">
-            <div class="empty-icon">
-                <i class="fas fa-exclamation-triangle"></i>
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <p class="empty-text">Failed to load products. Please try again later.</p>
             </div>
-            <p class="empty-text">Failed to load products. Please try again later.</p>
-        </div>
-    `;
+        `;
     }
 
+
+    // ========================================
     // UTILITY FUNCTIONS
+    // ========================================
+
+    /**
+     * capitalizeFirst(str)
+     * ====================
+     * Capitalize first letter of string
+     */
     function capitalizeFirst(str) {
         return str.charAt(0).toUpperCase() + str.slice(1);
     }
 
+    /**
+     * escapeHtml(text)
+     * ================
+     * Escape HTML special characters to prevent XSS
+     */
     function escapeHtml(text) {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
     }
 
+
+    // ========================================
     // INITIALIZE ON PAGE LOAD
+    // ========================================
     document.addEventListener('DOMContentLoaded', function () {
-        console.log('Page loaded, fetching products...');
+        console.log('🚀 Product List Page loaded');
+        console.log('🔍 Current category filter:', selectedCategory);
+
+        // Fetch and display products
         fetchProducts();
     });
 </script>

@@ -5,193 +5,315 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-
-    <!-- SEO Meta Tags -->
-    <meta name="description"
-        content="ShopEase - Your one-stop shop for quality products at great prices. Electronics, fashion, home goods and more.">
-    <meta name="keywords" content="online shopping, e-commerce, electronics, fashion, deals">
-    <meta name="author" content="ShopEase">
-
-    <!-- Page Title -->
     <title>{% block title %}ShopEase - Shop Online{% endblock %}</title>
 
-    <!-- Favicon - Multiple sizes for crystal clear visibility -->
-    <!-- The browser will automatically choose the best size -->
-    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'images/favicon-16x16.png' %}">
-    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'images/favicon-32x32.png' %}">
-    <link rel="icon" type="image/png" sizes="64x64" href="{% static 'images/favicon-64x64.png' %}">
-
-    <!-- Fallback to main logo if specific sizes not available -->
+    <!-- Favicon -->
     <link rel="icon" type="image/png" href="{% static 'images/logo.png' %}">
-    <link rel="shortcut icon" type="image/png" href="{% static 'images/logo.png' %}">
-
-    <!-- Apple devices (mobile home screen) -->
-    <link rel="apple-touch-icon" href="{% static 'images/logo.png' %}">
 
     <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
         href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Sans:wght@400;500;700&display=swap"
         rel="stylesheet">
 
-    <!-- Font Awesome Icons -->
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <!-- Custom CSS -->
+    <!-- Main Stylesheet -->
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
 
-    <!-- Extra CSS Block -->
     {% block extra_css %}{% endblock %}
 
-    <!-- Inline Styles -->
     <style>
-        :root {
-            --primary-color: #2563eb;
-            --primary-dark: #1e40af;
-            --secondary-color: #f59e0b;
-            --success-color: #10b981;
-            --danger-color: #ef4444;
-            --warning-color: #f59e0b;
-            --info-color: #3b82f6;
-            --dark: #1f2937;
-            --gray-dark: #4b5563;
-            --gray: #6b7280;
-            --gray-light: #d1d5db;
-            --gray-lighter: #f3f4f6;
-            --white: #ffffff;
-            --font-heading: 'Outfit', sans-serif;
-            --font-body: 'DM Sans', sans-serif;
-            --spacing-xs: 0.25rem;
-            --spacing-sm: 0.5rem;
-            --spacing-md: 1rem;
-            --spacing-lg: 1.5rem;
-            --spacing-xl: 2rem;
-            --spacing-2xl: 3rem;
-            --radius-sm: 0.375rem;
-            --radius-md: 0.5rem;
-            --radius-lg: 0.75rem;
-            --radius-xl: 1rem;
-            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
-            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1);
-            --transition-fast: 150ms ease-in-out;
-            --transition-normal: 300ms ease-in-out;
-            --transition-slow: 500ms ease-in-out;
+        /* ========================================
+           CRITICAL FIX: Dropdown Positioning
+           ======================================== */
+
+        /* Ensure navigation has proper positioning context */
+        .main-nav {
+            position: relative;
+            z-index: 100;
         }
 
-        * {
-            margin: 0;
+        .nav-menu {
+            list-style: none;
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
             padding: 0;
-            box-sizing: border-box;
+            margin: 0;
+            position: relative;
+            /* IMPORTANT: Creates positioning context */
         }
 
-        body {
-            font-family: var(--font-body);
-            font-size: 16px;
-            line-height: 1.6;
-            color: var(--dark);
-            background-color: var(--white);
-            overflow-x: hidden;
+        .nav-item {
+            position: relative;
+            /* IMPORTANT: Each nav item needs this */
         }
 
-        h1,
-        h2,
-        h3,
-        h4,
-        h5,
-        h6 {
-            font-family: var(--font-heading);
-            font-weight: 700;
-            line-height: 1.2;
-            margin-bottom: var(--spacing-md);
-            color: var(--dark);
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem 1.25rem;
+            color: #94a3b8;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border-radius: 0.5rem;
+            text-decoration: none;
         }
 
-        h1 {
-            font-size: 2.5rem;
+        .nav-link:hover {
+            background: rgba(59, 130, 246, 0.1);
+            color: #60a5fa;
         }
 
-        h2 {
-            font-size: 2rem;
+        /* ========================================
+           CATEGORIES DROPDOWN - FIXED VERSION
+           ======================================== */
+
+        .categories-dropdown {
+            position: relative;
+            /* CRITICAL: Must be relative for absolute children */
         }
 
-        h3 {
-            font-size: 1.75rem;
+        .categories-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem 1.25rem;
+            color: #94a3b8;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border-radius: 0.5rem;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 1rem;
+            white-space: nowrap;
+            /* Prevent text wrapping */
         }
 
-        h4 {
-            font-size: 1.5rem;
+        .categories-btn:hover {
+            background: rgba(59, 130, 246, 0.1);
+            color: #60a5fa;
         }
 
-        h5 {
-            font-size: 1.25rem;
-        }
-
-        h6 {
+        .categories-btn i {
             font-size: 1rem;
         }
 
-        a {
-            color: var(--primary-color);
-            text-decoration: none;
-            transition: color var(--transition-fast);
+        .dropdown-arrow {
+            transition: transform 0.3s ease;
+            margin-left: 0.25rem;
         }
 
-        a:hover {
-            color: var(--primary-dark);
+        .categories-dropdown.active .dropdown-arrow {
+            transform: rotate(180deg);
         }
 
-        img {
-            max-width: 100%;
-            height: auto;
+        /* ========================================
+           DROPDOWN MENU - FIXED POSITIONING
+           ======================================== */
+
+        .dropdown-menu {
+            /* HIDDEN BY DEFAULT */
+            display: none;
+
+            /* POSITIONING - This is the fix! */
+            position: absolute;
+            /* Position relative to .categories-dropdown */
+            top: 100%;
+            /* Place it right below the button */
+            left: 0;
+            /* Align with left edge of button */
+
+            /* STYLING */
+            background: rgba(30, 41, 59, 0.98);
+            backdrop-filter: blur(10px);
+            min-width: 280px;
+            max-width: 350px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            border-radius: 0.5rem;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            padding: 0.5rem;
+            list-style: none;
+
+            /* Z-INDEX - Ensure it appears above other content */
+            z-index: 1000;
+
+            /* SPACING */
+            margin-top: 0.5rem;
+            /* Small gap between button and menu */
+
+            /* ANIMATION */
+            animation: fadeInDown 0.3s ease;
+
+            /* SCROLLING */
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        /* SHOW DROPDOWN WHEN ACTIVE */
+        .categories-dropdown.active .dropdown-menu {
             display: block;
         }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 var(--spacing-lg);
+        /* FADE IN ANIMATION */
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
-        .text-center {
+        /* DROPDOWN ITEMS */
+        .dropdown-link {
+            display: flex;
+            align-items: center;
+            padding: 0.875rem 1rem;
+            color: #94a3b8;
+            border-radius: 0.375rem;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .dropdown-link:hover {
+            background: rgba(59, 130, 246, 0.15);
+            color: #60a5fa;
+            transform: translateX(5px);
+        }
+
+        /* CATEGORY INFO LAYOUT */
+        .category-info {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .category-icon {
+            width: 32px;
+            height: 32px;
+            background: rgba(59, 130, 246, 0.1);
+            border-radius: 0.375rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #60a5fa;
+            flex-shrink: 0;
+        }
+
+        .category-name {
+            font-weight: 500;
+            color: #e5e7eb;
+            flex: 1;
+        }
+
+        .category-count {
+            font-size: 0.8rem;
+            color: #64748b;
+            background: rgba(100, 116, 139, 0.2);
+            padding: 0.25rem 0.5rem;
+            border-radius: 50px;
+            min-width: 30px;
             text-align: center;
         }
 
-        .text-right {
-            text-align: right;
+        /* LOADING SKELETON */
+        .loading-skeleton {
+            background: linear-gradient(90deg, rgba(59, 130, 246, 0.1) 25%, rgba(59, 130, 246, 0.2) 50%, rgba(59, 130, 246, 0.1) 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s ease-in-out infinite;
+            border-radius: 0.375rem;
+            height: 50px;
+            margin-bottom: 0.5rem;
         }
 
-        .mt-1 {
-            margin-top: var(--spacing-md);
+        @keyframes loading {
+            0% {
+                background-position: 200% 0;
+            }
+
+            100% {
+                background-position: -200% 0;
+            }
         }
 
-        .mt-2 {
-            margin-top: var(--spacing-lg);
+        /* DROPDOWN DIVIDER */
+        .dropdown-divider {
+            height: 1px;
+            background: rgba(59, 130, 246, 0.1);
+            margin: 0.5rem 0;
         }
 
-        .mt-3 {
-            margin-top: var(--spacing-xl);
+        /* ========================================
+           SCROLLBAR STYLING
+           ======================================== */
+
+        .dropdown-menu::-webkit-scrollbar {
+            width: 6px;
         }
 
-        .mb-1 {
-            margin-bottom: var(--spacing-md);
+        .dropdown-menu::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.5);
+            border-radius: 3px;
         }
 
-        .mb-2 {
-            margin-bottom: var(--spacing-lg);
+        .dropdown-menu::-webkit-scrollbar-thumb {
+            background: rgba(59, 130, 246, 0.3);
+            border-radius: 3px;
         }
 
-        .mb-3 {
-            margin-bottom: var(--spacing-xl);
+        .dropdown-menu::-webkit-scrollbar-thumb:hover {
+            background: rgba(59, 130, 246, 0.5);
+        }
+
+        /* ========================================
+           MOBILE RESPONSIVE
+           ======================================== */
+
+        @media (max-width: 768px) {
+            .nav-menu {
+                display: none;
+                flex-direction: column;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                background: rgba(30, 41, 59, 0.98);
+                backdrop-filter: blur(10px);
+                padding: 1rem;
+                border: 1px solid rgba(59, 130, 246, 0.2);
+            }
+
+            .nav-menu.active {
+                display: flex;
+            }
+
+            /* On mobile, dropdown appears below in the flow */
+            .dropdown-menu {
+                position: static;
+                /* Change from absolute to static on mobile */
+                margin-top: 0.5rem;
+                margin-left: 1rem;
+            }
+
+            .categories-dropdown.active .dropdown-menu {
+                display: block;
+            }
         }
     </style>
 </head>
 
 <body>
-    <!-- HEADER SECTION -->
+    <!-- HEADER -->
     <header class="site-header">
         <!-- Top Bar -->
         <div class="top-bar">
@@ -199,7 +321,6 @@
                 <p class="top-bar-text">
                     <i class="fas fa-truck"></i>
                     Free shipping on orders over $50!
-                    <a href="#" class="top-bar-link">Shop Now</a>
                 </p>
             </div>
         </div>
@@ -210,19 +331,16 @@
                 <div class="header-content">
                     <!-- Logo -->
                     <div class="logo">
-                        <a href="{% url 'home' %}" style="display: flex; align-items: center; gap: 1rem;">
-                            <img src="{% static 'images/logo.png' %}" alt="ShopEase Logo"
-                                style="height: 60px; width: auto;">
-                            <h1 class="logo-text" style="margin: 0; font-size: 2rem;">
-                                ShopEase
-                            </h1>
+                        <a href="{% url 'home' %}">
+                            <img src="{% static 'images/logo.png' %}" alt="ShopEase Logo" style="height: 60px;">
+                            <h1 class="logo-text" style="margin: 0;">ShopEase</h1>
                         </a>
                     </div>
 
                     <!-- Search Bar -->
                     <div class="search-bar">
-                        <form action="#" method="GET" class="search-form">
-                            <input type="text" name="q" placeholder="Search for products..." class="search-input">
+                        <form action="{% url 'products:product_list' %}" method="GET" class="search-form">
+                            <input type="text" name="search" placeholder="Search for products..." class="search-input">
                             <button type="submit" class="search-button">
                                 <i class="fas fa-search"></i>
                             </button>
@@ -231,12 +349,10 @@
 
                     <!-- Header Actions -->
                     <div class="header-actions">
-                        <!-- User Account -->
                         <div class="header-action">
                             {% if user.is_authenticated %}
                             {% if user.role == 'ADMIN' or user.is_superuser %}
-                            <a href="{% url 'accounts:admin_dashboard' %}" class="action-link"
-                                style="background: rgba(59, 130, 246, 0.1); padding: 0.5rem 1rem; border-radius: 0.5rem; border: 1px solid rgba(59, 130, 246, 0.3);">
+                            <a href="{% url 'accounts:admin_dashboard' %}" class="action-link">
                                 <i class="fas fa-user-shield"></i>
                                 <span>Admin Panel</span>
                             </a>
@@ -254,7 +370,6 @@
                             {% endif %}
                         </div>
 
-                        <!-- Shopping Cart -->
                         <div class="header-action">
                             <a href="#" class="action-link cart-link">
                                 <i class="fas fa-shopping-cart"></i>
@@ -263,19 +378,14 @@
                             </a>
                         </div>
                     </div>
-
-                    <!-- Mobile Menu Toggle -->
-                    <button class="mobile-menu-toggle" id="mobileMenuToggle">
-                        <i class="fas fa-bars"></i>
-                    </button>
                 </div>
             </div>
         </div>
 
-        <!-- Navigation Menu -->
+        <!-- Navigation -->
         <nav class="main-nav">
             <div class="container">
-                <ul class="nav-menu" id="navMenu">
+                <ul class="nav-menu">
                     <li class="nav-item">
                         <a href="{% url 'home' %}" class="nav-link">
                             <i class="fas fa-home"></i> Home
@@ -286,15 +396,37 @@
                             <i class="fas fa-th"></i> All Products
                         </a>
                     </li>
-                    <li class="nav-item dropdown">
-                        <a href="#" class="nav-link">
-                            <i class="fas fa-list"></i> Categories
-                            <i class="fas fa-chevron-down"></i>
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a href="#" class="dropdown-link">Loading...</a></li>
+
+                    <!-- ================================================
+                         CATEGORIES DROPDOWN - FIXED VERSION
+                         ================================================
+                         
+                         CRITICAL FIXES APPLIED:
+                         1. Parent has position: relative
+                         2. Dropdown has position: absolute
+                         3. Proper top: 100% and left: 0
+                         4. z-index: 1000 to appear above content
+                         
+                         This ensures dropdown appears BELOW the button,
+                         not in a random position on the page!
+                         ================================================ -->
+                    <li class="nav-item categories-dropdown" id="categoriesDropdown">
+                        <!-- CATEGORIES BUTTON -->
+                        <button class="categories-btn" onclick="toggleCategories(event)">
+                            <i class="fas fa-list"></i>
+                            <span>Categories</span>
+                            <i class="fas fa-chevron-down dropdown-arrow"></i>
+                        </button>
+
+                        <!-- DROPDOWN MENU - Will appear below button -->
+                        <ul class="dropdown-menu" id="categoriesMenu">
+                            <!-- Loading state -->
+                            <li class="loading-skeleton"></li>
+                            <li class="loading-skeleton"></li>
+                            <li class="loading-skeleton"></li>
                         </ul>
                     </li>
+
                     <li class="nav-item">
                         <a href="#" class="nav-link">
                             <i class="fas fa-fire"></i> Hot Deals
@@ -303,16 +435,6 @@
                     <li class="nav-item">
                         <a href="#" class="nav-link">
                             <i class="fas fa-star"></i> New Arrivals
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="#" class="nav-link">
-                            <i class="fas fa-info-circle"></i> About
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="#" class="nav-link">
-                            <i class="fas fa-envelope"></i> Contact
                         </a>
                     </li>
                     {% if user.is_authenticated %}
@@ -327,12 +449,12 @@
         </nav>
     </header>
 
-    <!-- MESSAGES SECTION -->
+    <!-- Messages -->
     {% if messages %}
     <div class="messages-container">
         <div class="container">
             {% for message in messages %}
-            <div class="alert alert-{{ message.tags }}" role="alert">
+            <div class="alert alert-{{ message.tags }}">
                 <i class="fas fa-check-circle"></i>
                 {{ message }}
                 <button class="alert-close">&times;</button>
@@ -342,169 +464,237 @@
     </div>
     {% endif %}
 
-    <!-- MAIN CONTENT AREA -->
+    <!-- Main Content -->
     <main class="main-content">
         {% block content %}
-        <!-- Child templates will fill this area -->
         {% endblock %}
     </main>
 
-    <!-- FOOTER SECTION -->
+    <!-- Footer -->
     <footer class="site-footer">
         <div class="footer-main">
             <div class="container">
                 <div class="footer-grid">
-                    <!-- About Column -->
                     <div class="footer-column">
-                        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
-                            <img src="{% static 'images/logo.png' %}" alt="ShopEase Logo"
-                                style="height: 50px; width: auto;">
-                            <h3 class="footer-title" style="margin: 0; font-size: 1.75rem;">
-                                ShopEase
-                            </h3>
-                        </div>
-                        <p class="footer-text">
-                            Your trusted online shopping destination for quality products
-                            at unbeatable prices. Shop with confidence!
-                        </p>
-                        <div class="social-links">
-                            <a href="#" class="social-link" aria-label="Facebook">
-                                <i class="fab fa-facebook-f"></i>
-                            </a>
-                            <a href="#" class="social-link" aria-label="Twitter">
-                                <i class="fab fa-twitter"></i>
-                            </a>
-                            <a href="#" class="social-link" aria-label="Instagram">
-                                <i class="fab fa-instagram"></i>
-                            </a>
-                            <a href="#" class="social-link" aria-label="YouTube">
-                                <i class="fab fa-youtube"></i>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Quick Links Column -->
-                    <div class="footer-column">
-                        <h4 class="footer-heading">Quick Links</h4>
-                        <ul class="footer-links">
-                            <li><a href="{% url 'home' %}">Home</a></li>
-                            <li><a href="{% url 'products:product_list' %}">All Products</a></li>
-                            <li><a href="#">Hot Deals</a></li>
-                            <li><a href="#">New Arrivals</a></li>
-                            <li><a href="#">About Us</a></li>
-                            <li><a href="#">Contact</a></li>
-                        </ul>
-                    </div>
-
-                    <!-- Customer Service Column -->
-                    <div class="footer-column">
-                        <h4 class="footer-heading">Customer Service</h4>
-                        <ul class="footer-links">
-                            <li><a href="#">Help Center</a></li>
-                            <li><a href="#">Track Order</a></li>
-                            <li><a href="#">Returns & Refunds</a></li>
-                            <li><a href="#">Shipping Info</a></li>
-                            <li><a href="#">Terms & Conditions</a></li>
-                            <li><a href="#">Privacy Policy</a></li>
-                        </ul>
-                    </div>
-
-                    <!-- Newsletter Column -->
-                    <div class="footer-column">
-                        <h4 class="footer-heading">Newsletter</h4>
-                        <p class="footer-text">
-                            Subscribe to get special offers and updates!
-                        </p>
-                        <form class="newsletter-form" action="#" method="POST">
-                            {% csrf_token %}
-                            <input type="email" name="email" placeholder="Enter your email" class="newsletter-input"
-                                required>
-                            <button type="submit" class="newsletter-button">
-                                <i class="fas fa-paper-plane"></i>
-                            </button>
-                        </form>
-                        <div class="payment-methods">
-                            <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" alt="Visa"
-                                class="payment-logo">
-                            <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg"
-                                alt="Mastercard" class="payment-logo">
-                            <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" alt="PayPal"
-                                class="payment-logo">
-                        </div>
+                        <h3 class="footer-title">ShopEase</h3>
+                        <p class="footer-text">Your trusted online shopping destination</p>
                     </div>
                 </div>
             </div>
         </div>
-
-        <!-- Footer Bottom -->
         <div class="footer-bottom">
             <div class="container">
-                <p class="copyright">
-                    &copy; 2024 ShopEase. All rights reserved.
-                    Made with <i class="fas fa-heart" style="color: #ef4444;"></i> by ShopEase Team
-                </p>
+                <p class="copyright">&copy; 2024 ShopEase. All rights reserved.</p>
             </div>
         </div>
     </footer>
 
-    <!-- SCROLL TO TOP BUTTON -->
-    <button class="scroll-to-top" id="scrollToTop" aria-label="Scroll to top">
-        <i class="fas fa-arrow-up"></i>
-    </button>
-
-    <!-- JAVASCRIPT -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- JavaScript -->
     <script src="{% static 'js/main.js' %}"></script>
 
-    <!-- Extra JavaScript Block -->
-    {% block extra_js %}{% endblock %}
-
-    <!-- Inline JavaScript -->
+    <!-- ========================================
+         CATEGORIES DROPDOWN FUNCTIONALITY
+         ======================================== -->
     <script>
-        document.getElementById('mobileMenuToggle').addEventListener('click', function () {
-            const navMenu = document.getElementById('navMenu');
-            navMenu.classList.toggle('active');
-            const icon = this.querySelector('i');
-            if (navMenu.classList.contains('active')) {
-                icon.classList.remove('fa-bars');
-                icon.classList.add('fa-times');
-            } else {
-                icon.classList.remove('fa-times');
-                icon.classList.add('fa-bars');
+        // ========================================
+        // GLOBAL VARIABLES
+        // ========================================
+
+        let allCategories = [];
+        let categoriesLoaded = false;
+
+
+        // ========================================
+        // LOAD CATEGORIES FROM API
+        // ========================================
+        /**
+         * Fetches categories from FakeStore API
+         * and displays them in the dropdown menu
+         */
+        async function loadCategories() {
+            console.log('📦 Loading categories from FakeStore API...');
+
+            try {
+                // STEP 1: Fetch categories
+                const response = await fetch('https://fakestoreapi.com/products/categories');
+                const categories = await response.json();
+
+                console.log('✅ Categories loaded:', categories);
+                allCategories = categories;
+
+                // STEP 2: Count products in each category
+                const productsResponse = await fetch('https://fakestoreapi.com/products');
+                const allProducts = await productsResponse.json();
+
+                const categoryCounts = {};
+                allProducts.forEach(product => {
+                    const cat = product.category;
+                    categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
+                });
+
+                console.log('📊 Product counts:', categoryCounts);
+
+                // STEP 3: Render categories in dropdown
+                renderCategories(categories, categoryCounts);
+
+                categoriesLoaded = true;
+
+            } catch (error) {
+                console.error('❌ Error loading categories:', error);
+                showCategoriesError();
+            }
+        }
+
+
+        // ========================================
+        // RENDER CATEGORIES IN DROPDOWN
+        // ========================================
+        /**
+         * Creates HTML for each category and displays in dropdown
+         * 
+         * @param {Array} categories - Array of category names
+         * @param {Object} counts - Object with product counts per category
+         */
+        function renderCategories(categories, counts) {
+            const menu = document.getElementById('categoriesMenu');
+
+            // Category icons mapping
+            const categoryIcons = {
+                "electronics": "fa-laptop",
+                "jewelery": "fa-gem",
+                "men's clothing": "fa-tshirt",
+                "women's clothing": "fa-female"
+            };
+
+            // Build HTML
+            let html = '';
+
+            categories.forEach(category => {
+                const icon = categoryIcons[category] || 'fa-box';
+                const count = counts[category] || 0;
+                const displayName = category.charAt(0).toUpperCase() + category.slice(1);
+
+                html += `
+                    <li>
+                        <a href="{% url 'products:product_list' %}?category=${encodeURIComponent(category)}" 
+                           class="dropdown-link"
+                           onclick="selectCategory('${category}', event)">
+                            <div class="category-info">
+                                <div class="category-icon">
+                                    <i class="fas ${icon}"></i>
+                                </div>
+                                <span class="category-name">${displayName}</span>
+                                <span class="category-count">${count}</span>
+                            </div>
+                        </a>
+                    </li>
+                `;
+            });
+
+            // Add "View All" option
+            html += `
+                <li><div class="dropdown-divider"></div></li>
+                <li>
+                    <a href="{% url 'products:product_list' %}" class="dropdown-link">
+                        <div class="category-info">
+                            <div class="category-icon">
+                                <i class="fas fa-th"></i>
+                            </div>
+                            <span class="category-name">View All Products</span>
+                        </div>
+                    </a>
+                </li>
+            `;
+
+            // Update dropdown menu
+            menu.innerHTML = html;
+
+            console.log('✅ Categories rendered successfully');
+        }
+
+
+        // ========================================
+        // SHOW ERROR MESSAGE
+        // ========================================
+        function showCategoriesError() {
+            const menu = document.getElementById('categoriesMenu');
+            menu.innerHTML = `
+                <li>
+                    <div style="padding: 1rem; text-align: center; color: #fca5a5;">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <div style="margin-top: 0.5rem; font-size: 0.875rem;">
+                            Failed to load categories
+                        </div>
+                    </div>
+                </li>
+            `;
+        }
+
+
+        // ========================================
+        // TOGGLE DROPDOWN VISIBILITY
+        // ========================================
+        /**
+         * Shows or hides the categories dropdown
+         * 
+         * @param {Event} event - Click event
+         */
+        function toggleCategories(event) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            const dropdown = document.getElementById('categoriesDropdown');
+
+            // Toggle active class
+            dropdown.classList.toggle('active');
+
+            console.log('📂 Categories dropdown toggled');
+        }
+
+
+        // ========================================
+        // SELECT CATEGORY
+        // ========================================
+        /**
+         * Handles category selection
+         * 
+         * @param {String} category - Selected category name
+         * @param {Event} event - Click event
+         */
+        function selectCategory(category, event) {
+            console.log('✅ Selected category:', category);
+
+            // Close dropdown
+            const dropdown = document.getElementById('categoriesDropdown');
+            dropdown.classList.remove('active');
+
+            // Navigation handled by href attribute
+        }
+
+
+        // ========================================
+        // CLOSE DROPDOWN WHEN CLICKING OUTSIDE
+        // ========================================
+        document.addEventListener('click', function (event) {
+            const dropdown = document.getElementById('categoriesDropdown');
+
+            // If click is outside dropdown, close it
+            if (!dropdown.contains(event.target)) {
+                dropdown.classList.remove('active');
             }
         });
 
-        window.addEventListener('scroll', function () {
-            const scrollBtn = document.getElementById('scrollToTop');
-            if (window.pageYOffset > 300) {
-                scrollBtn.classList.add('visible');
-            } else {
-                scrollBtn.classList.remove('visible');
-            }
-        });
 
-        document.getElementById('scrollToTop').addEventListener('click', function () {
-            window.scrollTo({
-                top: 0,
-                behavior: 'smooth'
-            });
+        // ========================================
+        // LOAD CATEGORIES ON PAGE LOAD
+        // ========================================
+        document.addEventListener('DOMContentLoaded', function () {
+            console.log('🚀 Page loaded, loading categories...');
+            loadCategories();
         });
-
-        document.querySelectorAll('.alert-close').forEach(function (button) {
-            button.addEventListener('click', function () {
-                this.parentElement.style.display = 'none';
-            });
-        });
-
-        setTimeout(function () {
-            document.querySelectorAll('.alert').forEach(function (alert) {
-                alert.style.opacity = '0';
-                setTimeout(function () {
-                    alert.style.display = 'none';
-                }, 500);
-            });
-        }, 5000);
     </script>
+
+    {% block extra_js %}{% endblock %}
 </body>
 
 </html>
