@@ -98,6 +98,7 @@ def login_view(request):
     LOGIN HANDLER
     =============
     Processes user login form submission.
+    Redirects admin users to admin panel, regular users to home.
     
     Form fields:
     - username
@@ -118,11 +119,19 @@ def login_view(request):
     if user is not None:
         # Login successful
         login(request, user)
-        messages.success(request, f'Welcome back, {user.username}!')
         
-        # Redirect to next page or home
-        next_page = request.GET.get('next', 'home')
-        return redirect(next_page)
+        # Check user role and redirect accordingly
+        if user.role == 'ADMIN' or user.is_superuser:
+            # Admin user - redirect to admin panel
+            messages.success(request, f'Welcome back, {user.username}! Redirecting to admin panel...')
+            return redirect('accounts:admin_dashboard')
+        else:
+            # Regular user - redirect to home
+            messages.success(request, f'Welcome back, {user.username}!')
+            
+            # Redirect to next page or home
+            next_page = request.GET.get('next', 'home')
+            return redirect(next_page)
     else:
         # Login failed
         messages.error(request, 'Invalid username or password!')

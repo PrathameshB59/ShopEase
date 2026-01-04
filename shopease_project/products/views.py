@@ -412,3 +412,177 @@ WHEN TO USE WHICH:
 
 This makes your site MUCH faster!
 """
+# products/views.py
+# This file handles all product-related views for the customer-facing side
+
+from django.shortcuts import render, get_object_or_404
+from django.core.paginator import Paginator
+from .models import Product, Category, ProductImage
+
+def home(request):
+    """
+    Home page view - displays featured products and all categories
+    
+    What this does:
+    1. Gets all active products marked as featured (is_featured=True)
+    2. Gets all active categories for the navigation
+    3. Passes them to the home template
+    """
+    # Get only featured products that are active and in stock
+    # order_by('-created_at') shows newest products first
+    featured_products = Product.objects.filter(
+        is_featured=True, 
+        is_active=True,
+        stock__gt=0  # gt means "greater than" - only show products with stock
+    ).order_by('-created_at')[:8]  # [:8] limits to 8 products
+    
+    # Get all active categories ordered by their order field
+    categories = Category.objects.filter(is_active=True).order_by('order')
+    
+    # Context is a dictionary we send to the template
+    context = {
+        'featured_products': featured_products,
+        'categories': categories,
+        'page_title': 'Welcome to ShopEase'
+    }
+    
+    return render(request, 'products/home.html', context)
+
+
+def product_list(request):
+    """
+    Product listing page - shows all products with filtering options
+    
+    This view handles:
+    1. Displaying all products
+    2. Filtering by category
+    3. Searching products
+    4. Pagination (showing products across multiple pages)
+    """
+    # Start with all active products
+    products = Product.objects.filter(is_active=True, stock__gt=0)
+    
+    # Get the category slug from URL parameters (?category=electronics)
+    category_slug = request.GET.get('category')
+    selected_category = None
+    
+    # If a category is selected, filter products by that category
+    if category_slug:
+        # get_object_or_404 returns the category or shows 404 error page if not found
+        selected_category = get_object_or_404(Category, slug=category_slug, is_active=True)
+        # Filter products to only show those in this category
+        products = products.filter(category=selected_category)
+    
+    # Search functionality - check if there's a search query
+    search_query = request.GET.get('search')
+    if search_query:
+        # Filter products where name or description contains the search term
+        # icontains means "contains" but case-insensitive (iPhone = iphone = IPHONE)
+        products = products.filter(
+            name__icontains=search_query
+        ) | products.filter(
+            description__icontains=search_query
+        )
+    
+    # Sorting functionality
+    sort_by = request.GET.get('sort', '-created_at')  # Default: newest first
+    
+    # Dictionary of allowed sort options (prevents users from sorting by invalid fields)
+    valid_sorts = {
+        'price_low': 'price',           # Cheapest first
+        'price_high': '-price',         # Most expensive first
+        'name_asc': 'name',             # A to Z
+        'name_desc': '-name',           # Z to A
+        'newest': '-created_at',        # Newest first
+        'oldest': 'created_at'          # Oldest first
+    }
+    
+    # Apply sorting if it's a valid option
+    if sort_by in valid_sorts:
+        products = products.order_by(valid_sorts[sort_by])
+    else:
+        products = products.order_by('-created_at')  # Default sort
+    
+    # Pagination - divide products into pages (12 per page)
+    paginator = Paginator(products, 12)  # 12 products per page
+    page_number = request.GET.get('page')  # Get current page number from URL
+    page_obj = paginator.get_page(page_number)  # Get the products for this page
+    
+    # Get all categories for the filter sidebar
+    categories = Category.objects.filter(is_active=True).order_by('order')
+    
+    context = {
+        'products': page_obj,  # This contains products for current page + pagination info
+        'categories': categories,
+        'selected_category': selected_category,
+        'search_query': search_query,
+        'sort_by': sort_by,
+        'page_title': f'{selected_category.name} Products' if selected_category else 'All Products'
+    }
+    
+    return render(request, 'products/product_list.html', context)
+
+
+def product_detail(request, slug):
+    """
+    Product detail page - shows one product with all its information
+    
+    Parameters:
+    - slug: The URL-friendly version of product name (e.g., "blue-t-shirt")
+    
+    What this does:
+    1. Gets the specific product by its slug
+    2. Gets all images for this product
+    3. Gets related products (same category)
+    """
+    # Get the product or show 404 if not found
+    product = get_object_or_404(Product, slug=slug, is_active=True)
+    
+    # Get all images for this product, ordered by the 'order' field
+    # Primary image first (is_primary=True)
+    product_images = product.images.all().order_by('-is_primary', 'order')
+    
+    # Get related products (same category, exclude current product)
+    related_products = Product.objects.filter(
+        category=product.category,
+        is_active=True,
+        stock__gt=0
+    ).exclude(id=product.id)[:4]  # Show 4 related products
+    
+    # Check if product has a sale price
+    discount_percentage = 0
+    if product.sale_price:
+        # Calculate discount percentage
+        discount = product.price - product.sale_price
+        discount_percentage = int((discount / product.price) * 100)
+    
+    context = {
+        'product': product,
+        'product_images': product_images,
+        'related_products': related_products,
+        'discount_percentage': discount_percentage,
+        'page_title': product.name
+    }
+    
+    return render(request, 'products/product_detail.html', context)
+
+
+def category_list(request):
+    """
+    Categories page - shows all available categories
+    
+    This is useful for mobile users or as a dedicated categories page
+    Shows each category with product count
+    """
+    # Get all active categories
+    categories = Category.objects.filter(is_active=True).order_by('order')
+    
+    # For each category, we can access category.product_count
+    # (This is defined in the Category model as a method)
+    
+    context = {
+        'categories': categories,
+        'page_title': 'Shop by Category'
+    }
+    
+    return render(request, 'products/category_list.html', context)

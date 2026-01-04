@@ -16,8 +16,18 @@
     <!-- Page Title -->
     <title>{% block title %}ShopEase - Shop Online{% endblock %}</title>
 
-    <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="{% static 'images/favicon.ico' %}">
+    <!-- Favicon - Multiple sizes for crystal clear visibility -->
+    <!-- The browser will automatically choose the best size -->
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'images/favicon-16x16.png' %}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'images/favicon-32x32.png' %}">
+    <link rel="icon" type="image/png" sizes="64x64" href="{% static 'images/favicon-64x64.png' %}">
+
+    <!-- Fallback to main logo if specific sizes not available -->
+    <link rel="icon" type="image/png" href="{% static 'images/logo.png' %}">
+    <link rel="shortcut icon" type="image/png" href="{% static 'images/logo.png' %}">
+
+    <!-- Apple devices (mobile home screen) -->
+    <link rel="apple-touch-icon" href="{% static 'images/logo.png' %}">
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -224,10 +234,18 @@
                         <!-- User Account -->
                         <div class="header-action">
                             {% if user.is_authenticated %}
+                            {% if user.role == 'ADMIN' or user.is_superuser %}
+                            <a href="{% url 'accounts:admin_dashboard' %}" class="action-link"
+                                style="background: rgba(59, 130, 246, 0.1); padding: 0.5rem 1rem; border-radius: 0.5rem; border: 1px solid rgba(59, 130, 246, 0.3);">
+                                <i class="fas fa-user-shield"></i>
+                                <span>Admin Panel</span>
+                            </a>
+                            {% else %}
                             <a href="{% url 'accounts:profile' %}" class="action-link">
                                 <i class="fas fa-user"></i>
                                 <span>{{ user.username }}</span>
                             </a>
+                            {% endif %}
                             {% else %}
                             <a href="{% url 'accounts:auth' %}" class="action-link">
                                 <i class="fas fa-user"></i>
