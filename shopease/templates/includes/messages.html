@@ -1,0 +1,318 @@
+{% if messages %}
+<!-- ==========================================
+     FLASH MESSAGES - User Feedback System
+     ========================================== -->
+
+<!-- Why Flash Messages Matter:
+     - Provides immediate feedback after user actions
+     - Examples: "Product added to cart", "Login successful", "Payment failed"
+     - Messages are stored in session and disappear after being displayed once
+     - Critical for UX - user knows their action succeeded/failed
+-->
+
+<div class="messages-container" role="alert" aria-live="polite">
+    {% for message in messages %}
+    <!-- Each message has a level: success, error, warning, info -->
+    <!-- Django automatically sets message.tags based on level -->
+    <div class="alert alert-{{ message.tags }} alert-dismissible" data-alert role="alert">
+
+        <!-- Message Icon -->
+        <span class="alert-icon">
+            {% if message.tags == 'success' %}
+            <!-- Success icon (checkmark) -->
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
+                <path d="M22 4L12 14.01l-3-3" />
+            </svg>
+            {% elif message.tags == 'error' or message.tags == 'danger' %}
+            <!-- Error icon (X in circle) -->
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="15" y1="9" x2="9" y2="15" />
+                <line x1="9" y1="9" x2="15" y2="15" />
+            </svg>
+            {% elif message.tags == 'warning' %}
+            <!-- Warning icon (triangle with exclamation) -->
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                <line x1="12" y1="9" x2="12" y2="13" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
+            {% else %}
+            <!-- Info icon (i in circle) -->
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="16" x2="12" y2="12" />
+                <line x1="12" y1="8" x2="12.01" y2="8" />
+            </svg>
+            {% endif %}
+        </span>
+
+        <!-- Message Text -->
+        <div class="alert-content">
+            <p class="alert-message">{{ message }}</p>
+        </div>
+
+        <!-- Close Button -->
+        <!-- Allows user to dismiss message manually -->
+        <button type="button" class="alert-close" data-dismiss="alert" aria-label="Close message">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+        </button>
+    </div>
+    {% endfor %}
+</div>
+
+<style>
+    /* Messages container - fixed at top of viewport */
+    .messages-container {
+        /* Position fixed so it stays visible when scrolling */
+        position: fixed;
+        top: var(--space-4);
+        right: var(--space-4);
+        z-index: var(--z-modal);
+        /* Above everything else */
+
+        /* Layout for stacked messages */
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-3);
+
+        /* Max width prevents messages from being too wide */
+        max-width: 400px;
+        width: 100%;
+    }
+
+    /* Base alert styles */
+    .alert {
+        /* Layout */
+        display: flex;
+        align-items: flex-start;
+        gap: var(--space-3);
+
+        /* Spacing */
+        padding: var(--space-4);
+
+        /* Appearance */
+        background: white;
+        border-radius: var(--border-radius);
+        border-left: 4px solid;
+        box-shadow: var(--shadow-lg);
+
+        /* Animation */
+        /* Slide in from right */
+        animation: slideInRight 0.3s ease-out;
+    }
+
+    /* Success alert (green) */
+    .alert-success {
+        border-color: var(--color-success);
+        background: #f0fdf4;
+        /* Light green background */
+    }
+
+    .alert-success .alert-icon {
+        color: var(--color-success);
+    }
+
+    /* Error alert (red) */
+    .alert-error,
+    .alert-danger {
+        border-color: var(--color-error);
+        background: #fef2f2;
+        /* Light red background */
+    }
+
+    .alert-error .alert-icon,
+    .alert-danger .alert-icon {
+        color: var(--color-error);
+    }
+
+    /* Warning alert (orange/yellow) */
+    .alert-warning {
+        border-color: var(--color-warning);
+        background: #fffbeb;
+        /* Light yellow background */
+    }
+
+    .alert-warning .alert-icon {
+        color: var(--color-warning);
+    }
+
+    /* Info alert (blue) */
+    .alert-info {
+        border-color: var(--color-info);
+        background: #eff6ff;
+        /* Light blue background */
+    }
+
+    .alert-info .alert-icon {
+        color: var(--color-info);
+    }
+
+    /* Alert icon */
+    .alert-icon {
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .alert-icon svg {
+        stroke-width: 2.5;
+    }
+
+    /* Alert content */
+    .alert-content {
+        flex: 1;
+        min-width: 0;
+        /* Allows text to wrap */
+    }
+
+    .alert-message {
+        font-size: var(--font-size-sm);
+        font-weight: var(--font-weight-medium);
+        color: var(--color-gray-800);
+        line-height: var(--line-height-normal);
+        margin: 0;
+    }
+
+    /* Close button */
+    .alert-close {
+        flex-shrink: 0;
+        padding: 0;
+        color: var(--color-gray-400);
+        transition: color var(--transition-fast);
+        cursor: pointer;
+    }
+
+    .alert-close:hover {
+        color: var(--color-gray-700);
+    }
+
+    /* Slide in animation */
+    @keyframes slideInRight {
+        from {
+            opacity: 0;
+            transform: translateX(100%);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    /* Fade out animation (when dismissed) */
+    @keyframes fadeOut {
+        from {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        to {
+            opacity: 0;
+            transform: scale(0.9);
+        }
+    }
+
+    .alert.dismissing {
+        animation: fadeOut 0.2s ease-out forwards;
+    }
+
+    /* Auto-dismiss after 5 seconds */
+    .alert-dismissible {
+        /* Visual indicator of auto-dismiss */
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* Progress bar showing time until auto-dismiss */
+    .alert-dismissible::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        height: 2px;
+        background: currentColor;
+        opacity: 0.3;
+        /* Animation duration matches auto-dismiss time */
+        animation: progressBar 5s linear forwards;
+    }
+
+    @keyframes progressBar {
+        from {
+            width: 100%;
+        }
+
+        to {
+            width: 0%;
+        }
+    }
+
+    /* Mobile responsive */
+    @media (max-width: 767px) {
+        .messages-container {
+            /* Full width on mobile */
+            top: var(--space-2);
+            right: var(--space-2);
+            left: var(--space-2);
+            max-width: none;
+        }
+
+        .alert {
+            padding: var(--space-3);
+        }
+    }
+</style>
+
+<script>
+    // ==========================================
+    // MESSAGES JAVASCRIPT - Auto-dismiss & Manual Close
+    // ==========================================
+
+    document.addEventListener('DOMContentLoaded', function () {
+        // Get all alert elements
+        const alerts = document.querySelectorAll('[data-alert]');
+
+        // Auto-dismiss after 5 seconds
+        alerts.forEach(alert => {
+            // Set timeout to auto-dismiss
+            setTimeout(() => {
+                dismissAlert(alert);
+            }, 5000);  // 5000ms = 5 seconds
+        });
+
+        // Manual close button handling
+        const closeButtons = document.querySelectorAll('[data-dismiss="alert"]');
+        closeButtons.forEach(button => {
+            button.addEventListener('click', function () {
+                // Find parent alert element
+                const alert = this.closest('[data-alert]');
+                dismissAlert(alert);
+            });
+        });
+
+        // Function to dismiss alert with animation
+        function dismissAlert(alert) {
+            if (!alert) return;
+
+            // Add dismissing class for fade-out animation
+            alert.classList.add('dismissing');
+
+            // Remove element after animation completes
+            setTimeout(() => {
+                alert.remove();
+
+                // If no more messages, remove container
+                const container = document.querySelector('.messages-container');
+                if (container && container.children.length === 0) {
+                    container.remove();
+                }
+            }, 200);  // Match animation duration
+        }
+    });
+</script>
+{% endif %}

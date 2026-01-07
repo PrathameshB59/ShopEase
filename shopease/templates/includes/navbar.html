@@ -1,0 +1,265 @@
+{% load static %}
+
+<!-- ==========================================
+     NAVIGATION BAR - Main Site Navigation
+     ========================================== -->
+
+<nav class="navbar" role="navigation" aria-label="Main navigation">
+    <div class="container">
+        <div class="navbar-inner">
+            <!-- ==========================================
+                 LOGO / BRAND
+                 ========================================== -->
+
+            <div class="navbar-brand">
+                <a href="{% url 'home' %}" class="brand-link" aria-label="ShopEase Home">
+                    <!-- Text logo (no image file yet) -->
+                    <span class="brand-text">ShopEase</span>
+                </a>
+            </div>
+
+            <!-- ==========================================
+                 SEARCH BAR - Disabled until products app ready
+                 ========================================== -->
+
+            <div class="navbar-search">
+                <form class="search-form" role="search">
+                    <input type="search" name="q" class="search-input" placeholder="Search products..." disabled
+                        aria-label="Search products">
+
+                    <button type="button" class="search-btn" disabled aria-label="Submit search">
+                        <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor">
+                            <circle cx="11" cy="11" r="8" />
+                            <path d="m21 21-4.35-4.35" />
+                        </svg>
+                    </button>
+                </form>
+            </div>
+
+            <!-- ==========================================
+                 NAVIGATION LINKS - Simplified
+                 ========================================== -->
+
+            <ul class="navbar-nav" id="navbar-nav">
+                <li class="nav-item">
+                    <a href="{% url 'home' %}" class="nav-link">
+                        Home
+                    </a>
+                </li>
+
+                <!-- Will enable when products app is ready -->
+                <li class="nav-item">
+                    <span class="nav-link" style="opacity: 0.5; cursor: not-allowed;">
+                        Shop (Coming Soon)
+                    </span>
+                </li>
+            </ul>
+
+            <!-- ==========================================
+                 USER ACTIONS - Simplified
+                 ========================================== -->
+
+            <div class="navbar-actions">
+                <!-- Cart icon (disabled for now) -->
+                <button type="button" class="action-link" disabled aria-label="Shopping cart (coming soon)"
+                    style="opacity: 0.5; cursor: not-allowed;">
+                    <svg class="action-icon" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor">
+                        <circle cx="9" cy="21" r="1" />
+                        <circle cx="20" cy="21" r="1" />
+                        <path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6" />
+                    </svg>
+                </button>
+
+                <!-- User icon (disabled for now) -->
+                <button type="button" class="action-link" disabled aria-label="User account (coming soon)"
+                    style="opacity: 0.5; cursor: not-allowed;">
+                    <svg class="action-icon" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor">
+                        <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+                        <circle cx="12" cy="7" r="4" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<style>
+    /* Navbar container */
+    .navbar {
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        background: white;
+        border-bottom: 1px solid #e5e7eb;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    }
+
+    .navbar-inner {
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+        padding: 1rem 0;
+    }
+
+    .container {
+        width: 100%;
+        max-width: 1280px;
+        margin-left: auto;
+        margin-right: auto;
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    /* Brand */
+    .navbar-brand {
+        flex-shrink: 0;
+    }
+
+    .brand-link {
+        display: flex;
+        align-items: center;
+    }
+
+    .brand-text {
+        font-family: 'Playfair Display', Georgia, serif;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #0f4c5c;
+    }
+
+    /* Search */
+    .navbar-search {
+        flex: 1;
+        max-width: 500px;
+    }
+
+    .search-form {
+        position: relative;
+        display: flex;
+    }
+
+    .search-input {
+        flex: 1;
+        padding: 0.75rem 1rem;
+        padding-right: 3rem;
+        border: 1px solid #d1d5db;
+        border-radius: 9999px;
+        font-size: 1rem;
+    }
+
+    .search-input:focus {
+        outline: none;
+        border-color: #0f4c5c;
+        box-shadow: 0 0 0 3px rgba(15, 76, 92, 0.1);
+    }
+
+    .search-input:disabled {
+        background: #f3f4f6;
+        cursor: not-allowed;
+    }
+
+    .search-btn {
+        position: absolute;
+        right: 0.5rem;
+        top: 50%;
+        transform: translateY(-50%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 9999px;
+        background: #0f4c5c;
+        color: white;
+        border: none;
+        cursor: pointer;
+    }
+
+    .search-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .search-icon {
+        width: 20px;
+        height: 20px;
+        stroke: currentColor;
+        stroke-width: 2;
+        fill: none;
+    }
+
+    /* Navigation */
+    .navbar-nav {
+        display: flex;
+        gap: 2rem;
+        align-items: center;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    .nav-link {
+        font-size: 1rem;
+        font-weight: 500;
+        color: #374151;
+        text-decoration: none;
+        transition: color 0.2s;
+    }
+
+    .nav-link:hover {
+        color: #0f4c5c;
+    }
+
+    /* Actions */
+    .navbar-actions {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+    }
+
+    .action-link {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.5rem;
+        color: #374151;
+        background: none;
+        border: none;
+        cursor: pointer;
+        transition: color 0.2s;
+    }
+
+    .action-link:hover:not(:disabled) {
+        color: #0f4c5c;
+    }
+
+    .action-icon {
+        width: 24px;
+        height: 24px;
+        stroke: currentColor;
+        stroke-width: 2;
+        fill: none;
+    }
+
+    /* Mobile responsive */
+    @media (max-width: 767px) {
+        .navbar-inner {
+            flex-wrap: wrap;
+        }
+
+        .navbar-search {
+            order: 3;
+            flex: 1 1 100%;
+            max-width: none;
+            margin-top: 1rem;
+        }
+
+        .navbar-nav {
+            gap: 1rem;
+        }
+    }
+</style>

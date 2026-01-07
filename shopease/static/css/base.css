@@ -1,0 +1,650 @@
+/* ==========================================
+   SHOPEASE - BASE CSS
+   Modern E-Commerce Design System
+   ========================================== */
+
+/* ==========================================
+   CSS VARIABLES (Design Tokens)
+   ========================================== */
+
+/* Why CSS Variables?
+   - Single source of truth for colors, spacing, typography
+   - Easy to maintain (change once, updates everywhere)
+   - Enables dark mode (just swap variable values)
+   - Better than Sass variables (work in browser, can change dynamically)
+   - Performance: Browser parses once, caches values
+*/
+
+:root {
+    /* === COLOR PALETTE === */
+    /* Primary: Luxury deep teal (sophisticated, trustworthy) */
+    --color-primary: #0f4c5c;
+    --color-primary-light: #1a6d7e;
+    --color-primary-dark: #083540;
+
+    /* Secondary: Warm gold accent (premium, attention-grabbing) */
+    --color-secondary: #e1a75f;
+    --color-secondary-light: #f5c88a;
+    --color-secondary-dark: #c88835;
+
+    /* Neutrals: Clean, modern grays */
+    --color-gray-50: #f9fafb;
+    --color-gray-100: #f3f4f6;
+    --color-gray-200: #e5e7eb;
+    --color-gray-300: #d1d5db;
+    --color-gray-400: #9ca3af;
+    --color-gray-500: #6b7280;
+    --color-gray-600: #4b5563;
+    --color-gray-700: #374151;
+    --color-gray-800: #1f2937;
+    --color-gray-900: #111827;
+
+    /* Semantic Colors */
+    --color-success: #10b981;
+    --color-warning: #f59e0b;
+    --color-error: #ef4444;
+    --color-info: #3b82f6;
+
+    /* === TYPOGRAPHY === */
+    /* Font Families */
+    --font-display: 'Playfair Display', Georgia, serif;
+    /* Elegant headlines */
+    --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+    /* Font Sizes - Fluid Typography (scales with viewport) */
+    /* clamp(min, preferred, max) adapts to screen size */
+    --font-size-xs: clamp(0.75rem, 0.7vw, 0.875rem);
+    /* 12-14px */
+    --font-size-sm: clamp(0.875rem, 0.85vw, 1rem);
+    /* 14-16px */
+    --font-size-base: clamp(1rem, 1vw, 1.125rem);
+    /* 16-18px */
+    --font-size-lg: clamp(1.125rem, 1.2vw, 1.25rem);
+    /* 18-20px */
+    --font-size-xl: clamp(1.25rem, 1.5vw, 1.5rem);
+    /* 20-24px */
+    --font-size-2xl: clamp(1.5rem, 2vw, 2rem);
+    /* 24-32px */
+    --font-size-3xl: clamp(2rem, 3vw, 3rem);
+    /* 32-48px */
+    --font-size-4xl: clamp(2.5rem, 4vw, 4rem);
+    /* 40-64px */
+
+    /* Font Weights */
+    --font-weight-light: 300;
+    --font-weight-normal: 400;
+    --font-weight-medium: 500;
+    --font-weight-semibold: 600;
+    --font-weight-bold: 700;
+    --font-weight-black: 800;
+
+    /* Line Heights - For readability */
+    --line-height-tight: 1.2;
+    /* Headlines */
+    --line-height-normal: 1.5;
+    /* Body text */
+    --line-height-relaxed: 1.75;
+    /* Long-form content */
+
+    /* === SPACING === */
+    /* 8px base unit (8-point grid system) */
+    --space-1: 0.25rem;
+    /* 4px */
+    --space-2: 0.5rem;
+    /* 8px */
+    --space-3: 0.75rem;
+    /* 12px */
+    --space-4: 1rem;
+    /* 16px */
+    --space-5: 1.25rem;
+    /* 20px */
+    --space-6: 1.5rem;
+    /* 24px */
+    --space-8: 2rem;
+    /* 32px */
+    --space-10: 2.5rem;
+    /* 40px */
+    --space-12: 3rem;
+    /* 48px */
+    --space-16: 4rem;
+    /* 64px */
+    --space-20: 5rem;
+    /* 80px */
+    --space-24: 6rem;
+    /* 96px */
+
+    /* === LAYOUT === */
+    --container-max-width: 1280px;
+    /* Max content width */
+    --content-max-width: 720px;
+    /* Max text width (optimal reading) */
+
+    /* === BORDERS === */
+    --border-width: 1px;
+    --border-width-thick: 2px;
+    --border-radius-sm: 0.25rem;
+    /* 4px - buttons, inputs */
+    --border-radius: 0.5rem;
+    /* 8px - cards */
+    --border-radius-lg: 1rem;
+    /* 16px - modals */
+    --border-radius-xl: 1.5rem;
+    /* 24px - hero sections */
+    --border-radius-full: 9999px;
+    /* Circular - avatars, badges */
+
+    /* === SHADOWS === */
+    /* Elevation system - creates depth */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+
+    /* === TRANSITIONS === */
+    /* Animation timing functions for smooth UI */
+    --transition-fast: 150ms ease;
+    --transition-base: 200ms ease;
+    --transition-slow: 300ms ease;
+    --transition-slower: 500ms ease;
+
+    /* Easing curves */
+    --ease-in: cubic-bezier(0.4, 0, 1, 1);
+    --ease-out: cubic-bezier(0, 0, 0.2, 1);
+    --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* === Z-INDEX === */
+    /* Stacking order - prevents overlap issues */
+    --z-dropdown: 1000;
+    --z-sticky: 1100;
+    --z-fixed: 1200;
+    --z-modal-backdrop: 1300;
+    --z-modal: 1400;
+    --z-popover: 1500;
+    --z-tooltip: 1600;
+}
+
+/* ==========================================
+   RESET & NORMALIZATION
+   ========================================== */
+
+/* Modern CSS Reset
+   Removes browser inconsistencies
+   Provides better defaults for building layouts
+*/
+
+*,
+*::before,
+*::after {
+    /* border-box: width/height includes padding and border */
+    /* Without this, adding padding breaks layouts */
+    box-sizing: border-box;
+
+    /* Remove default margins and padding */
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    /* Prevents horizontal scroll caused by animations */
+    /* Smooth scrolling for anchor links */
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+
+    /* Better text rendering on macOS/iOS */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+
+    /* Prevent text size adjustment on orientation change (mobile) */
+    -webkit-text-size-adjust: 100%;
+}
+
+body {
+    /* Base font settings */
+    font-family: var(--font-body);
+    font-size: var(--font-size-base);
+    line-height: var(--line-height-normal);
+    font-weight: var(--font-weight-normal);
+
+    /* Colors */
+    color: var(--color-gray-900);
+    background-color: var(--color-gray-50);
+
+    /* Prevents horizontal scroll */
+    overflow-x: hidden;
+
+    /* Better font rendering */
+    text-rendering: optimizeLegibility;
+}
+
+/* Remove list styles */
+ul,
+ol {
+    list-style: none;
+}
+
+/* Remove link styles */
+a {
+    color: inherit;
+    text-decoration: none;
+
+    /* Remove tap highlight on mobile (looks cleaner) */
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Better image defaults */
+img {
+    /* Responsive images by default */
+    max-width: 100%;
+    height: auto;
+
+    /* Prevents weird spacing below images */
+    display: block;
+
+    /* Smooth image scaling */
+    image-rendering: -webkit-optimize-contrast;
+}
+
+/* Form elements inherit fonts */
+input,
+button,
+textarea,
+select {
+    font: inherit;
+    color: inherit;
+}
+
+/* Remove button styles */
+button {
+    background: none;
+    border: none;
+    cursor: pointer;
+
+    /* Remove focus outline (we'll add custom one) */
+    outline: none;
+}
+
+/* Prevent textarea resize (we'll control it) */
+textarea {
+    resize: vertical;
+}
+
+/* ==========================================
+   TYPOGRAPHY
+   ========================================== */
+
+/* Headings */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family: var(--font-display);
+    font-weight: var(--font-weight-bold);
+    line-height: var(--line-height-tight);
+    color: var(--color-gray-900);
+
+    /* Prevents orphans (single word on last line) */
+    text-wrap: balance;
+}
+
+h1 {
+    font-size: var(--font-size-4xl);
+}
+
+h2 {
+    font-size: var(--font-size-3xl);
+}
+
+h3 {
+    font-size: var(--font-size-2xl);
+}
+
+h4 {
+    font-size: var(--font-size-xl);
+}
+
+h5 {
+    font-size: var(--font-size-lg);
+}
+
+h6 {
+    font-size: var(--font-size-base);
+}
+
+/* Paragraphs */
+p {
+    margin-bottom: var(--space-4);
+    color: var(--color-gray-700);
+
+    /* Optimal reading width (45-75 characters per line) */
+    max-width: var(--content-max-width);
+}
+
+/* ==========================================
+   LAYOUT UTILITIES
+   ========================================== */
+
+/* Container - Centers content, adds padding */
+.container {
+    width: 100%;
+    max-width: var(--container-max-width);
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: var(--space-4);
+    padding-right: var(--space-4);
+}
+
+/* Responsive padding for larger screens */
+@media (min-width: 768px) {
+    .container {
+        padding-left: var(--space-8);
+        padding-right: var(--space-8);
+    }
+}
+
+/* Section spacing */
+section {
+    padding-top: var(--space-16);
+    padding-bottom: var(--space-16);
+}
+
+@media (min-width: 768px) {
+    section {
+        padding-top: var(--space-24);
+        padding-bottom: var(--space-24);
+    }
+}
+
+/* ==========================================
+   BUTTONS
+   ========================================== */
+
+/* Base button styles */
+.btn {
+    /* Layout */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+
+    /* Spacing */
+    padding: var(--space-3) var(--space-6);
+
+    /* Typography */
+    font-family: var(--font-body);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-medium);
+    text-align: center;
+    white-space: nowrap;
+
+    /* Appearance */
+    border: var(--border-width) solid transparent;
+    border-radius: var(--border-radius);
+
+    /* Interaction */
+    cursor: pointer;
+    transition: all var(--transition-base);
+
+    /* Prevents text selection on double-click */
+    user-select: none;
+
+    /* Remove default button appearance */
+    appearance: none;
+}
+
+/* Primary button */
+.btn-primary {
+    background-color: var(--color-primary);
+    color: white;
+    border-color: var(--color-primary);
+}
+
+.btn-primary:hover {
+    background-color: var(--color-primary-dark);
+    border-color: var(--color-primary-dark);
+    transform: translateY(-2px);
+    /* Lift effect */
+    box-shadow: var(--shadow-lg);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+    /* Press down effect */
+    box-shadow: var(--shadow);
+}
+
+/* Outline button */
+.btn-outline {
+    background-color: transparent;
+    color: var(--color-primary);
+    border-color: var(--color-primary);
+}
+
+.btn-outline:hover {
+    background-color: var(--color-primary);
+    color: white;
+}
+
+/* Button sizes */
+.btn-sm {
+    padding: var(--space-2) var(--space-4);
+    font-size: var(--font-size-sm);
+}
+
+.btn-lg {
+    padding: var(--space-4) var(--space-8);
+    font-size: var(--font-size-lg);
+}
+
+/* Full width button */
+.btn-block {
+    width: 100%;
+}
+
+/* Button icon */
+.btn-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+/* Disabled state */
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* ==========================================
+   FORMS
+   ========================================== */
+
+/* Form group (label + input wrapper) */
+.form-group {
+    margin-bottom: var(--space-4);
+}
+
+/* Form labels */
+.form-label {
+    display: block;
+    margin-bottom: var(--space-2);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-gray-700);
+}
+
+/* Form inputs */
+.form-control {
+    /* Layout */
+    display: block;
+    width: 100%;
+
+    /* Spacing */
+    padding: var(--space-3) var(--space-4);
+
+    /* Typography */
+    font-size: var(--font-size-base);
+    line-height: var(--line-height-normal);
+
+    /* Appearance */
+    color: var(--color-gray-900);
+    background-color: white;
+    border: var(--border-width) solid var(--color-gray-300);
+    border-radius: var(--border-radius);
+
+    /* Interaction */
+    transition: all var(--transition-base);
+}
+
+.form-control:focus {
+    outline: none;
+    /* Remove default outline */
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(15, 76, 92, 0.1);
+    /* Custom focus ring */
+}
+
+.form-control::placeholder {
+    color: var(--color-gray-400);
+}
+
+/* ==========================================
+   ACCESSIBILITY
+   ========================================== */
+
+/* Focus visible - keyboard navigation */
+/* Only show focus ring for keyboard users, not mouse clicks */
+*:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+/* Skip to content link (for screen readers) */
+.skip-to-content {
+    position: absolute;
+    top: -100px;
+    left: 0;
+    background: var(--color-primary);
+    color: white;
+    padding: var(--space-4);
+    z-index: var(--z-fixed);
+}
+
+.skip-to-content:focus {
+    top: 0;
+}
+
+/* Screen reader only text */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+/* ==========================================
+   UTILITY CLASSES
+   ========================================== */
+
+/* Text alignment */
+.text-left {
+    text-align: left;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.text-right {
+    text-align: right;
+}
+
+/* Text colors */
+.text-primary {
+    color: var(--color-primary);
+}
+
+.text-secondary {
+    color: var(--color-secondary);
+}
+
+.text-muted {
+    color: var(--color-gray-500);
+}
+
+/* Display utilities */
+.d-none {
+    display: none;
+}
+
+.d-block {
+    display: block;
+}
+
+.d-flex {
+    display: flex;
+}
+
+.d-grid {
+    display: grid;
+}
+
+/* Flexbox utilities */
+.flex-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Spacing utilities */
+.mt-0 {
+    margin-top: 0;
+}
+
+.mt-4 {
+    margin-top: var(--space-4);
+}
+
+.mt-8 {
+    margin-top: var(--space-8);
+}
+
+.mb-0 {
+    margin-bottom: 0;
+}
+
+.mb-4 {
+    margin-bottom: var(--space-4);
+}
+
+.mb-8 {
+    margin-bottom: var(--space-8);
+}
+
+/* ==========================================
+   RESPONSIVE UTILITIES
+   ========================================== */
+
+/* Mobile first approach - start with mobile styles */
+/* Then use media queries to enhance for larger screens */
+
+/* Hide on mobile, show on tablet+ */
+@media (max-width: 767px) {
+    .hide-mobile {
+        display: none;
+    }
+}
+
+/* Show on mobile only */
+@media (min-width: 768px) {
+    .show-mobile {
+        display: none;
+    }
+}
