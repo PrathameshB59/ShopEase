@@ -38,13 +38,14 @@ INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
-    'django.contrib.sessions',
+    'django.contrib.sessions',  # ← REQUIRED for cart
     'django.contrib.messages',
     'django.contrib.staticfiles',
     
     # Our apps
     'apps.products',
-    'apps.core',      # Add this line
+    'apps.core',
+    'apps.cart',      # ← ADD THIS
 ]
 
 MIDDLEWARE = [
@@ -153,3 +154,27 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# ==========================================
+# SESSION CONFIGURATION - Shopping Cart
+# ==========================================
+
+# Where to store sessions
+# Options: 'django.contrib.sessions.backends.db' (database)
+#         'django.contrib.sessions.backends.cache' (Redis/Memcached)
+#         'django.contrib.sessions.backends.file' (filesystem)
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+
+# Session cookie settings
+SESSION_COOKIE_NAME = 'shopease_sessionid'  # Cookie name (default: sessionid)
+SESSION_COOKIE_AGE = 1209600  # 2 weeks in seconds (how long cart persists)
+SESSION_COOKIE_HTTPONLY = True  # JavaScript can't access (prevents XSS)
+SESSION_COOKIE_SECURE = False  # Set True in production (HTTPS only)
+SESSION_COOKIE_SAMESITE = 'Lax'  # CSRF protection (Lax or Strict)
+
+# Save session on every request (updates expiry)
+# False = only saves when session is modified
+SESSION_SAVE_EVERY_REQUEST = False
+
+# Clear expired sessions regularly
+# Run: python manage.py clearsessions (add to cron job)

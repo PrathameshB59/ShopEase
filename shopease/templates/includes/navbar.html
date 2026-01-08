@@ -189,55 +189,51 @@
         display: flex;
     }
 
-    .search-input {
-        flex: 1;
-        padding: 0.75rem 1rem;
-        padding-right: 3rem;
-        border: 1px solid #d1d5db;
-        border-radius: 9999px;
-        font-size: 1rem;
-    }
+    /* Remove the opacity styles that made search look disabled */
+.search-input {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    padding-right: 3rem;
+    border: 1px solid #d1d5db;
+    border-radius: 9999px;
+    font-size: 1rem;
+}
 
-    .search-input:focus {
-        outline: none;
-        border-color: #0f4c5c;
-        box-shadow: 0 0 0 3px rgba(15, 76, 92, 0.1);
-    }
+/* Active state styling - shows user the field is focused */
+.search-input:focus {
+    outline: none;
+    border-color: #0f4c5c;
+    /* Focus ring for accessibility - keyboard users see this */
+    box-shadow: 0 0 0 3px rgba(15, 76, 92, 0.1);
+}
 
-    .search-input:disabled {
-        background: #f3f4f6;
-        cursor: not-allowed;
-    }
+.search-btn {
+    position: absolute;
+    right: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 9999px;
+    background: #0f4c5c;
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s;
+}
 
-    .search-btn {
-        position: absolute;
-        right: 0.5rem;
-        top: 50%;
-        transform: translateY(-50%);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 36px;
-        height: 36px;
-        border-radius: 9999px;
-        background: #0f4c5c;
-        color: white;
-        border: none;
-        cursor: pointer;
-    }
+.search-btn:hover {
+    background: #0d3d4a;
+}
 
-    .search-btn:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
+.search-btn:active {
+    /* Visual feedback on click */
+    transform: translateY(-50%) scale(0.95);
+}
 
-    .search-icon {
-        width: 20px;
-        height: 20px;
-        stroke: currentColor;
-        stroke-width: 2;
-        fill: none;
-    }
 
     /* Navigation */
     .navbar-nav {
