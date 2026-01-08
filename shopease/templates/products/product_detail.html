@@ -1,0 +1,1088 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ product.name }} - ShopEase{% endblock %}
+
+{% block content %}
+
+<!-- Breadcrumb Navigation -->
+<section class="breadcrumb-section">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                {% for crumb in breadcrumbs %}
+                {% if crumb.url %}
+                <li class="breadcrumb-item">
+                    <a href="{{ crumb.url }}">{{ crumb.name }}</a>
+                </li>
+                {% else %}
+                <li class="breadcrumb-item active" aria-current="page">
+                    {{ crumb.name|truncatewords:5 }}
+                </li>
+                {% endif %}
+                {% endfor %}
+            </ol>
+        </nav>
+    </div>
+</section>
+
+<!-- Product Detail Section -->
+<section class="product-detail-section">
+    <div class="container">
+        <div class="product-detail-grid">
+
+            <!-- ==========================================
+                 LEFT COLUMN - Product Images
+                 ========================================== -->
+            <div class="product-images-column">
+                <!-- Main Product Image -->
+                <div class="main-image-container">
+                    <img id="mainImage" src="{{ product.image.url }}" alt="{{ product.name }}"
+                        class="main-product-image">
+
+                    <!-- Sale Badge -->
+                    {% if product.is_on_sale %}
+                    <span class="detail-badge sale">
+                        Save {{ product.get_discount_percentage }}%
+                    </span>
+                    {% endif %}
+
+                    <!-- Stock Badge -->
+                    {% if not product.is_in_stock %}
+                    <span class="detail-badge out-of-stock">
+                        Out of Stock
+                    </span>
+                    {% elif product.stock < 10 %} <span class="detail-badge low-stock">
+                        Only {{ product.stock }} left!
+                        </span>
+                        {% endif %}
+                </div>
+
+                <!-- Image Gallery Thumbnails -->
+                {% if product.images.all %}
+                <div class="image-gallery">
+                    <!-- Main image thumbnail -->
+                    <div class="gallery-item active" onclick="changeImage('{{ product.image.url }}', this)">
+                        <img src="{{ product.image.url }}" alt="Main image">
+                    </div>
+
+                    <!-- Additional images -->
+                    {% for image in product.images.all %}
+                    <div class="gallery-item" onclick="changeImage('{{ image.image.url }}', this)">
+                        <img src="{{ image.image.url }}" alt="{{ image.caption|default:'Product image' }}">
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- ==========================================
+                 RIGHT COLUMN - Product Info
+                 ========================================== -->
+            <div class="product-info-column">
+                <!-- Category Badge -->
+                <div class="product-category-badge">
+                    <a href="{% url 'products:category' product.category.slug %}">
+                        {{ product.category.name }}
+                    </a>
+                </div>
+
+                <!-- Product Name -->
+                <h1 class="product-detail-title">{{ product.name }}</h1>
+
+                <!-- Rating & Reviews -->
+                <div class="product-rating-section">
+                    {% if product.get_average_rating %}
+                    <div class="rating-stars">
+                        {% with rating=product.get_average_rating %}
+                        <!-- Display filled and empty stars based on rating -->
+                        {% for i in "12345" %}
+                        {% if forloop.counter <= rating %} <span class="star filled">★</span>
+                            {% else %}
+                            <span class="star empty">☆</span>
+                            {% endif %}
+                            {% endfor %}
+                            {% endwith %}
+                    </div>
+                    <span class="rating-text">
+                        {{ product.get_average_rating }}
+                        ({{ product.get_review_count }} review{{ product.get_review_count|pluralize }})
+                    </span>
+                    {% else %}
+                    <span class="no-reviews">No reviews yet</span>
+                    {% endif %}
+                </div>
+
+                <!-- Price -->
+                <div class="product-price-section">
+                    {% if product.is_on_sale %}
+                    <div class="price-row">
+                        <span class="price-current">${{ product.sale_price }}</span>
+                        <span class="price-original">${{ product.price }}</span>
+                        <span class="price-discount">
+                            Save ${{ product.price|floatformat:2|add:"-"|add:product.sale_price }}
+                        </span>
+                    </div>
+                    {% else %}
+                    <span class="price-current">${{ product.price }}</span>
+                    {% endif %}
+                </div>
+
+                <!-- Short Description -->
+                {% if product.short_description %}
+                <div class="product-short-desc">
+                    <p>{{ product.short_description }}</p>
+                </div>
+                {% endif %}
+
+                <!-- Stock Status -->
+                <div class="stock-status-section">
+                    {% if product.is_in_stock %}
+                    <div class="stock-available">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
+                            <path d="M22 4L12 14.01l-3-3" />
+                        </svg>
+                        <span>In Stock</span>
+                    </div>
+                    {% else %}
+                    <div class="stock-unavailable">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="15" y1="9" x2="9" y2="15" />
+                            <line x1="9" y1="9" x2="15" y2="15" />
+                        </svg>
+                        <span>Out of Stock</span>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Quantity Selector & Add to Cart -->
+                {% if product.is_in_stock %}
+                <div class="purchase-section">
+                    <!-- Quantity Selector -->
+                    <div class="quantity-selector">
+                        <label for="quantity">Quantity:</label>
+                        <div class="quantity-input-group">
+                            <button type="button" class="qty-btn" onclick="decreaseQty()">−</button>
+                            <input type="number" id="quantity" name="quantity" value="1" min="1"
+                                max="{{ product.stock }}" class="qty-input">
+                            <button type="button" class="qty-btn" onclick="increaseQty()">+</button>
+                        </div>
+                    </div>
+
+                    <!-- Add to Cart Button -->
+                    <button type="button" class="btn-add-to-cart" data-product-id="{{ product.id }}"
+                        data-product-name="{{ product.name }}" data-product-price="{{ product.get_display_price }}">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <circle cx="9" cy="21" r="1" />
+                            <circle cx="20" cy="21" r="1" />
+                            <path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6" />
+                        </svg>
+                        Add to Cart
+                    </button>
+
+                    <!-- Wishlist Button -->
+                    <button type="button" class="btn-wishlist" data-product-id="{{ product.id }}">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path
+                                d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
+                        </svg>
+                    </button>
+                </div>
+                {% else %}
+                <!-- Notify When Available -->
+                <button type="button" class="btn-notify" disabled>
+                    Notify When Available
+                </button>
+                {% endif %}
+
+                <!-- Product Features/Benefits -->
+                <div class="product-features">
+                    <div class="feature-item">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+                            <circle cx="12" cy="7" r="4" />
+                        </svg>
+                        <span>Free Shipping on orders over $50</span>
+                    </div>
+                    <div class="feature-item">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                            <path d="M9 22V12h6v10" />
+                        </svg>
+                        <span>30-Day Easy Returns</span>
+                    </div>
+                    <div class="feature-item">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <rect x="1" y="3" width="15" height="13" />
+                            <path d="M16 8h2a2 2 0 012 2v8a2 2 0 01-2 2h-2" />
+                        </svg>
+                        <span>Secure Checkout</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==========================================
+             FULL DESCRIPTION & REVIEWS TABS
+             ========================================== -->
+        <div class="product-tabs-section">
+            <!-- Tab Navigation -->
+            <div class="tab-nav">
+                <button class="tab-button active" onclick="showTab('description')">
+                    Description
+                </button>
+                <button class="tab-button" onclick="showTab('reviews')">
+                    Reviews ({{ product.get_review_count }})
+                </button>
+            </div>
+
+            <!-- Tab Content -->
+            <div class="tab-content">
+                <!-- Description Tab -->
+                <div id="description-tab" class="tab-panel active">
+                    <div class="description-content">
+                        {{ product.description|linebreaks }}
+                    </div>
+                </div>
+
+                <!-- Reviews Tab -->
+                <div id="reviews-tab" class="tab-panel">
+                    {% if reviews %}
+                    <div class="reviews-list">
+                        {% for review in reviews %}
+                        <div class="review-item">
+                            <div class="review-header">
+                                <div class="reviewer-info">
+                                    <div class="reviewer-avatar">
+                                        {{ review.user.username|first|upper }}
+                                    </div>
+                                    <div class="reviewer-details">
+                                        <h4 class="reviewer-name">{{ review.user.username }}</h4>
+                                        <div class="review-rating">
+                                            {% for i in "12345" %}
+                                            {% if forloop.counter <= review.rating %} <span class="star filled">★</span>
+                                                {% else %}
+                                                <span class="star empty">☆</span>
+                                                {% endif %}
+                                                {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="review-date">
+                                    {{ review.created_at|date:"M d, Y" }}
+                                </div>
+                            </div>
+                            <h5 class="review-title">{{ review.title }}</h5>
+                            <p class="review-comment">{{ review.comment }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="no-reviews-message">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+                        </svg>
+                        <h3>No reviews yet</h3>
+                        <p>Be the first to review this product!</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- ==========================================
+             RELATED PRODUCTS
+             ========================================== -->
+        {% if related_products %}
+        <div class="related-products-section">
+            <h2 class="section-title">You May Also Like</h2>
+
+            <div class="related-products-grid">
+                {% for rel_product in related_products %}
+                <div class="related-product-card">
+                    <a href="{% url 'products:detail' rel_product.slug %}">
+                        <div class="related-product-image">
+                            <img src="{{ rel_product.image.url }}" alt="{{ rel_product.name }}" loading="lazy">
+                        </div>
+                        <div class="related-product-info">
+                            <h3 class="related-product-name">
+                                {{ rel_product.name|truncatewords:8 }}
+                            </h3>
+                            <div class="related-product-price">
+                                {% if rel_product.is_on_sale %}
+                                <span class="price-sale">${{ rel_product.sale_price }}</span>
+                                <span class="price-original">${{ rel_product.price }}</span>
+                                {% else %}
+                                <span class="price-current">${{ rel_product.price }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+</section>
+
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/home.css' %}">
+<style>
+    /* ==========================================
+   BREADCRUMB
+   ========================================== */
+    .breadcrumb-section {
+        background: #f8f9fa;
+        padding: 1rem 0;
+    }
+
+    .breadcrumb {
+        display: flex;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        flex-wrap: wrap;
+    }
+
+    .breadcrumb-item {
+        font-size: 0.875rem;
+    }
+
+    .breadcrumb-item+.breadcrumb-item::before {
+        content: '›';
+        padding: 0 0.5rem;
+        color: #6b7280;
+    }
+
+    .breadcrumb-item a {
+        color: #0f4c5c;
+        text-decoration: none;
+    }
+
+    .breadcrumb-item a:hover {
+        text-decoration: underline;
+    }
+
+    .breadcrumb-item.active {
+        color: #6b7280;
+    }
+
+    /* ==========================================
+   PRODUCT DETAIL GRID
+   ========================================== */
+    .product-detail-section {
+        padding: 3rem 0;
+    }
+
+    .product-detail-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 4rem;
+        margin-bottom: 4rem;
+    }
+
+    /* ==========================================
+   LEFT COLUMN - Images
+   ========================================== */
+    .product-images-column {
+        position: sticky;
+        top: 100px;
+        height: fit-content;
+    }
+
+    .main-image-container {
+        position: relative;
+        background: white;
+        border-radius: 1rem;
+        padding: 2rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1rem;
+    }
+
+    .main-product-image {
+        width: 100%;
+        height: auto;
+        max-height: 500px;
+        object-fit: contain;
+        display: block;
+    }
+
+    .detail-badge {
+        position: absolute;
+        top: 1.5rem;
+        right: 1.5rem;
+        padding: 0.5rem 1rem;
+        border-radius: 2rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: white;
+    }
+
+    .detail-badge.sale {
+        background: #e74c3c;
+    }
+
+    .detail-badge.out-of-stock {
+        background: #95a5a6;
+    }
+
+    .detail-badge.low-stock {
+        background: #f39c12;
+    }
+
+    /* Image Gallery */
+    .image-gallery {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+        gap: 0.75rem;
+    }
+
+    .gallery-item {
+        border-radius: 0.5rem;
+        border: 2px solid #e5e7eb;
+        padding: 0.5rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        background: white;
+    }
+
+    .gallery-item:hover,
+    .gallery-item.active {
+        border-color: #0f4c5c;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .gallery-item img {
+        width: 100%;
+        height: 80px;
+        object-fit: contain;
+        display: block;
+    }
+
+    /* ==========================================
+   RIGHT COLUMN - Product Info
+   ========================================== */
+    .product-category-badge {
+        margin-bottom: 1rem;
+    }
+
+    .product-category-badge a {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        background: #f3f4f6;
+        color: #0f4c5c;
+        border-radius: 0.25rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+        text-decoration: none;
+        transition: background 0.2s;
+    }
+
+    .product-category-badge a:hover {
+        background: #e5e7eb;
+    }
+
+    .product-detail-title {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #111827;
+        margin-bottom: 1rem;
+        line-height: 1.2;
+    }
+
+    /* Rating Section */
+    .product-rating-section {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .rating-stars {
+        display: flex;
+        gap: 0.125rem;
+    }
+
+    .star {
+        font-size: 1.25rem;
+    }
+
+    .star.filled {
+        color: #f59e0b;
+    }
+
+    .star.empty {
+        color: #d1d5db;
+    }
+
+    .rating-text {
+        font-size: 0.875rem;
+        color: #6b7280;
+    }
+
+    .no-reviews {
+        font-size: 0.875rem;
+        color: #9ca3af;
+    }
+
+    /* Price Section */
+    .product-price-section {
+        margin-bottom: 1.5rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .price-row {
+        display: flex;
+        align-items: baseline;
+        gap: 1rem;
+    }
+
+    .price-current {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #0f4c5c;
+    }
+
+    .price-original {
+        font-size: 1.5rem;
+        color: #9ca3af;
+        text-decoration: line-through;
+    }
+
+    .price-discount {
+        font-size: 1rem;
+        color: #e74c3c;
+        font-weight: 600;
+    }
+
+    /* Short Description */
+    .product-short-desc {
+        margin-bottom: 1.5rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .product-short-desc p {
+        color: #4b5563;
+        line-height: 1.75;
+        margin: 0;
+    }
+
+    /* Stock Status */
+    .stock-status-section {
+        margin-bottom: 1.5rem;
+    }
+
+    .stock-available,
+    .stock-unavailable {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1rem;
+        border-radius: 0.5rem;
+        font-weight: 600;
+    }
+
+    .stock-available {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .stock-unavailable {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .stock-available svg,
+    .stock-unavailable svg {
+        stroke-width: 2.5;
+    }
+
+    /* Purchase Section */
+    .purchase-section {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    /* Quantity Selector */
+    .quantity-selector {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .quantity-selector label {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #374151;
+    }
+
+    .quantity-input-group {
+        display: flex;
+        border: 2px solid #d1d5db;
+        border-radius: 0.5rem;
+        overflow: hidden;
+    }
+
+    .qty-btn {
+        width: 40px;
+        height: 48px;
+        background: #f3f4f6;
+        border: none;
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #374151;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+
+    .qty-btn:hover {
+        background: #e5e7eb;
+    }
+
+    .qty-input {
+        width: 60px;
+        height: 48px;
+        border: none;
+        text-align: center;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+
+    /* Add to Cart Button */
+    .btn-add-to-cart {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0 2rem;
+        background: #0f4c5c;
+        color: white;
+        border: none;
+        border-radius: 0.5rem;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-add-to-cart:hover {
+        background: #0d3d4a;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-add-to-cart svg {
+        stroke-width: 2;
+    }
+
+    /* Wishlist Button */
+    .btn-wishlist {
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: white;
+        border: 2px solid #d1d5db;
+        border-radius: 0.5rem;
+        color: #6b7280;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-wishlist:hover {
+        border-color: #0f4c5c;
+        color: #0f4c5c;
+    }
+
+    .btn-wishlist svg {
+        stroke-width: 2;
+    }
+
+    /* Notify Button */
+    .btn-notify {
+        width: 100%;
+        padding: 1rem 2rem;
+        background: #9ca3af;
+        color: white;
+        border: none;
+        border-radius: 0.5rem;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: not-allowed;
+    }
+
+    /* Product Features */
+    .product-features {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        padding-top: 2rem;
+        border-top: 1px solid #e5e7eb;
+    }
+
+    .feature-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        color: #6b7280;
+        font-size: 0.875rem;
+    }
+
+    .feature-item svg {
+        stroke-width: 2;
+        flex-shrink: 0;
+    }
+
+    /* ==========================================
+   TABS SECTION
+   ========================================== */
+    .product-tabs-section {
+        margin-top: 4rem;
+        padding-top: 2rem;
+        border-top: 1px solid #e5e7eb;
+    }
+
+    .tab-nav {
+        display: flex;
+        gap: 1rem;
+        border-bottom: 2px solid #e5e7eb;
+        margin-bottom: 2rem;
+    }
+
+    .tab-button {
+        padding: 1rem 2rem;
+        background: none;
+        border: none;
+        font-size: 1rem;
+        font-weight: 600;
+        color: #6b7280;
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        margin-bottom: -2px;
+        transition: all 0.2s;
+    }
+
+    .tab-button:hover {
+        color: #374151;
+    }
+
+    .tab-button.active {
+        color: #0f4c5c;
+        border-bottom-color: #0f4c5c;
+    }
+
+    .tab-panel {
+        display: none;
+    }
+
+    .tab-panel.active {
+        display: block;
+    }
+
+    /* Description Content */
+    .description-content {
+        color: #4b5563;
+        line-height: 1.75;
+        max-width: 800px;
+    }
+
+    /* Reviews List */
+    .reviews-list {
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+    }
+
+    .review-item {
+        padding: 1.5rem;
+        background: #f9fafb;
+        border-radius: 0.5rem;
+    }
+
+    .review-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+    }
+
+    .reviewer-info {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .reviewer-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: #0f4c5c;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 1.25rem;
+    }
+
+    .reviewer-name {
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+
+    .review-rating {
+        display: flex;
+        gap: 0.125rem;
+    }
+
+    .review-date {
+        font-size: 0.875rem;
+        color: #9ca3af;
+    }
+
+    .review-title {
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .review-comment {
+        color: #6b7280;
+        line-height: 1.75;
+        margin: 0;
+    }
+
+    .no-reviews-message {
+        text-align: center;
+        padding: 4rem 2rem;
+    }
+
+    .no-reviews-message svg {
+        color: #d1d5db;
+        margin-bottom: 1rem;
+    }
+
+    .no-reviews-message h3 {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .no-reviews-message p {
+        color: #9ca3af;
+    }
+
+    /* ==========================================
+   RELATED PRODUCTS
+   ========================================== */
+    .related-products-section {
+        margin-top: 4rem;
+        padding-top: 2rem;
+        border-top: 1px solid #e5e7eb;
+    }
+
+    .section-title {
+        font-size: 1.875rem;
+        font-weight: 700;
+        margin-bottom: 2rem;
+    }
+
+    .related-products-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1.5rem;
+    }
+
+    .related-product-card {
+        background: white;
+        border-radius: 0.5rem;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        transition: all 0.2s;
+    }
+
+    .related-product-card:hover {
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+    }
+
+    .related-product-image {
+        padding: 1rem;
+        background: #f9fafb;
+    }
+
+    .related-product-image img {
+        width: 100%;
+        height: 150px;
+        object-fit: contain;
+    }
+
+    .related-product-info {
+        padding: 1rem;
+    }
+
+    .related-product-name {
+        font-size: 0.875rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: #111827;
+    }
+
+    .related-product-price {
+        display: flex;
+        gap: 0.5rem;
+        align-items: baseline;
+    }
+
+    /* ==========================================
+   RESPONSIVE
+   ========================================== */
+    @media (max-width: 1024px) {
+        .product-detail-grid {
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+
+        .product-images-column {
+            position: static;
+        }
+
+        .related-products-grid {
+            grid-template-columns: repeat(3, 1fr);
+        }
+    }
+
+    @media (max-width: 768px) {
+        .purchase-section {
+            flex-direction: column;
+        }
+
+        .related-products-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .product-detail-title {
+            font-size: 1.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    /* ==========================================
+       IMAGE GALLERY - Change Main Image
+       ========================================== */
+    function changeImage(imageUrl, element) {
+        // Get main image element
+        const mainImage = document.getElementById('mainImage');
+
+        // Change source with fade effect
+        mainImage.style.opacity = '0.5';
+        setTimeout(() => {
+            mainImage.src = imageUrl;
+            mainImage.style.opacity = '1';
+        }, 150);
+
+        // Update active thumbnail
+        document.querySelectorAll('.gallery-item').forEach(item => {
+            item.classList.remove('active');
+        });
+        element.classList.add('active');
+    }
+
+    /* ==========================================
+       QUANTITY SELECTOR
+       ========================================== */
+    function increaseQty() {
+        const input = document.getElementById('quantity');
+        const max = parseInt(input.max);
+        const current = parseInt(input.value);
+
+        if (current < max) {
+            input.value = current + 1;
+        }
+    }
+
+    function decreaseQty() {
+        const input = document.getElementById('quantity');
+        const min = parseInt(input.min);
+        const current = parseInt(input.value);
+
+        if (current > min) {
+            input.value = current - 1;
+        }
+    }
+
+    /* ==========================================
+       TABS NAVIGATION
+       ========================================== */
+    function showTab(tabName) {
+        // Hide all tabs
+        document.querySelectorAll('.tab-panel').forEach(panel => {
+            panel.classList.remove('active');
+        });
+
+        // Remove active from all buttons
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.classList.remove('active');
+        });
+
+        // Show selected tab
+        document.getElementById(tabName + '-tab').classList.add('active');
+
+        // Activate button
+        event.target.classList.add('active');
+    }
+
+    /* ==========================================
+       ADD TO CART WITH QUANTITY
+       ========================================== */
+    document.addEventListener('DOMContentLoaded', function () {
+        const addToCartBtn = document.querySelector('.btn-add-to-cart');
+
+        if (addToCartBtn) {
+            addToCartBtn.addEventListener('click', function () {
+                const quantity = parseInt(document.getElementById('quantity').value);
+                const productId = this.dataset.productId;
+                const productName = this.dataset.productName;
+                const productPrice = this.dataset.productPrice;
+
+                // Disable button
+                this.disabled = true;
+                const originalText = this.innerHTML;
+                this.innerHTML = '<span>Adding...</span>';
+
+                // Simulate API call (replace with real API when cart is implemented)
+                setTimeout(() => {
+                    // Success feedback
+                    this.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg> Added to Cart!';
+                    this.style.background = '#10b981';
+
+                    // Show notification
+                    if (window.showNotification) {
+                        window.showNotification('success', `Added ${quantity}x ${productName} to cart`);
+                    }
+
+                    // Reset button after 2 seconds
+                    setTimeout(() => {
+                        this.disabled = false;
+                        this.innerHTML = originalText;
+                        this.style.background = '';
+                    }, 2000);
+                }, 500);
+            });
+        }
+    });
+</script>
+{% endblock %}

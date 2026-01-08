@@ -19,17 +19,46 @@
             </div>
 
             <!-- ==========================================
-                 SEARCH BAR - Disabled until products app ready
+                 SEARCH BAR - Now Active!
                  ========================================== -->
-
+            
             <div class="navbar-search">
-                <form class="search-form" role="search">
-                    <input type="search" name="q" class="search-input" placeholder="Search products..." disabled
-                        aria-label="Search products">
-
-                    <button type="button" class="search-btn" disabled aria-label="Submit search">
-                        <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor">
+                <!-- 
+                    FORM METHOD: GET vs POST
+                    - Use GET for search (allows bookmarking URLs, back button works)
+                    - Use POST for sensitive data (login, payment)
+                    
+                    ACTION: Where form submits to
+                    - /products/ means search happens on product list page
+                    
+                    SECURITY: Django automatically escapes query parameters
+                    - Prevents XSS attacks via search input
+                -->
+                <form class="search-form" method="GET" action="{% url 'products:product_list' %}" role="search">
+            
+                    <!-- 
+                        NAME ATTRIBUTE: Query parameter name
+                        - ?q=laptop creates request.GET['q'] = 'laptop'
+                        - Industry standard: Google, Amazon all use 'q'
+                        
+                        AUTOCOMPLETE: Browser remembers past searches
+                        - 'off' prevents sensitive data leaks
+                        - For product search, 'on' improves UX
+                        
+                        MAXLENGTH: Input validation (frontend)
+                        - Prevents DOS attacks via huge search strings
+                        - Backend MUST also validate (never trust frontend)
+                    -->
+                    <input type="search" name="q" class="search-input" placeholder="Search products..." value="{{ request.GET.q }}"
+                        aria-label="Search products" autocomplete="off" maxlength="100">
+            
+                    <!-- 
+                        BUTTON TYPE: Submit form
+                        - Triggers form submission to action URL
+                        - Could also use <input type="submit"> but button allows SVG icon
+                    -->
+                    <button type="submit" class="search-btn" aria-label="Submit search">
+                        <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                             <circle cx="11" cy="11" r="8" />
                             <path d="m21 21-4.35-4.35" />
                         </svg>

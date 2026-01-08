@@ -41,9 +41,18 @@
         <div class="products-grid">
             {% for product in featured_products %}
             <div class="product-card" data-aos="fade-up">
-                <!-- Product Image -->
-                <div class="product-image">
+            <!-- Product Image -->
+            <div class="product-image">
+                <!-- Wrap image in clickable link -->
+                <a href="{% url 'products:detail' product.slug %}">
                     <img src="{{ product.image.url }}" alt="{{ product.name }}" loading="lazy">
+                </a>
+            
+                {% if product.is_on_sale %}
+                <span class="product-badge sale">
+                    Save {{ product.get_discount_percentage }}%
+                </span>
+                {% endif %}
 
                     <!-- Sale Badge -->
                     {% if product.is_on_sale %}
@@ -70,9 +79,11 @@
                     </div>
 
                     <h3 class="product-name">
-                        <a href="#">{{ product.name|truncatewords:10 }}</a>
+                        <a href="{% url 'products:detail' product.slug %}">
+                            {{ product.name|truncatewords:10 }}
+                        </a>
                     </h3>
-
+                    
                     <!-- Rating (placeholder for now) -->
                     <div class="product-rating">
                         <div class="stars">
