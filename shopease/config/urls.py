@@ -21,7 +21,8 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('apps.core.urls')),  # Remove namespace='core'
+    path('', include('apps.core.urls')),
+    path('products/', include('apps.products.urls')),  # Add this line
 ]
 
 if settings.DEBUG:
