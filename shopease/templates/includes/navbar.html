@@ -48,13 +48,32 @@
                     </a>
                 </li>
 
-                <!-- Will enable when products app is ready -->
-                <li class="nav-item">
-                    <span class="nav-link" style="opacity: 0.5; cursor: not-allowed;">
-                        Shop (Coming Soon)
-                    </span>
+                <!-- Shop Dropdown - Categories -->
+                <li class="nav-item dropdown">
+                    <a href="#" class="nav-link dropdown-toggle" id="shopDropdown" role="button" aria-expanded="false">
+                        Shop
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="shopDropdown">
+                        <li>
+                            <a class="dropdown-item" href="#">
+                                All Products
+                            </a>
+                        </li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        {% load products_tags %}
+                        {% get_categories as categories %}
+                        {% for category in categories %}
+                        <li>
+                            <a class="dropdown-item" href="#">
+                                {{ category.name }}
+                                <span class="badge">{{ category.get_product_count }}</span>
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
                 </li>
-            </ul>
 
             <!-- ==========================================
                  USER ACTIONS - Simplified
@@ -262,4 +281,219 @@
             gap: 1rem;
         }
     }
+
+    /* ==========================================
+   DROPDOWN MENU STYLES
+   ========================================== */
+
+/* Dropdown container - positioned relative for absolute menu */
+.nav-item.dropdown {
+    position: relative;
+}
+
+/* Dropdown toggle - the clickable link */
+.dropdown-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    cursor: pointer;
+    user-select: none; /* Prevent text selection on double-click */
+}
+
+/* Dropdown arrow - CSS-only arrow icon */
+.dropdown-toggle::after {
+    content: '';
+    display: inline-block;
+    width: 0;
+    height: 0;
+    margin-left: 0.25rem;
+    vertical-align: 0.15em;
+    /* Triangle pointing down */
+    border-top: 0.3em solid;
+    border-right: 0.3em solid transparent;
+    border-left: 0.3em solid transparent;
+    transition: transform 0.2s ease;
+}
+
+/* Rotate arrow when menu is open */
+.dropdown-toggle[aria-expanded="true"]::after {
+    transform: rotate(180deg);
+}
+
+/* Dropdown menu - hidden by default */
+.dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 1000;
+    display: none; /* Hidden by default */
+    min-width: 220px;
+    padding: 0.5rem 0;
+    margin: 0.5rem 0 0;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+                0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    list-style: none;
+}
+
+/* Show menu when dropdown is active */
+.dropdown-menu.show {
+    display: block;
+    /* Slide down animation */
+    animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Dropdown menu items */
+.dropdown-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: 0.5rem 1rem;
+    color: #374151;
+    text-decoration: none;
+    transition: background-color 0.15s ease;
+    cursor: pointer;
+}
+
+.dropdown-item:hover {
+    background-color: #f3f4f6;
+    color: #0f4c5c;
+}
+
+/* Divider between menu sections */
+.dropdown-divider {
+    height: 0;
+    margin: 0.5rem 0;
+    overflow: hidden;
+    border-top: 1px solid #e5e7eb;
+}
+
+/* Badge for product count */
+.dropdown-item .badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.5rem;
+    height: 1.5rem;
+    padding: 0 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: white;
+    background: #0f4c5c;
+    border-radius: 9999px;
+}
+
+/* Mobile responsive - full width dropdown on mobile */
+@media (max-width: 767px) {
+    .dropdown-menu {
+        position: static;
+        width: 100%;
+        margin-top: 0.5rem;
+        box-shadow: none;
+        border: none;
+        border-top: 1px solid #e5e7eb;
+    }
+}
 </style>
+
+<script>
+    /* ==========================================
+       DROPDOWN MENU FUNCTIONALITY
+       ========================================== */
+
+    (function () {
+        'use strict';
+
+        // Wait for DOM to be fully loaded
+        // Ensures all elements exist before we try to access them
+        document.addEventListener('DOMContentLoaded', function () {
+
+            // Get all dropdown toggles on the page
+            // NodeList of elements with class 'dropdown-toggle'
+            const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
+
+            // Loop through each dropdown toggle
+            dropdownToggles.forEach(function (toggle) {
+
+                // Add click event listener
+                // When user clicks the dropdown toggle button
+                toggle.addEventListener('click', function (e) {
+                    e.preventDefault(); // Prevent default link behavior
+                    e.stopPropagation(); // Prevent event bubbling
+
+                    // Get the dropdown menu (next sibling element)
+                    const menu = this.nextElementSibling;
+
+                    // Check if menu is currently open
+                    const isOpen = menu.classList.contains('show');
+
+                    // Close all other dropdowns first
+                    // This ensures only one dropdown is open at a time
+                    document.querySelectorAll('.dropdown-menu').forEach(function (m) {
+                        m.classList.remove('show');
+                    });
+
+                    // Reset all aria-expanded attributes
+                    // Important for screen readers (accessibility)
+                    document.querySelectorAll('.dropdown-toggle').forEach(function (t) {
+                        t.setAttribute('aria-expanded', 'false');
+                    });
+
+                    // Toggle this dropdown
+                    if (!isOpen) {
+                        // Open this dropdown
+                        menu.classList.add('show');
+                        this.setAttribute('aria-expanded', 'true');
+                    } else {
+                        // Close this dropdown
+                        menu.classList.remove('show');
+                        this.setAttribute('aria-expanded', 'false');
+                    }
+                });
+            });
+
+            // Close dropdowns when clicking outside
+            // This is standard dropdown behavior users expect
+            document.addEventListener('click', function (e) {
+                // Check if click was outside dropdown
+                if (!e.target.closest('.dropdown')) {
+                    // Close all dropdowns
+                    document.querySelectorAll('.dropdown-menu').forEach(function (menu) {
+                        menu.classList.remove('show');
+                    });
+                    document.querySelectorAll('.dropdown-toggle').forEach(function (toggle) {
+                        toggle.setAttribute('aria-expanded', 'false');
+                    });
+                }
+            });
+
+            // Close dropdowns on Escape key
+            // Standard keyboard interaction for dropdowns
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') {
+                    // Close all dropdowns
+                    document.querySelectorAll('.dropdown-menu').forEach(function (menu) {
+                        menu.classList.remove('show');
+                    });
+                    document.querySelectorAll('.dropdown-toggle').forEach(function (toggle) {
+                        toggle.setAttribute('aria-expanded', 'false');
+                    });
+                }
+            });
+        });
+    })();
+</script>
