@@ -1,6 +1,19 @@
+# asgiref==3.11.0
+# Django==5.0.1
+# mysqlclient==2.2.7
+# PyMySQL==1.1.2
+# sqlparse==0.5.5
+# tzdata==2025.3
+
 asgiref==3.11.0
 Django==5.0.1
 mysqlclient==2.2.7
 PyMySQL==1.1.2
 sqlparse==0.5.5
 tzdata==2025.3
+python-decouple==3.8
+requests==2.31.0
+Pillow==10.1.0
+django-otp==1.5.4
+qrcode==7.4.2
+twilio==9.0.4

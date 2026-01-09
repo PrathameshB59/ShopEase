@@ -38,14 +38,15 @@ INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
-    'django.contrib.sessions',  # ← REQUIRED for cart
+    'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
     
     # Our apps
     'apps.products',
     'apps.core',
-    'apps.cart',      # ← ADD THIS
+    'apps.cart',
+    'apps.accounts',      # ← ADD THIS
 ]
 
 MIDDLEWARE = [
@@ -99,23 +100,23 @@ DATABASES = {
 }
 
 
-# Password validation
-# https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
+# # Password validation
+# # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
 
-AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
-]
+# AUTH_PASSWORD_VALIDATORS = [
+#     {
+#         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+#     },
+#     {
+#         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+#     },
+#     {
+#         'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+#     },
+#     {
+#         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+#     },
+# ]
 
 
 # Internationalization
@@ -178,3 +179,69 @@ SESSION_SAVE_EVERY_REQUEST = False
 
 # Clear expired sessions regularly
 # Run: python manage.py clearsessions (add to cron job)
+
+# ==========================================
+# AUTHENTICATION SETTINGS
+# ==========================================
+
+# Where to redirect after login/logout
+LOGIN_URL = '/accounts/login/'  # Where to redirect if @login_required
+LOGIN_REDIRECT_URL = '/'  # After successful login
+LOGOUT_REDIRECT_URL = '/'  # After logout
+
+# Password validation
+# Makes passwords secure (min length, not common, not all numeric)
+AUTH_PASSWORD_VALIDATORS = [
+    {
+        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        # Prevents: username=john, password=john123
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'OPTIONS': {
+            'min_length': 8,  # Minimum 8 characters
+        }
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+        # Prevents: password123, qwerty, etc.
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        # Prevents: 12345678 (all numbers)
+    },
+]
+
+# Email backend (for password reset)
+# Development: Console backend (prints emails to terminal)
+# Production: SMTP backend (sends real emails)
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# Production email settings (configure when deploying):
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.gmail.com'
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+# EMAIL_HOST_USER = 'your-email@gmail.com'
+# EMAIL_HOST_PASSWORD = 'your-app-password'
+# DEFAULT_FROM_EMAIL = 'ShopEase <noreply@shopease.com>'
+
+# ==========================================
+# TWILIO SMS CONFIGURATION (OTP)
+# ==========================================
+
+# Twilio credentials for sending SMS OTP
+# Get from: https://www.twilio.com/console
+TWILIO_ACCOUNT_SID = config('TWILIO_ACCOUNT_SID', default='')
+TWILIO_AUTH_TOKEN = config('TWILIO_AUTH_TOKEN', default='')
+TWILIO_PHONE_NUMBER = config('TWILIO_PHONE_NUMBER', default='')
+
+# Check if Twilio is configured
+TWILIO_ENABLED = bool(TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN and TWILIO_PHONE_NUMBER)
+
+# Development: Print OTPs to console
+# Production: Send real SMS via Twilio
+if DEBUG and not TWILIO_ENABLED:
+    print("\n" + "="*60)
+    print("📱 TWILIO NOT CONFIGURED - OTPs will print to console")
+    print("="*60 + "\n")

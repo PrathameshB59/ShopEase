@@ -1,0 +1,852 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Profile - ShopEase{% endblock %}
+
+{% block content %}
+
+<!-- ==========================================
+     USER PROFILE PAGE
+     ========================================== -->
+
+<section class="profile-section">
+    <div class="container">
+
+        <!-- Page Header -->
+        <div class="profile-header">
+            <div class="header-content">
+                <div class="avatar-container">
+                    {% if user.profile.avatar %}
+                    <img src="{{ user.profile.avatar.url }}" alt="{{ user.username }}" class="user-avatar">
+                    {% else %}
+                    <div class="avatar-placeholder">
+                        {{ user.username|first|upper }}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="user-info">
+                    <h1 class="user-name">{{ user.get_full_name|default:user.username }}</h1>
+                    <p class="user-email">{{ user.email }}</p>
+                    <p class="member-since">Member since {{ user.date_joined|date:"F Y" }}</p>
+                </div>
+            </div>
+
+            <div class="header-actions">
+                <a href="{% url 'accounts:dashboard' %}" class="btn-secondary">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <rect x="3" y="3" width="7" height="7" />
+                        <rect x="14" y="3" width="7" height="7" />
+                        <rect x="14" y="14" width="7" height="7" />
+                        <rect x="3" y="14" width="7" height="7" />
+                    </svg>
+                    Dashboard
+                </a>
+            </div>
+        </div>
+
+        <!-- Profile Form -->
+        <div class="profile-content">
+            <div class="profile-grid">
+
+                <!-- Left Side - Personal Information -->
+                <div class="profile-card">
+                    <div class="card-header">
+                        <h2 class="card-title">Personal Information</h2>
+                        <p class="card-subtitle">Update your account details</p>
+                    </div>
+
+                    <form method="POST" enctype="multipart/form-data" class="profile-form">
+                        {% csrf_token %}
+
+                        <!-- User Basic Info -->
+                        <div class="form-section">
+                            <h3 class="section-title">Basic Details</h3>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">First Name</label>
+                                    {{ user_form.first_name }}
+                                    {% if user_form.first_name.errors %}
+                                    <div class="form-error">{{ user_form.first_name.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">Last Name</label>
+                                    {{ user_form.last_name }}
+                                    {% if user_form.last_name.errors %}
+                                    <div class="form-error">{{ user_form.last_name.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Email Address</label>
+                                {{ user_form.email }}
+                                {% if user_form.email.errors %}
+                                <div class="form-error">{{ user_form.email.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Phone Number</label>
+                                {{ profile_form.phone }}
+                                {% if profile_form.phone.errors %}
+                                <div class="form-error">{{ profile_form.phone.errors.0 }}</div>
+                                {% endif %}
+                                {% if user.profile.phone_verified %}
+                                <small class="verified-badge">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                        <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
+                                        <path d="M22 4L12 14.01l-3-3" />
+                                    </svg>
+                                    Verified
+                                </small>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Avatar Upload -->
+                        <div class="form-section">
+                            <h3 class="section-title">Profile Picture</h3>
+
+                            <div class="avatar-upload">
+                                <div class="current-avatar">
+                                    {% if user.profile.avatar %}
+                                    <img src="{{ user.profile.avatar.url }}" alt="Current avatar" id="avatarPreview">
+                                    {% else %}
+                                    <div class="avatar-placeholder-large" id="avatarPreview">
+                                        {{ user.username|first|upper }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="upload-controls">
+                                    {{ profile_form.avatar }}
+                                    <label for="{{ profile_form.avatar.id_for_label }}" class="btn-upload">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor">
+                                            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                                            <polyline points="17 8 12 3 7 8" />
+                                            <line x1="12" y1="3" x2="12" y2="15" />
+                                        </svg>
+                                        Choose Photo
+                                    </label>
+                                    <small class="upload-help">JPG, PNG or GIF. Max 2MB.</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Shipping Address -->
+                        <div class="form-section">
+                            <h3 class="section-title">Shipping Address</h3>
+
+                            <div class="form-group">
+                                <label class="form-label">Address Line 1</label>
+                                {{ profile_form.address_line1 }}
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Address Line 2 (Optional)</label>
+                                {{ profile_form.address_line2 }}
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">City</label>
+                                    {{ profile_form.city }}
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">State</label>
+                                    {{ profile_form.state }}
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Postal Code</label>
+                                    {{ profile_form.postal_code }}
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">Country</label>
+                                    {{ profile_form.country }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Newsletter -->
+                        <div class="form-section">
+                            <label class="checkbox-label-large">
+                                {{ profile_form.newsletter_subscribed }}
+                                <div class="checkbox-content">
+                                    <span class="checkbox-title">Email Newsletter</span>
+                                    <span class="checkbox-description">Receive updates about new products and special
+                                        offers</span>
+                                </div>
+                            </label>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="form-actions">
+                            <button type="submit" class="btn-save">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" />
+                                    <polyline points="17 21 17 13 7 13 7 21" />
+                                    <polyline points="7 3 7 8 15 8" />
+                                </svg>
+                                Save Changes
+                            </button>
+
+                            <a href="{% url 'home' %}" class="btn-cancel">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Right Side - Quick Actions -->
+                <div class="sidebar">
+
+                    <!-- Account Security -->
+                    <div class="sidebar-card">
+                        <h3 class="sidebar-title">Account Security</h3>
+
+                        <div class="security-item">
+                            <div class="security-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                                    <path d="M7 11V7a5 5 0 0110 0v4" />
+                                </svg>
+                            </div>
+                            <div class="security-content">
+                                <h4>Password</h4>
+                                <p>Last changed 3 months ago</p>
+                                <a href="{% url 'accounts:password_reset' %}" class="security-link">Change Password</a>
+                            </div>
+                        </div>
+
+                        <div class="security-item">
+                            <div class="security-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path
+                                        d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z" />
+                                </svg>
+                            </div>
+                            <div class="security-content">
+                                <h4>Phone Verification</h4>
+                                {% if user.profile.phone_verified %}
+                                <p class="verified-text">Verified</p>
+                                {% else %}
+                                <p>Not verified</p>
+                                <a href="#" class="security-link">Verify Now</a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Account Stats -->
+                    <div class="sidebar-card">
+                        <h3 class="sidebar-title">Account Overview</h3>
+
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <div class="stat-value">0</div>
+                                <div class="stat-label">Orders</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">$0.00</div>
+                                <div class="stat-label">Total Spent</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">0</div>
+                                <div class="stat-label">Reviews</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">0</div>
+                                <div class="stat-label">Wishlist</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Danger Zone -->
+                    <div class="sidebar-card danger-zone">
+                        <h3 class="sidebar-title">Danger Zone</h3>
+                        <p class="danger-description">Permanently delete your account and all data</p>
+                        <button class="btn-danger" onclick="confirmDelete()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <polyline points="3 6 5 6 21 6" />
+                                <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+                            </svg>
+                            Delete Account
+                        </button>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</section>
+
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ==========================================
+   PROFILE PAGE STYLES
+   ========================================== */
+
+    .profile-section {
+        padding: 3rem 0;
+        min-height: calc(100vh - 200px);
+        background: #f9fafb;
+    }
+
+    /* HEADER */
+    .profile-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: white;
+        padding: 2rem;
+        border-radius: 1rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        margin-bottom: 2rem;
+    }
+
+    .header-content {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+    }
+
+    .avatar-container {
+        flex-shrink: 0;
+    }
+
+    .user-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid #0f4c5c;
+    }
+
+    .avatar-placeholder {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #0f4c5c 0%, #1a6d7e 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        font-weight: 700;
+    }
+
+    .user-name {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #111827;
+        margin-bottom: 0.25rem;
+    }
+
+    .user-email {
+        color: #6b7280;
+        margin-bottom: 0.25rem;
+    }
+
+    .member-since {
+        color: #9ca3af;
+        font-size: 0.875rem;
+    }
+
+    .header-actions {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .btn-secondary {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        background: white;
+        border: 1px solid #d1d5db;
+        border-radius: 0.5rem;
+        color: #374151;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.2s;
+    }
+
+    .btn-secondary:hover {
+        border-color: #0f4c5c;
+        color: #0f4c5c;
+    }
+
+    .btn-secondary svg {
+        stroke-width: 2;
+    }
+
+    /* PROFILE GRID */
+    .profile-grid {
+        display: grid;
+        grid-template-columns: 1fr 400px;
+        gap: 2rem;
+    }
+
+    .profile-card,
+    .sidebar-card {
+        background: white;
+        border-radius: 1rem;
+        padding: 2rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .card-header {
+        margin-bottom: 2rem;
+    }
+
+    .card-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #111827;
+        margin-bottom: 0.25rem;
+    }
+
+    .card-subtitle {
+        color: #6b7280;
+        font-size: 0.95rem;
+    }
+
+    /* FORM SECTIONS */
+    .form-section {
+        margin-bottom: 2rem;
+        padding-bottom: 2rem;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .form-section:last-of-type {
+        border-bottom: none;
+        margin-bottom: 0;
+        padding-bottom: 0;
+    }
+
+    .section-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: #111827;
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group {
+        margin-bottom: 1rem;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #374151;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 1px solid #d1d5db;
+        border-radius: 0.5rem;
+        font-size: 0.95rem;
+        transition: all 0.2s;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: #0f4c5c;
+        box-shadow: 0 0 0 3px rgba(15, 76, 92, 0.1);
+    }
+
+    .form-error {
+        color: #dc2626;
+        font-size: 0.75rem;
+        margin-top: 0.25rem;
+    }
+
+    .verified-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        color: #10b981;
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-top: 0.25rem;
+    }
+
+    .verified-badge svg {
+        stroke-width: 2.5;
+    }
+
+    /* AVATAR UPLOAD */
+    .avatar-upload {
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+    }
+
+    .current-avatar {
+        flex-shrink: 0;
+    }
+
+    .current-avatar img {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+
+    .avatar-placeholder-large {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #0f4c5c 0%, #1a6d7e 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+        font-weight: 700;
+    }
+
+    .upload-controls {
+        flex: 1;
+    }
+
+    .upload-controls input[type="file"] {
+        display: none;
+    }
+
+    .btn-upload {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        background: #0f4c5c;
+        color: white;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-upload:hover {
+        background: #0d3d4a;
+    }
+
+    .btn-upload svg {
+        stroke-width: 2;
+    }
+
+    .upload-help {
+        display: block;
+        color: #6b7280;
+        font-size: 0.75rem;
+        margin-top: 0.5rem;
+    }
+
+    /* CHECKBOX */
+    .checkbox-label-large {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        padding: 1rem;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .checkbox-label-large:hover {
+        border-color: #0f4c5c;
+        background: #f9fafb;
+    }
+
+    .checkbox-label-large input[type="checkbox"] {
+        margin-top: 0.25rem;
+        cursor: pointer;
+    }
+
+    .checkbox-content {
+        flex: 1;
+    }
+
+    .checkbox-title {
+        display: block;
+        font-weight: 600;
+        color: #111827;
+        margin-bottom: 0.25rem;
+    }
+
+    .checkbox-description {
+        display: block;
+        color: #6b7280;
+        font-size: 0.875rem;
+    }
+
+    /* FORM ACTIONS */
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        padding-top: 2rem;
+        border-top: 1px solid #e5e7eb;
+    }
+
+    .btn-save {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.875rem 2rem;
+        background: #0f4c5c;
+        color: white;
+        border: none;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .btn-save:hover {
+        background: #0d3d4a;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(15, 76, 92, 0.3);
+    }
+
+    .btn-save svg {
+        stroke-width: 2;
+    }
+
+    .btn-cancel {
+        padding: 0.875rem 2rem;
+        color: #6b7280;
+        text-decoration: none;
+        font-weight: 600;
+        transition: color 0.2s;
+    }
+
+    .btn-cancel:hover {
+        color: #111827;
+    }
+
+    /* SIDEBAR */
+    .sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .sidebar-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: #111827;
+        margin-bottom: 1.5rem;
+    }
+
+    /* SECURITY ITEMS */
+    .security-item {
+        display: flex;
+        gap: 1rem;
+        padding: 1rem;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .security-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .security-icon {
+        width: 40px;
+        height: 40px;
+        background: #f3f4f6;
+        border-radius: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #0f4c5c;
+        flex-shrink: 0;
+    }
+
+    .security-icon svg {
+        stroke-width: 2;
+    }
+
+    .security-content h4 {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #111827;
+        margin-bottom: 0.25rem;
+    }
+
+    .security-content p {
+        color: #6b7280;
+        font-size: 0.875rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .security-link {
+        color: #0f4c5c;
+        font-size: 0.875rem;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+    .security-link:hover {
+        text-decoration: underline;
+    }
+
+    .verified-text {
+        color: #10b981 !important;
+        font-weight: 600 !important;
+    }
+
+    /* STATS GRID */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+
+    .stat-item {
+        text-align: center;
+        padding: 1rem;
+        background: #f9fafb;
+        border-radius: 0.5rem;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #0f4c5c;
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-label {
+        color: #6b7280;
+        font-size: 0.875rem;
+    }
+
+    /* DANGER ZONE */
+    .danger-zone {
+        border: 1px solid #fca5a5;
+        background: #fef2f2;
+    }
+
+    .danger-description {
+        color: #6b7280;
+        font-size: 0.875rem;
+        margin-bottom: 1rem;
+    }
+
+    .btn-danger {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        background: #dc2626;
+        color: white;
+        border: none;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-danger:hover {
+        background: #b91c1c;
+    }
+
+    .btn-danger svg {
+        stroke-width: 2;
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 1024px) {
+        .profile-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .profile-header {
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .header-content {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+
+        .avatar-upload {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Preview avatar on file select
+    document.querySelector('input[type="file"]').addEventListener('change', function (e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const preview = document.getElementById('avatarPreview');
+                if (preview.tagName === 'IMG') {
+                    preview.src = e.target.result;
+                } else {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.style.width = '100px';
+                    img.style.height = '100px';
+                    img.style.borderRadius = '50%';
+                    img.style.objectFit = 'cover';
+                    preview.parentNode.replaceChild(img, preview);
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // Confirm account deletion
+    function confirmDelete() {
+        if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+            if (confirm('This will permanently delete all your data, orders, and reviews. Continue?')) {
+                alert('Account deletion feature will be implemented soon.');
+                // TODO: Implement account deletion
+            }
+        }
+    }
+</script>
+{% endblock %}
