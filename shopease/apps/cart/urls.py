@@ -45,4 +45,8 @@ urlpatterns = [
     # URL: /cart/clear/
     # Method: POST
     path('clear/', views.clear_cart, name='clear_cart'),
+
+    path('', views.cart_view, name='view'),
+    
+    path('add/', views.add_to_cart, name='add_to_cart'),
 ]

@@ -19,41 +19,29 @@ from django.contrib.auth.decorators import login_required
 from decimal import Decimal
 import json
 
+# from shopease.apps.cart.cart import CartService
+
 from .models import Cart, CartItem
 from apps.products.models import Product
-
+    # 
 
 # ==========================================
 # HELPER FUNCTIONS
 # ==========================================
 
+# views.py - inside get_or_create_cart
 def get_or_create_cart(request):
-    """
-    Get or create cart for current user/session.
-    
-    Logic:
-    - Logged in users: Get cart by user
-    - Anonymous users: Get cart by session key
-    - Creates new cart if doesn't exist
-    
-    Security:
-    - Session key from Django (can't be forged)
-    - User from Django auth (can't be forged)
-    
-    Returns: Cart object
-    """
     if request.user.is_authenticated:
-        # Logged in user - get cart by user
         cart, created = Cart.objects.get_or_create(user=request.user)
     else:
-        # Anonymous user - get cart by session
-        # Ensure session exists (Django creates it)
         if not request.session.session_key:
             request.session.create()
         
+        # IMPORTANT: Force the session to persist
+        request.session.modified = True 
+        
         session_key = request.session.session_key
         cart, created = Cart.objects.get_or_create(session_key=session_key)
-    
     return cart
 
 
@@ -78,35 +66,15 @@ def get_cart_data(cart):
 # ==========================================
 
 def cart_view(request):
-    """
-    Display shopping cart page.
+    cart_service = cart_service(request)
+    cart_data = cart_service.get_cart_data()
     
-    URL: /cart/
-    Method: GET
-    Template: cart/cart.html
-    
-    Context:
-    - cart_items: QuerySet of CartItem objects
-    - subtotal: Decimal
-    - tax: Decimal  
-    - total: Decimal
-    """
-    cart = get_or_create_cart(request)
-    
-    # Get all items in cart with product details
-    # select_related('product'): Fetch product in same query (performance)
-    cart_items = cart.items.select_related('product', 'product__category').all()
-    
-    context = {
-        'cart_items': cart_items,
-        'subtotal': cart.get_subtotal(),
-        'tax': cart.get_tax(),
-        'total': cart.get_total(),
-        'cart_count': cart.get_total_items(),
-    }
-    
-    return render(request, 'cart/cart.html', context)
-
+    return render(request, 'cart/cart.html', {
+        'cart': cart_service.cart,
+        'cart_items': cart_data['items'],
+        'subtotal': cart_data['subtotal'],
+        'total': cart_data['total']
+    })
 
 # ==========================================
 # ADD TO CART
@@ -114,108 +82,16 @@ def cart_view(request):
 
 @require_POST
 def add_to_cart(request):
-    """
-    Add product to cart.
+    cart_service = cart_service(request)
+    product_id = request.POST.get('product_id')
     
-    URL: /cart/add/
-    Method: POST
-    Content-Type: application/json
+    # The service handles session creation and DB saving internally
+    result = cart_service.add(product_id=product_id)
     
-    Request Body:
-    {
-        "product_id": 123,
-        "quantity": 1
-    }
-    
-    Response:
-    {
-        "success": true,
-        "message": "Product added to cart",
-        "cart_count": 3,
-        "cart_total": "149.97"
-    }
-    
-    Security:
-    - CSRF token required
-    - Validates product exists
-    - Validates quantity > 0
-    - Validates quantity <= stock
-    """
-    try:
-        # Parse JSON request body
-        data = json.loads(request.body)
-        product_id = data.get('product_id')
-        quantity = int(data.get('quantity', 1))
-        
-        # Validation: Check inputs
-        if not product_id:
-            return JsonResponse({
-                'success': False,
-                'message': 'Product ID required'
-            }, status=400)
-        
-        if quantity < 1:
-            return JsonResponse({
-                'success': False,
-                'message': 'Quantity must be at least 1'
-            }, status=400)
-        
-        # Get product (404 if not found)
-        product = get_object_or_404(Product, id=product_id, is_active=True)
-        
-        # Check stock availability
-        if quantity > product.stock:
-            return JsonResponse({
-                'success': False,
-                'message': f'Only {product.stock} items available'
-            }, status=400)
-        
-        # Get or create cart
-        cart = get_or_create_cart(request)
-        
-        # Check if product already in cart
-        cart_item, created = CartItem.objects.get_or_create(
-            cart=cart,
-            product=product,
-            defaults={'quantity': quantity}
-        )
-        
-        if not created:
-            # Item exists - increase quantity
-            new_quantity = cart_item.quantity + quantity
-            
-            # Check stock for new quantity
-            if new_quantity > product.stock:
-                return JsonResponse({
-                    'success': False,
-                    'message': f'Cannot add more. Only {product.stock} available.'
-                }, status=400)
-            
-            cart_item.quantity = new_quantity
-            cart_item.save()
-            message = f'Updated {product.name} quantity to {new_quantity}'
-        else:
-            # New item added
-            message = f'{product.name} added to cart'
-        
-        # Return success with cart data
-        return JsonResponse({
-            'success': True,
-            'message': message,
-            'cart_data': get_cart_data(cart)
-        })
-        
-    except json.JSONDecodeError:
-        return JsonResponse({
-            'success': False,
-            'message': 'Invalid JSON'
-        }, status=400)
-    
-    except Exception as e:
-        return JsonResponse({
-            'success': False,
-            'message': str(e)
-        }, status=500)
+    if result['success']:
+        return JsonResponse(result)
+    else:
+        return JsonResponse(result, status=400)
 
 
 # ==========================================
