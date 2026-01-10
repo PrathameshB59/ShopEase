@@ -486,29 +486,19 @@
         try {
             const response = await fetch('/cart/data/');
             const data = await response.json();
-            if (data.success) {
-                document.getElementById('cartCount').textContent = data.cart_count;
+
+            // The endpoint returns data.count (not data.cart_count or data.success)
+            if (data.count !== undefined) {
+                document.getElementById('cartCount').textContent = data.count;
             }
         } catch (error) {
             console.error('Cart count error:', error);
         }
     }
 
+    // Make it globally available so cart.js can call it
     window.updateCartCount = updateCartCount;
+
+    // Load cart count on page load
     updateCartCount();
-
-    // In navbar.html
-        async function updateCartCount() {
-            try {
-                const response = await fetch('/cart/data/');
-                const data = await response.json();
-
-                // Change data.cart_count to data.count (or whatever your view returns)
-                if (data.count !== undefined) {
-                    document.getElementById('cartCount').textContent = data.count;
-                }
-            } catch (error) {
-                console.error('Cart count error:', error);
-            }
-        }
 </script>

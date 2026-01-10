@@ -143,8 +143,6 @@
           // 'SameSite=Strict' prevents CSRF attacks
           document.cookie = 'csrftoken=' + csrftoken + '; Secure; SameSite=Strict';
      </script>
-     <!-- Cart Notifications CSS -->
-     <link rel="stylesheet" href="{% static 'css/cart_notifications.css' %}">
 </head>
 
 <body>
@@ -196,6 +194,9 @@
      <!-- Main JavaScript -->
      <script src="{% static 'js/main.js' %}"></script>
 
+     <!-- Cart JavaScript - Must load before page-specific JS -->
+     <script src="{% static 'js/cart.js' %}"></script>
+
      <!-- Page-specific JavaScript -->
      {% block extra_js %}{% endblock %}
 
@@ -215,8 +216,6 @@
           gtag('config', 'YOUR-GA-ID');
      </script>
      {% endif %}
-     <!-- Cart Operations JavaScript -->
-     <script src="{% static 'js/cart_operations.js' %}"></script>
 </body>
 
 </html>

@@ -321,9 +321,25 @@ function getCookie(name) {
    ========================================== */
 
 // Global function for adding to cart from product pages
-window.addToCart = function(productId, quantity = 1) {
+// Accept either (productId, quantity) or (productId, productName)
+window.addToCart = function(productId, qtyOrName = 1) {
+    // Determine quantity: if second arg is numeric use it, otherwise default to 1
+    let quantity = 1;
+    let productName = null;
+
+    if (typeof qtyOrName === 'number' && Number.isInteger(qtyOrName) && qtyOrName > 0) {
+        quantity = qtyOrName;
+    } else if (typeof qtyOrName === 'string') {
+        // If it's numeric string, parse it
+        if (/^\d+$/.test(qtyOrName)) {
+            quantity = parseInt(qtyOrName, 10);
+        } else {
+            productName = qtyOrName; // treat as name for friendly notification
+        }
+    }
+
     console.log(`🛒 Adding to cart: Product ${productId}, Qty ${quantity}`);
-    
+
     fetch('/cart/add/', {
         method: 'POST',
         headers: {
@@ -339,12 +355,13 @@ window.addToCart = function(productId, quantity = 1) {
     .then(data => {
         if (data.success) {
             console.log('✅ Added to cart:', data);
-            
+
             // Update cart count
             updateCartCount();
-            
-            // Show success notification
-            showNotification('success', data.message);
+
+            // Show success notification (use server message or fallback)
+            const msg = data.message || (productName ? `${productName} added to cart` : 'Added to cart');
+            showNotification('success', msg);
         } else {
             console.error('❌ Add to cart failed:', data.message);
             showNotification('error', data.message);

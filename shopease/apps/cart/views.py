@@ -19,7 +19,7 @@ from django.contrib.auth.decorators import login_required
 from decimal import Decimal
 import json
 
-# from shopease.apps.cart.cart import CartService
+from .cart import CartService
 
 from .models import Cart, CartItem
 from apps.products.models import Product
@@ -66,13 +66,14 @@ def get_cart_data(cart):
 # ==========================================
 
 def cart_view(request):
-    cart_service = cart_service(request)
+    cart_service = CartService(request)
     cart_data = cart_service.get_cart_data()
     
     return render(request, 'cart/cart.html', {
         'cart': cart_service.cart,
         'cart_items': cart_data['items'],
         'subtotal': cart_data['subtotal'],
+        'tax': cart_data['tax'],
         'total': cart_data['total']
     })
 
@@ -82,12 +83,40 @@ def cart_view(request):
 
 @require_POST
 def add_to_cart(request):
-    cart_service = cart_service(request)
-    product_id = request.POST.get('product_id')
+    cart_service = CartService(request)
+
+    # Support both form-encoded POST (from forms) and JSON (from fetch)
+    product_id = None
+    quantity = 1
+
+    if request.content_type == 'application/json':
+        try:
+            data = json.loads(request.body)
+            product_id = int(data.get('product_id'))  # Convert to int
+            quantity = int(data.get('quantity', 1))
+        except (json.JSONDecodeError, ValueError, TypeError):
+            return JsonResponse({'success': False, 'message': 'Invalid JSON, product_id or quantity'}, status=400)
+    else:
+        product_id = request.POST.get('product_id')
+        try:
+            product_id = int(product_id)  # Convert to int
+            quantity = int(request.POST.get('quantity', 1))
+        except (TypeError, ValueError):
+            return JsonResponse({'success': False, 'message': 'Invalid product_id or quantity'}, status=400)
+
+    if not product_id:
+        return JsonResponse({'success': False, 'message': 'Product id is required'}, status=400)
+
+    print(f'DEBUG: Adding product {product_id}, qty {quantity} to cart')
+    print(f'DEBUG: Session key: {request.session.session_key}')
+    print(f'DEBUG: Cart ID: {cart_service.cart.id}')
     
     # The service handles session creation and DB saving internally
-    result = cart_service.add(product_id=product_id)
+    result = cart_service.add(product_id=product_id, quantity=quantity)
     
+    print(f'DEBUG: Result: {result}')
+    print(f'DEBUG: Cart items after add: {cart_service.cart.items.count()}')
+
     if result['success']:
         return JsonResponse(result)
     else:

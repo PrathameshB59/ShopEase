@@ -172,8 +172,7 @@
                     </div>
 
                     <!-- Add to Cart Button -->
-                    <!-- Add to Cart Button -->
-                    <button type="button" class="btn-add-to-cart" data-product-id="{{ product.id }}"onclick="addToCart({{ product.id }}, document.getElementById('quantity-input').value)">
+                    <button type="button" class="btn-add-to-cart" data-product-id="{{ product.id }}" data-product-name="{{ product.name }}">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                             <circle cx="9" cy="21" r="1" />
                             <circle cx="20" cy="21" r="1" />
@@ -181,9 +180,6 @@
                         </svg>
                         Add to Cart
                     </button>
-                    
-                    <!-- Quantity Input (if you have one) -->
-                    <input type="number" id="quantity-input" value="1" min="1" max="{{ product.stock }}" class="quantity-input">
 
                     <!-- Wishlist Button -->
                     <button type="button" class="btn-wishlist" data-product-id="{{ product.id }}">
@@ -1059,31 +1055,33 @@
                 const quantity = parseInt(document.getElementById('quantity').value);
                 const productId = this.dataset.productId;
                 const productName = this.dataset.productName;
-                const productPrice = this.dataset.productPrice;
 
                 // Disable button
                 this.disabled = true;
                 const originalText = this.innerHTML;
                 this.innerHTML = '<span>Adding...</span>';
 
-                // Simulate API call (replace with real API when cart is implemented)
-                setTimeout(() => {
+                // Call the global addToCart function from cart.js
+                if (window.addToCart) {
+                    window.addToCart(productId, quantity);
+
                     // Success feedback
-                    this.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg> Added to Cart!';
-                    this.style.background = '#10b981';
-
-                    // Show notification
-                    if (window.showNotification) {
-                        window.showNotification('success', `Added ${quantity}x ${productName} to cart`);
-                    }
-
-                    // Reset button after 2 seconds
                     setTimeout(() => {
-                        this.disabled = false;
-                        this.innerHTML = originalText;
-                        this.style.background = '';
-                    }, 2000);
-                }, 500);
+                        this.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg> Added to Cart!';
+                        this.style.background = '#10b981';
+
+                        // Reset button after 2 seconds
+                        setTimeout(() => {
+                            this.disabled = false;
+                            this.innerHTML = originalText;
+                            this.style.background = '';
+                        }, 2000);
+                    }, 500);
+                } else {
+                    console.error('addToCart function not found - cart.js may not be loaded');
+                    this.disabled = false;
+                    this.innerHTML = originalText;
+                }
             });
         }
     });

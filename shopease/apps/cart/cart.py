@@ -80,20 +80,20 @@ class CartService:
         
         Returns: Cart instance
         """
+        session_key = self.session.session_key
+
         if self.request.user.is_authenticated:
-            # Logged-in user: Get cart by user ID
+            # Logged-in user: Get or create cart by user
             cart, created = Cart.objects.get_or_create(
                 user=self.request.user,
-                is_active=True,
-                defaults={'session_key': self.session.session_key}
+                defaults={'session_key': session_key}
             )
         else:
-            # Anonymous user: Get cart by session key
+            # Anonymous user: Get or create cart by session key
             cart, created = Cart.objects.get_or_create(
-                session_key=self.session.session_key,
-                is_active=True
+                session_key=session_key
             )
-        
+
         return cart
     
     # ==========================================
@@ -339,7 +339,8 @@ class CartService:
             'items': items,
             'item_count': self.get_item_count(),
             'subtotal': self.get_total(),
-            'total': self.cart.get_total_price(),
+            'tax': self.cart.get_tax(),
+            'total': self.cart.get_total(),
             'has_items': items.exists()
         }
     

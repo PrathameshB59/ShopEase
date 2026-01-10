@@ -81,6 +81,21 @@ class Cart(models.Model):
         """
         return sum(item.quantity for item in self.items.all())
     
+    def get_item_count_by_product(self, product_id):
+        """
+        Get quantity of a specific product in cart.
+        
+        Args:
+            product_id: Integer
+        
+        Returns: Integer (quantity of this product, or 0 if not in cart)
+        """
+        try:
+            item = self.items.get(product_id=product_id)
+            return item.quantity
+        except CartItem.DoesNotExist:
+            return 0
+    
     def get_subtotal(self):
         """
         Calculate subtotal (before tax/shipping).

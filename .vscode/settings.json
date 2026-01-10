@@ -20,5 +20,8 @@
   },
   "peacock.color": "red",
   "screencastMode.mouseIndicatorColor": "#red",
-  "workbench.iconTheme": "vscode-icons"
+  "workbench.iconTheme": "vscode-icons",
+  "cSpell.words": [
+    "onclick"
+  ]
 }
