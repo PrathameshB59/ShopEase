@@ -1,6 +1,6 @@
 {% load static %}
 
-<nav class="navbar" role="navigation">
+<nav class="navbar">
     <div class="container">
         <div class="navbar-inner">
             <!-- Logo -->
@@ -10,12 +10,11 @@
                 </a>
             </div>
 
-            <!-- Search -->
+            <!-- Search (disabled until products app ready) -->
             <div class="navbar-search">
-                <form class="search-form" action="{% url 'products:product_list' %}" method="GET">
-                    <input type="search" name="q" class="search-input" placeholder="Search products..."
-                        value="{{ request.GET.q }}">
-                    <button type="submit" class="search-btn">
+                <form class="search-form">
+                    <input type="search" name="q" class="search-input" placeholder="Search products..." disabled>
+                    <button type="button" class="search-btn" disabled>
                         <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor">
                             <circle cx="11" cy="11" r="8" />
@@ -25,109 +24,57 @@
                 </form>
             </div>
 
-            <!-- Navigation -->
+            <!-- Navigation Links -->
             <ul class="navbar-nav">
                 <li class="nav-item">
                     <a href="{% url 'home' %}" class="nav-link">Home</a>
                 </li>
-
-                <!-- SHOP DROPDOWN -->
-                <li class="nav-item" style="position: relative;">
-                    <button type="button" class="nav-link" onclick="toggleShopDropdown(event)">
-                        Shop ▼
-                    </button>
-                    <ul class="shop-dropdown" id="shopDropdown">
-                        <li>
-                            <a href="{% url 'products:product_list' %}">All Products</a>
-                        </li>
-                        <li>
-                            <hr class="dropdown-divider">
-                        </li>
-                        {% load products_tags %}
-                        {% get_categories as categories %}
-                        {% for category in categories %}
-                        <li>
-                            <a href="{% url 'products:product_list' %}?category={{ category.slug }}">
-                                {{ category.name }}
-                                <span class="badge-count">{{ category.get_product_count }}</span>
-                            </a>
-                        </li>
-                        {% endfor %}
-                    </ul>
+                <li class="nav-item">
+                    <span class="nav-link" style="opacity: 0.5; cursor: not-allowed;">Shop (Coming Soon)</span>
                 </li>
             </ul>
 
-            <!-- Actions -->
+            <!-- User Actions -->
             <div class="navbar-actions">
-                <!-- Cart -->
-                <a href="{% url 'cart:view' %}" class="action-link">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <!-- Cart Button -->
+                <a href="{% url 'cart:cart_view' %}" class="action-link">
+                    <svg class="action-icon" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor">
                         <circle cx="9" cy="21" r="1" />
                         <circle cx="20" cy="21" r="1" />
                         <path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6" />
                     </svg>
-                    <span class="cart-badge" id="cartCount">0</span>
+                    <span class="badge" id="cartCount">0</span>
                 </a>
 
-                <!-- User -->
+                <!-- User Dropdown -->
                 {% if user.is_authenticated %}
-                <div style="position: relative;">
+                <div class="user-dropdown" id="userDropdown">
                     <button type="button" class="action-link" onclick="toggleUserDropdown(event)">
-                        {% if user.profile.avatar %}
-                        <img src="{{ user.profile.avatar.url }}" alt="{{ user.username }}" class="user-avatar">
-                        {% else %}
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <svg class="action-icon" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor">
                             <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
                             <circle cx="12" cy="7" r="4" />
                         </svg>
-                        {% endif %}
                     </button>
-                    <div class="user-dropdown" id="userDropdown">
-                        <div style="padding: 1rem; border-bottom: 1px solid #e5e7eb;">
-                            <strong>{{ user.username }}</strong><br>
-                            <small style="color: #6b7280;">{{ user.email }}</small>
+                    <div class="dropdown-menu">
+                        <div class="dropdown-header">
+                            <span class="user-name">{{ user.username }}</span>
                         </div>
-                        <a href="{% url 'accounts:profile' %}">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
-                                <circle cx="12" cy="7" r="4" />
-                            </svg>
-                            My Profile
-                        </a>
-                        <a href="{% url 'accounts:dashboard' %}">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                <rect x="3" y="3" width="7" height="7" />
-                                <rect x="14" y="3" width="7" height="7" />
-                                <rect x="14" y="14" width="7" height="7" />
-                                <rect x="3" y="14" width="7" height="7" />
-                            </svg>
-                            Dashboard
-                        </a>
-                        <a href="{% url 'cart:view' %}">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                <circle cx="9" cy="21" r="1" />
-                                <circle cx="20" cy="21" r="1" />
-                                <path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6" />
-                            </svg>
-                            My Cart
-                        </a>
-                        <hr class="dropdown-divider">
+                        <a href="{% url 'accounts:dashboard' %}" class="dropdown-item">Dashboard</a>
+                        <a href="{% url 'accounts:profile' %}" class="dropdown-item">Profile</a>
+                        <div class="dropdown-divider"></div>
                         <form method="POST" action="{% url 'accounts:logout' %}" style="margin: 0;">
                             {% csrf_token %}
-                            <button type="submit" style="width: 100%; text-align: left; color: #dc2626;">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                    <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
-                                    <polyline points="16 17 21 12 16 7" />
-                                    <line x1="21" y1="12" x2="9" y2="12" />
-                                </svg>
-                                Logout
-                            </button>
+                            <button type="submit" class="dropdown-item"
+                                style="width: 100%; text-align: left; background: none; border: none; cursor: pointer; font: inherit;">Logout</button>
                         </form>
                     </div>
                 </div>
                 {% else %}
                 <a href="{% url 'accounts:auth' %}" class="action-link">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <svg class="action-icon" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor">
                         <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
                         <circle cx="12" cy="7" r="4" />
                     </svg>
@@ -139,14 +86,13 @@
 </nav>
 
 <style>
-    /* NAVBAR - Clean & Simple */
     .navbar {
         position: sticky;
         top: 0;
         z-index: 1000;
         background: white;
         border-bottom: 1px solid #e5e7eb;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     }
 
     .navbar-inner {
@@ -157,21 +103,23 @@
     }
 
     .container {
+        width: 100%;
         max-width: 1280px;
         margin: 0 auto;
         padding: 0 1rem;
     }
 
-    /* Brand */
+    .brand-link {
+        text-decoration: none;
+    }
+
     .brand-text {
         font-family: 'Playfair Display', Georgia, serif;
         font-size: 1.5rem;
         font-weight: 700;
         color: #0f4c5c;
-        text-decoration: none;
     }
 
-    /* Search */
     .navbar-search {
         flex: 1;
         max-width: 500px;
@@ -179,20 +127,19 @@
 
     .search-form {
         position: relative;
+        display: flex;
     }
 
     .search-input {
-        width: 100%;
+        flex: 1;
         padding: 0.75rem 3rem 0.75rem 1rem;
         border: 1px solid #d1d5db;
         border-radius: 9999px;
-        font-size: 1rem;
     }
 
-    .search-input:focus {
-        outline: none;
-        border-color: #0f4c5c;
-        box-shadow: 0 0 0 3px rgba(15, 76, 92, 0.1);
+    .search-input:disabled {
+        background: #f3f4f6;
+        cursor: not-allowed;
     }
 
     .search-btn {
@@ -206,66 +153,125 @@
         background: #0f4c5c;
         color: white;
         border: none;
-        cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
     }
 
-    .search-icon {
-        stroke: currentColor;
-        stroke-width: 2;
+    .search-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
     }
 
-    /* Navigation */
     .navbar-nav {
         display: flex;
         gap: 2rem;
         list-style: none;
         margin: 0;
         padding: 0;
-        align-items: center;
     }
 
     .nav-link {
-        color: #374151;
-        font-weight: 500;
         font-size: 1rem;
+        font-weight: 500;
+        color: #374151;
         text-decoration: none;
-        background: none;
-        border: none;
-        cursor: pointer;
-        padding: 0.5rem 1rem;
-        transition: color 0.2s;
     }
 
     .nav-link:hover {
         color: #0f4c5c;
     }
 
-    /* SHOP DROPDOWN - BULLETPROOF */
-    .shop-dropdown {
+    .navbar-actions {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .action-link {
+        position: relative;
+        padding: 0.5rem;
+        color: #374151;
+        background: none;
+        border: none;
+        cursor: pointer;
+        text-decoration: none;
+    }
+
+    .action-link:hover {
+        color: #0f4c5c;
+    }
+
+    .action-icon {
+        width: 24px;
+        height: 24px;
+        stroke: currentColor;
+        stroke-width: 2;
+        fill: none;
+    }
+
+    .badge {
         position: absolute;
-        top: 100%;
-        left: 0;
-        margin-top: 0.5rem;
-        min-width: 220px;
+        top: -5px;
+        right: -5px;
+        background: #ef4444;
+        color: white;
+        font-size: 0.75rem;
+        font-weight: 700;
+        min-width: 20px;
+        height: 20px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 5px;
+    }
+
+    .user-dropdown {
+        position: relative;
+    }
+
+    .dropdown-menu {
+        position: absolute;
+        top: calc(100% + 0.5rem);
+        right: 0;
+        min-width: 200px;
         background: white;
         border: 1px solid #e5e7eb;
         border-radius: 8px;
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-        list-style: none;
-        padding: 0.5rem 0;
-        z-index: 9999;
-
-        /* HIDDEN BY DEFAULT */
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
         display: none;
     }
 
-    /* SHOW CLASS - CRITICAL! */
-    .shop-dropdown.open {
-        display: block !important;
-        animation: fadeIn 0.2s ease-out;
+    .user-dropdown.open .dropdown-menu {
+        display: block;
+        animation: fadeIn 0.2s;
+    }
+
+    .dropdown-header {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .user-name {
+        font-weight: 600;
+        color: #1f2937;
+    }
+
+    .dropdown-item {
+        display: block;
+        padding: 0.75rem 1rem;
+        color: #374151;
+        text-decoration: none;
+    }
+
+    .dropdown-item:hover {
+        background: #f9fafb;
+    }
+
+    .dropdown-divider {
+        height: 1px;
+        background: #e5e7eb;
+        margin: 0.5rem 0;
     }
 
     @keyframes fadeIn {
@@ -279,221 +285,17 @@
             transform: translateY(0);
         }
     }
-
-    .shop-dropdown li {
-        margin: 0;
-    }
-
-    .shop-dropdown a {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 0.75rem 1rem;
-        color: #374151;
-        text-decoration: none;
-        transition: background 0.2s;
-    }
-
-    .shop-dropdown a:hover {
-        background: #f3f4f6;
-        color: #0f4c5c;
-    }
-
-    .badge-count {
-        background: #f3f4f6;
-        color: #6b7280;
-        font-size: 0.75rem;
-        padding: 2px 8px;
-        border-radius: 9999px;
-        font-weight: 600;
-    }
-
-    .shop-dropdown a:hover .badge-count {
-        background: #0f4c5c;
-        color: white;
-    }
-
-    .dropdown-divider {
-        height: 1px;
-        background: #e5e7eb;
-        margin: 0.5rem 0;
-        border: none;
-    }
-
-    /* USER DROPDOWN */
-    .user-dropdown {
-        position: absolute;
-        top: 100%;
-        right: 0;
-        margin-top: 0.5rem;
-        min-width: 240px;
-        background: white;
-        border: 1px solid #e5e7eb;
-        border-radius: 8px;
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-        z-index: 9999;
-        display: none;
-    }
-
-    .user-dropdown.open {
-        display: block !important;
-        animation: fadeIn 0.2s ease-out;
-    }
-
-    .user-dropdown a,
-    .user-dropdown button {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        padding: 0.75rem 1rem;
-        color: #374151;
-        text-decoration: none;
-        background: none;
-        border: none;
-        cursor: pointer;
-        transition: background 0.2s;
-    }
-
-    .user-dropdown a:hover,
-    .user-dropdown button:hover {
-        background: #f3f4f6;
-        color: #0f4c5c;
-    }
-
-    .user-dropdown svg {
-        stroke-width: 2;
-        flex-shrink: 0;
-    }
-
-    /* Actions */
-    .navbar-actions {
-        display: flex;
-        gap: 1rem;
-        align-items: center;
-    }
-
-    .action-link {
-        position: relative;
-        color: #374151;
-        padding: 0.5rem;
-        cursor: pointer;
-        background: none;
-        border: none;
-        transition: color 0.2s;
-    }
-
-    .action-link:hover {
-        color: #0f4c5c;
-    }
-
-    .action-link svg {
-        stroke: currentColor;
-        stroke-width: 2;
-    }
-
-    .user-avatar {
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        object-fit: cover;
-        border: 2px solid #0f4c5c;
-    }
-
-    .cart-badge {
-        position: absolute;
-        top: -4px;
-        right: -4px;
-        background: #dc2626;
-        color: white;
-        font-size: 0.75rem;
-        padding: 2px 6px;
-        border-radius: 9999px;
-        min-width: 20px;
-        text-align: center;
-        line-height: 1;
-    }
 </style>
 
 <script>
-    /* BULLETPROOF DROPDOWN LOGIC */
-    console.log('🚀 Navbar loaded');
-
-    function toggleShopDropdown(event) {
-        event.stopPropagation();
-        console.log('🖱️ Shop clicked');
-
-        const dropdown = document.getElementById('shopDropdown');
-        const userDropdown = document.getElementById('userDropdown');
-
-        // Close user dropdown
-        if (userDropdown) {
-            userDropdown.classList.remove('open');
-        }
-
-        // Toggle shop dropdown
-        const isOpen = dropdown.classList.contains('open');
-        console.log('Was open:', isOpen);
-
-        if (isOpen) {
-            dropdown.classList.remove('open');
-            console.log('❌ Closed');
-        } else {
-            dropdown.classList.add('open');
-            console.log('✅ Opened - classes:', dropdown.className);
-        }
-    }
-
     function toggleUserDropdown(event) {
         event.stopPropagation();
-
+        document.getElementById('userDropdown').classList.toggle('open');
+    }
+    document.addEventListener('click', function (e) {
         const dropdown = document.getElementById('userDropdown');
-        const shopDropdown = document.getElementById('shopDropdown');
-
-        // Close shop dropdown
-        if (shopDropdown) {
-            shopDropdown.classList.remove('open');
-        }
-
-        // Toggle user dropdown
-        dropdown.classList.toggle('open');
-    }
-
-    // Close all dropdowns when clicking outside
-    document.addEventListener('click', function (event) {
-        const shopDropdown = document.getElementById('shopDropdown');
-        const userDropdown = document.getElementById('userDropdown');
-
-        if (shopDropdown && !shopDropdown.contains(event.target)) {
-            shopDropdown.classList.remove('open');
-        }
-
-        if (userDropdown && !userDropdown.contains(event.target)) {
-            userDropdown.classList.remove('open');
+        if (dropdown && !dropdown.contains(e.target)) {
+            dropdown.classList.remove('open');
         }
     });
-
-    // Close on Escape key
-    document.addEventListener('keydown', function (event) {
-        if (event.key === 'Escape') {
-            document.querySelectorAll('.shop-dropdown, .user-dropdown').forEach(el => {
-                el.classList.remove('open');
-            });
-        }
-    });
-
-    // Load cart count
-    async function updateCartCount() {
-        try {
-            const response = await fetch('/cart/data/');
-            const data = await response.json();
-            if (data.success) {
-                document.getElementById('cartCount').textContent = data.cart_count;
-            }
-        } catch (error) {
-            console.error('Cart count error:', error);
-        }
-    }
-
-    window.updateCartCount = updateCartCount;
-    updateCartCount();
 </script>

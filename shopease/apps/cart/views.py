@@ -1,34 +1,80 @@
 """
 ========================================
-SHOPPING CART VIEWS
+CART VIEWS - Shopping Cart Operations
 ========================================
+Handles all cart functionality: view, add, update, remove items.
 
-ARCHITECTURE: AJAX-based Cart Operations
------------------------------------------
-All cart operations (add, update, remove) use AJAX:
-- No page reloads (better UX)
-- Instant feedback
-- Real-time cart updates
-
-SECURITY:
+Security:
 - CSRF protection on all POST requests
-- Stock validation before adding
-- Price validation (fetch from DB, not frontend)
-- Session management (cart tied to session/user)
+- User authentication checks
+- Input validation
+- SQL injection prevention via ORM
 """
 
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import JsonResponse
 from django.contrib import messages
-from django.views.decorators.http import require_POST
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST, require_http_methods
 from django.contrib.auth.decorators import login_required
-from .cart import CartService
-from apps.products.models import Product
+from decimal import Decimal
 import json
+
+from .models import Cart, CartItem
+from apps.products.models import Product
 
 
 # ==========================================
-# CART PAGE VIEW
+# HELPER FUNCTIONS
+# ==========================================
+
+def get_or_create_cart(request):
+    """
+    Get or create cart for current user/session.
+    
+    Logic:
+    - Logged in users: Get cart by user
+    - Anonymous users: Get cart by session key
+    - Creates new cart if doesn't exist
+    
+    Security:
+    - Session key from Django (can't be forged)
+    - User from Django auth (can't be forged)
+    
+    Returns: Cart object
+    """
+    if request.user.is_authenticated:
+        # Logged in user - get cart by user
+        cart, created = Cart.objects.get_or_create(user=request.user)
+    else:
+        # Anonymous user - get cart by session
+        # Ensure session exists (Django creates it)
+        if not request.session.session_key:
+            request.session.create()
+        
+        session_key = request.session.session_key
+        cart, created = Cart.objects.get_or_create(session_key=session_key)
+    
+    return cart
+
+
+def get_cart_data(cart):
+    """
+    Prepare cart data for JSON response.
+    
+    Used by AJAX endpoints to return cart info.
+    
+    Returns: Dictionary with cart stats
+    """
+    return {
+        'count': cart.get_total_items(),
+        'subtotal': str(cart.get_subtotal()),
+        'tax': str(cart.get_tax()),
+        'total': str(cart.get_total()),
+    }
+
+
+# ==========================================
+# CART VIEW
 # ==========================================
 
 def cart_view(request):
@@ -37,377 +83,310 @@ def cart_view(request):
     
     URL: /cart/
     Method: GET
+    Template: cart/cart.html
     
-    Shows:
-    - All items in cart
-    - Quantities
-    - Prices
-    - Subtotal/total
-    - Proceed to checkout button
-    
-    Performance:
-    - Optimized queries with select_related
-    - Minimal database hits
+    Context:
+    - cart_items: QuerySet of CartItem objects
+    - subtotal: Decimal
+    - tax: Decimal  
+    - total: Decimal
     """
+    cart = get_or_create_cart(request)
     
-    # Initialize cart service
-    cart = CartService(request)
-    
-    # Get cart data
-    cart_data = cart.get_cart_data()
+    # Get all items in cart with product details
+    # select_related('product'): Fetch product in same query (performance)
+    cart_items = cart.items.select_related('product', 'product__category').all()
     
     context = {
-        'cart_items': cart_data['items'],
-        'cart_count': cart_data['item_count'],
-        'subtotal': cart_data['subtotal'],
-        'total': cart_data['total'],
-        'has_items': cart_data['has_items'],
-        'page_title': 'Shopping Cart'
+        'cart_items': cart_items,
+        'subtotal': cart.get_subtotal(),
+        'tax': cart.get_tax(),
+        'total': cart.get_total(),
+        'cart_count': cart.get_total_items(),
     }
     
     return render(request, 'cart/cart.html', context)
 
 
 # ==========================================
-# ADD TO CART (AJAX)
+# ADD TO CART
 # ==========================================
 
 @require_POST
 def add_to_cart(request):
     """
-    Add product to cart via AJAX.
+    Add product to cart.
     
     URL: /cart/add/
-    Method: POST (AJAX)
+    Method: POST
+    Content-Type: application/json
     
-    Request body (JSON):
-        {
-            "product_id": 5,
-            "quantity": 2
-        }
+    Request Body:
+    {
+        "product_id": 123,
+        "quantity": 1
+    }
     
-    Response (JSON):
-        {
-            "success": true,
-            "message": "Added to cart",
-            "cart_count": 3,
-            "cart_total": "149.99"
-        }
+    Response:
+    {
+        "success": true,
+        "message": "Product added to cart",
+        "cart_count": 3,
+        "cart_total": "149.97"
+    }
     
-    SECURITY:
+    Security:
     - CSRF token required
-    - Product validation (exists, active, in stock)
-    - Quantity validation (positive integer, <= stock)
-    - Price fetched from database (not frontend)
+    - Validates product exists
+    - Validates quantity > 0
+    - Validates quantity <= stock
     """
-    
     try:
         # Parse JSON request body
         data = json.loads(request.body)
         product_id = data.get('product_id')
-        quantity = data.get('quantity', 1)
+        quantity = int(data.get('quantity', 1))
         
-        # Validate inputs
+        # Validation: Check inputs
         if not product_id:
             return JsonResponse({
                 'success': False,
                 'message': 'Product ID required'
-            })
+            }, status=400)
         
-        # Validate quantity
-        try:
-            quantity = int(quantity)
-            if quantity < 1:
+        if quantity < 1:
+            return JsonResponse({
+                'success': False,
+                'message': 'Quantity must be at least 1'
+            }, status=400)
+        
+        # Get product (404 if not found)
+        product = get_object_or_404(Product, id=product_id, is_active=True)
+        
+        # Check stock availability
+        if quantity > product.stock:
+            return JsonResponse({
+                'success': False,
+                'message': f'Only {product.stock} items available'
+            }, status=400)
+        
+        # Get or create cart
+        cart = get_or_create_cart(request)
+        
+        # Check if product already in cart
+        cart_item, created = CartItem.objects.get_or_create(
+            cart=cart,
+            product=product,
+            defaults={'quantity': quantity}
+        )
+        
+        if not created:
+            # Item exists - increase quantity
+            new_quantity = cart_item.quantity + quantity
+            
+            # Check stock for new quantity
+            if new_quantity > product.stock:
                 return JsonResponse({
                     'success': False,
-                    'message': 'Quantity must be at least 1'
-                })
-        except (ValueError, TypeError):
-            return JsonResponse({
-                'success': False,
-                'message': 'Invalid quantity'
-            })
+                    'message': f'Cannot add more. Only {product.stock} available.'
+                }, status=400)
+            
+            cart_item.quantity = new_quantity
+            cart_item.save()
+            message = f'Updated {product.name} quantity to {new_quantity}'
+        else:
+            # New item added
+            message = f'{product.name} added to cart'
         
-        # Add to cart via service layer
-        cart = CartService(request)
-        result = cart.add(product_id, quantity)
-        
-        # Return result
+        # Return success with cart data
         return JsonResponse({
-            'success': result['success'],
-            'message': result['message'],
-            'cart_count': result['cart_count'],
-            'cart_total': str(result['cart_total'])
+            'success': True,
+            'message': message,
+            'cart_data': get_cart_data(cart)
         })
-    
+        
     except json.JSONDecodeError:
         return JsonResponse({
             'success': False,
             'message': 'Invalid JSON'
-        })
+        }, status=400)
     
     except Exception as e:
-        # Log error for debugging
-        print(f"Cart add error: {str(e)}")
-        
         return JsonResponse({
             'success': False,
-            'message': 'An error occurred. Please try again.'
-        })
+            'message': str(e)
+        }, status=500)
 
 
 # ==========================================
-# UPDATE CART ITEM (AJAX)
+# UPDATE CART ITEM QUANTITY
 # ==========================================
 
 @require_POST
-def update_cart(request):
+def update_cart_item(request, item_id):
     """
-    Update item quantity in cart via AJAX.
+    Update cart item quantity.
     
-    URL: /cart/update/
-    Method: POST (AJAX)
+    URL: /cart/update/<item_id>/
+    Method: POST
+    Content-Type: application/json
     
-    Request body (JSON):
-        {
-            "product_id": 5,
-            "quantity": 3
-        }
+    Request Body:
+    {
+        "quantity": 3
+    }
     
-    Response (JSON):
-        {
-            "success": true,
-            "message": "Cart updated",
-            "cart_count": 3,
-            "cart_total": "179.97",
-            "item_total": "59.99"
-        }
+    Response:
+    {
+        "success": true,
+        "message": "Quantity updated",
+        "item_subtotal": "59.97",
+        "cart_data": {...}
+    }
     
-    Special cases:
-    - quantity = 0: Removes item
-    - quantity > stock: Returns error
+    Security:
+    - CSRF token required
+    - Validates item belongs to user's cart
+    - Validates quantity > 0 and <= stock
     """
-    
     try:
-        # Parse request
         data = json.loads(request.body)
-        product_id = data.get('product_id')
-        quantity = data.get('quantity')
+        quantity = int(data.get('quantity', 1))
         
-        # Validate inputs
-        if not product_id:
+        # Get cart for current user/session
+        cart = get_or_create_cart(request)
+        
+        # Get cart item (must belong to user's cart)
+        # Security: cart=cart ensures user can only update their items
+        cart_item = get_object_or_404(CartItem, id=item_id, cart=cart)
+        
+        # Validation: Quantity must be between 1 and stock
+        if quantity < 1:
             return JsonResponse({
                 'success': False,
-                'message': 'Product ID required'
-            })
+                'message': 'Quantity must be at least 1'
+            }, status=400)
         
-        try:
-            quantity = int(quantity)
-            if quantity < 0:
-                return JsonResponse({
-                    'success': False,
-                    'message': 'Invalid quantity'
-                })
-        except (ValueError, TypeError):
+        if quantity > cart_item.product.stock:
             return JsonResponse({
                 'success': False,
-                'message': 'Invalid quantity'
-            })
+                'message': f'Only {cart_item.product.stock} available'
+            }, status=400)
         
-        # Update cart
-        cart = CartService(request)
-        result = cart.update(product_id, quantity)
-        
-        # Calculate item total if item still exists
-        item_total = None
-        if result['success'] and quantity > 0:
-            # Get updated item
-            items = cart.get_items()
-            for item in items:
-                if item.product_id == int(product_id):
-                    item_total = str(item.get_total_price())
-                    break
+        # Update quantity
+        cart_item.quantity = quantity
+        cart_item.save()
         
         return JsonResponse({
-            'success': result['success'],
-            'message': result['message'],
-            'cart_count': result['cart_count'],
-            'cart_total': str(result['cart_total']),
-            'item_total': item_total
+            'success': True,
+            'message': 'Quantity updated',
+            'item_subtotal': str(cart_item.get_subtotal()),
+            'cart_data': get_cart_data(cart)
         })
-    
+        
     except json.JSONDecodeError:
         return JsonResponse({
             'success': False,
             'message': 'Invalid JSON'
-        })
+        }, status=400)
     
     except Exception as e:
-        print(f"Cart update error: {str(e)}")
         return JsonResponse({
             'success': False,
-            'message': 'An error occurred. Please try again.'
-        })
+            'message': str(e)
+        }, status=500)
 
 
 # ==========================================
-# REMOVE FROM CART (AJAX)
+# REMOVE FROM CART
 # ==========================================
 
 @require_POST
-def remove_from_cart(request):
+def remove_from_cart(request, item_id):
     """
-    Remove item from cart via AJAX.
+    Remove item from cart.
     
-    URL: /cart/remove/
-    Method: POST (AJAX)
+    URL: /cart/remove/<item_id>/
+    Method: POST
     
-    Request body (JSON):
-        {
-            "product_id": 5
-        }
+    Response:
+    {
+        "success": true,
+        "message": "Item removed from cart",
+        "cart_data": {...}
+    }
     
-    Response (JSON):
-        {
-            "success": true,
-            "message": "Item removed",
-            "cart_count": 2,
-            "cart_total": "99.98"
-        }
+    Security:
+    - CSRF token required
+    - Validates item belongs to user's cart
     """
-    
     try:
-        # Parse request
-        data = json.loads(request.body)
-        product_id = data.get('product_id')
+        # Get cart for current user/session
+        cart = get_or_create_cart(request)
         
-        # Validate input
-        if not product_id:
-            return JsonResponse({
-                'success': False,
-                'message': 'Product ID required'
-            })
+        # Get cart item (must belong to user's cart)
+        cart_item = get_object_or_404(CartItem, id=item_id, cart=cart)
         
-        # Remove from cart
-        cart = CartService(request)
-        result = cart.remove(product_id)
+        # Store product name for message
+        product_name = cart_item.product.name
+        
+        # Delete item
+        cart_item.delete()
         
         return JsonResponse({
-            'success': result['success'],
-            'message': result['message'],
-            'cart_count': result['cart_count'],
-            'cart_total': str(result['cart_total'])
+            'success': True,
+            'message': f'{product_name} removed from cart',
+            'cart_data': get_cart_data(cart)
         })
-    
-    except json.JSONDecodeError:
-        return JsonResponse({
-            'success': False,
-            'message': 'Invalid JSON'
-        })
-    
+        
     except Exception as e:
-        print(f"Cart remove error: {str(e)}")
         return JsonResponse({
             'success': False,
-            'message': 'An error occurred. Please try again.'
-        })
-
-
-# ==========================================
-# CLEAR CART (AJAX)
-# ==========================================
-
-@require_POST
-def clear_cart(request):
-    """
-    Remove all items from cart via AJAX.
-    
-    URL: /cart/clear/
-    Method: POST (AJAX)
-    
-    Response (JSON):
-        {
-            "success": true,
-            "message": "Cart cleared",
-            "cart_count": 0,
-            "cart_total": "0.00"
-        }
-    """
-    
-    try:
-        # Clear cart
-        cart = CartService(request)
-        result = cart.clear()
-        
-        return JsonResponse(result)
-    
-    except Exception as e:
-        print(f"Cart clear error: {str(e)}")
-        return JsonResponse({
-            'success': False,
-            'message': 'An error occurred. Please try again.'
-        })
+            'message': str(e)
+        }, status=500)
 
 
 # ==========================================
 # GET CART DATA (AJAX)
 # ==========================================
 
-def get_cart_data(request):
+def cart_data(request):
     """
-    Get current cart data via AJAX.
+    Get cart data as JSON.
     
     URL: /cart/data/
-    Method: GET (AJAX)
+    Method: GET
     
-    Response (JSON):
-        {
-            "success": true,
-            "cart_count": 3,
-            "cart_total": "149.99",
-            "items": [
-                {
-                    "product_id": 5,
-                    "product_name": "Product Name",
-                    "quantity": 2,
-                    "price": "49.99",
-                    "total": "99.98"
-                }
-            ]
-        }
+    Response:
+    {
+        "count": 3,
+        "subtotal": "149.97",
+        "tax": "14.99",
+        "total": "164.96"
+    }
     
-    Use case:
-    - Update cart count in navbar without page reload
-    - Refresh cart data after operations
+    Used by JavaScript to update cart count badge.
     """
+    cart = get_or_create_cart(request)
+    return JsonResponse(get_cart_data(cart))
+
+
+# ==========================================
+# CLEAR CART
+# ==========================================
+
+@require_POST
+def clear_cart(request):
+    """
+    Remove all items from cart.
     
-    try:
-        cart = CartService(request)
-        cart_data = cart.get_cart_data()
-        
-        # Format items for JSON
-        items = []
-        for item in cart_data['items']:
-            items.append({
-                'product_id': item.product.id,
-                'product_name': item.product.name,
-                'product_slug': item.product.slug,
-                'product_image': item.product.image.url if item.product.image else None,
-                'quantity': item.quantity,
-                'price': str(item.price_snapshot),
-                'total': str(item.get_total_price())
-            })
-        
-        return JsonResponse({
-            'success': True,
-            'cart_count': cart_data['item_count'],
-            'cart_total': str(cart_data['total']),
-            'items': items
-        })
+    URL: /cart/clear/
+    Method: POST
     
-    except Exception as e:
-        print(f"Get cart data error: {str(e)}")
-        return JsonResponse({
-            'success': False,
-            'message': 'An error occurred. Please try again.'
-        })
+    Security: CSRF token required
+    """
+    cart = get_or_create_cart(request)
+    cart.clear()
+    
+    messages.success(request, 'Cart cleared')
+    return redirect('cart:cart_view')

@@ -1,47 +1,48 @@
 """
 ========================================
-CART URL CONFIGURATION
+CART URLs - Routing Configuration
 ========================================
-Routes for shopping cart operations.
+Maps URLs to cart view functions.
+
+URL Pattern: /cart/...
 """
 
 from django.urls import path
 from . import views
 
-# Namespace for cart URLs
-# Access as: {% url 'cart:view' %}
-app_name = 'cart'
+app_name = 'cart'  # Namespace for cart URLs
 
 urlpatterns = [
-    # ==========================================
-    # CART PAGE
-    # ==========================================
+    # Cart view page
+    # URL: /cart/
+    # View: Display cart items
+    path('', views.cart_view, name='cart_view'),
     
-    # View cart
-    # GET: Display cart page with all items
-    path('', views.cart_view, name='view'),
+    # Add to cart (AJAX)
+    # URL: /cart/add/
+    # Method: POST
+    # Body: {"product_id": 123, "quantity": 1}
+    path('add/', views.add_to_cart, name='add_to_cart'),
     
-    # ==========================================
-    # CART OPERATIONS (AJAX)
-    # ==========================================
+    # Update cart item quantity (AJAX)
+    # URL: /cart/update/5/
+    # Method: POST
+    # Body: {"quantity": 3}
+    path('update/<int:item_id>/', views.update_cart_item, name='update_cart_item'),
     
-    # Add to cart
-    # POST (AJAX): Add product to cart
-    path('add/', views.add_to_cart, name='add'),
+    # Remove item from cart (AJAX)
+    # URL: /cart/remove/5/
+    # Method: POST
+    path('remove/<int:item_id>/', views.remove_from_cart, name='remove_from_cart'),
     
-    # Update cart item
-    # POST (AJAX): Update item quantity
-    path('update/', views.update_cart, name='update'),
-    
-    # Remove from cart
-    # POST (AJAX): Remove item from cart
-    path('remove/', views.remove_from_cart, name='remove'),
+    # Get cart data (AJAX)
+    # URL: /cart/data/
+    # Method: GET
+    # Returns: JSON with cart stats
+    path('data/', views.cart_data, name='cart_data'),
     
     # Clear cart
-    # POST (AJAX): Remove all items
-    path('clear/', views.clear_cart, name='clear'),
-    
-    # Get cart data
-    # GET (AJAX): Fetch current cart data
-    path('data/', views.get_cart_data, name='data'),
+    # URL: /cart/clear/
+    # Method: POST
+    path('clear/', views.clear_cart, name='clear_cart'),
 ]
