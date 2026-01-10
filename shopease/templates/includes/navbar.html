@@ -1,32 +1,21 @@
 {% load static %}
 
-<!-- ==========================================
-     NAVIGATION BAR - With Debug & Animations
-     ========================================== -->
-
-<nav class="navbar" role="navigation" aria-label="Main navigation">
+<nav class="navbar" role="navigation">
     <div class="container">
         <div class="navbar-inner">
-            <!-- ==========================================
-                 LOGO / BRAND
-                 ========================================== -->
-
+            <!-- Logo -->
             <div class="navbar-brand">
-                <a href="{% url 'home' %}" class="brand-link" aria-label="ShopEase Home">
+                <a href="{% url 'home' %}" class="brand-link">
                     <span class="brand-text">ShopEase</span>
                 </a>
             </div>
 
-            <!-- ==========================================
-                 SEARCH BAR
-                 ========================================== -->
-
+            <!-- Search -->
             <div class="navbar-search">
-                <form class="search-form" action="{% url 'products:product_list' %}" method="GET" role="search">
+                <form class="search-form" action="{% url 'products:product_list' %}" method="GET">
                     <input type="search" name="q" class="search-input" placeholder="Search products..."
-                        value="{{ request.GET.q }}" aria-label="Search products">
-
-                    <button type="submit" class="search-btn" aria-label="Submit search">
+                        value="{{ request.GET.q }}">
+                    <button type="submit" class="search-btn">
                         <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor">
                             <circle cx="11" cy="11" r="8" />
@@ -36,31 +25,20 @@
                 </form>
             </div>
 
-            <!-- ==========================================
-                 NAVIGATION LINKS
-                 ========================================== -->
-
-            <ul class="navbar-nav" id="navbar-nav">
+            <!-- Navigation -->
+            <ul class="navbar-nav">
                 <li class="nav-item">
-                    <a href="{% url 'home' %}" class="nav-link">
-                        Home
-                    </a>
+                    <a href="{% url 'home' %}" class="nav-link">Home</a>
                 </li>
 
-                <!-- Shop Dropdown - WITH ANIMATIONS -->
-                <li class="nav-item nav-dropdown">
-                    <button type="button" class="nav-link dropdown-toggle" id="shopDropdown" aria-expanded="false">
-                        Shop
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            class="chevron">
-                            <polyline points="6 9 12 15 18 9"></polyline>
-                        </svg>
+                <!-- SHOP DROPDOWN -->
+                <li class="nav-item" style="position: relative;">
+                    <button type="button" class="nav-link" onclick="toggleShopDropdown(event)">
+                        Shop ▼
                     </button>
-                    <ul class="dropdown-menu" id="shopDropdownMenu" aria-labelledby="shopDropdown">
+                    <ul class="shop-dropdown" id="shopDropdown">
                         <li>
-                            <a class="dropdown-item" href="{% url 'products:product_list' %}">
-                                All Products
-                            </a>
+                            <a href="{% url 'products:product_list' %}">All Products</a>
                         </li>
                         <li>
                             <hr class="dropdown-divider">
@@ -69,10 +47,9 @@
                         {% get_categories as categories %}
                         {% for category in categories %}
                         <li>
-                            <a class="dropdown-item"
-                                href="{% url 'products:product_list' %}?category={{ category.slug }}">
+                            <a href="{% url 'products:product_list' %}?category={{ category.slug }}">
                                 {{ category.name }}
-                                <span class="category-badge">{{ category.get_product_count }}</span>
+                                <span class="badge-count">{{ category.get_product_count }}</span>
                             </a>
                         </li>
                         {% endfor %}
@@ -80,57 +57,44 @@
                 </li>
             </ul>
 
-            <!-- ==========================================
-                 USER ACTIONS
-                 ========================================== -->
-
+            <!-- Actions -->
             <div class="navbar-actions">
-                <!-- Cart Icon -->
-                <a href="{% url 'cart:view' %}" class="action-link" aria-label="Shopping cart">
-                    <svg class="action-icon" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor">
+                <!-- Cart -->
+                <a href="{% url 'cart:view' %}" class="action-link">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <circle cx="9" cy="21" r="1" />
                         <circle cx="20" cy="21" r="1" />
                         <path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6" />
                     </svg>
-                    <span class="badge" id="cartCount">0</span>
+                    <span class="cart-badge" id="cartCount">0</span>
                 </a>
 
-                <!-- User Menu -->
+                <!-- User -->
                 {% if user.is_authenticated %}
-                <!-- Logged in user -->
-                <div class="user-dropdown">
-                    <button type="button" class="action-link" id="userDropdownBtn" aria-label="User menu"
-                        aria-expanded="false">
+                <div style="position: relative;">
+                    <button type="button" class="action-link" onclick="toggleUserDropdown(event)">
                         {% if user.profile.avatar %}
-                        <img src="{{ user.profile.avatar.url }}" alt="{{ user.username }}" class="user-avatar-small">
+                        <img src="{{ user.profile.avatar.url }}" alt="{{ user.username }}" class="user-avatar">
                         {% else %}
-                        <svg class="action-icon" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                             <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
                             <circle cx="12" cy="7" r="4" />
                         </svg>
                         {% endif %}
                     </button>
-
-                    <!-- User Dropdown Menu -->
-                    <div class="dropdown-menu user-dropdown-menu" id="userDropdownMenu">
-                        <div class="dropdown-header">
-                            <strong>{{ user.username }}</strong>
-                            <small>{{ user.email }}</small>
+                    <div class="user-dropdown" id="userDropdown">
+                        <div style="padding: 1rem; border-bottom: 1px solid #e5e7eb;">
+                            <strong>{{ user.username }}</strong><br>
+                            <small style="color: #6b7280;">{{ user.email }}</small>
                         </div>
-
-                        <div class="dropdown-divider"></div>
-
-                        <a href="{% url 'accounts:profile' %}" class="dropdown-item">
+                        <a href="{% url 'accounts:profile' %}">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                 <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
                                 <circle cx="12" cy="7" r="4" />
                             </svg>
                             My Profile
                         </a>
-
-                        <a href="{% url 'accounts:dashboard' %}" class="dropdown-item">
+                        <a href="{% url 'accounts:dashboard' %}">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                 <rect x="3" y="3" width="7" height="7" />
                                 <rect x="14" y="3" width="7" height="7" />
@@ -139,8 +103,7 @@
                             </svg>
                             Dashboard
                         </a>
-
-                        <a href="{% url 'cart:view' %}" class="dropdown-item">
+                        <a href="{% url 'cart:view' %}">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                 <circle cx="9" cy="21" r="1" />
                                 <circle cx="20" cy="21" r="1" />
@@ -148,12 +111,10 @@
                             </svg>
                             My Cart
                         </a>
-
-                        <div class="dropdown-divider"></div>
-
+                        <hr class="dropdown-divider">
                         <form method="POST" action="{% url 'accounts:logout' %}" style="margin: 0;">
                             {% csrf_token %}
-                            <button type="submit" class="dropdown-item logout">
+                            <button type="submit" style="width: 100%; text-align: left; color: #dc2626;">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                     <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
                                     <polyline points="16 17 21 12 16 7" />
@@ -165,10 +126,8 @@
                     </div>
                 </div>
                 {% else %}
-                <!-- Not logged in -->
-                <a href="{% url 'accounts:auth' %}" class="action-link" aria-label="Login">
-                    <svg class="action-icon" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor">
+                <a href="{% url 'accounts:auth' %}" class="action-link">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
                         <circle cx="12" cy="7" r="4" />
                     </svg>
@@ -180,17 +139,14 @@
 </nav>
 
 <style>
-    /* ==========================================
-       NAVBAR STYLES WITH SMOOTH ANIMATIONS
-       ========================================== */
-
+    /* NAVBAR - Clean & Simple */
     .navbar {
         position: sticky;
         top: 0;
         z-index: 1000;
         background: white;
         border-bottom: 1px solid #e5e7eb;
-        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
     }
 
     .navbar-inner {
@@ -201,30 +157,18 @@
     }
 
     .container {
-        width: 100%;
         max-width: 1280px;
-        margin-left: auto;
-        margin-right: auto;
-        padding-left: 1rem;
-        padding-right: 1rem;
+        margin: 0 auto;
+        padding: 0 1rem;
     }
 
     /* Brand */
-    .navbar-brand {
-        flex-shrink: 0;
-    }
-
-    .brand-link {
-        display: flex;
-        align-items: center;
-        text-decoration: none;
-    }
-
     .brand-text {
         font-family: 'Playfair Display', Georgia, serif;
         font-size: 1.5rem;
         font-weight: 700;
         color: #0f4c5c;
+        text-decoration: none;
     }
 
     /* Search */
@@ -235,17 +179,14 @@
 
     .search-form {
         position: relative;
-        display: flex;
     }
 
     .search-input {
-        flex: 1;
-        padding: 0.75rem 1rem;
-        padding-right: 3rem;
+        width: 100%;
+        padding: 0.75rem 3rem 0.75rem 1rem;
         border: 1px solid #d1d5db;
         border-radius: 9999px;
         font-size: 1rem;
-        transition: all 0.2s ease;
     }
 
     .search-input:focus {
@@ -259,153 +200,115 @@
         right: 0.5rem;
         top: 50%;
         transform: translateY(-50%);
-        display: flex;
-        align-items: center;
-        justify-content: center;
         width: 36px;
         height: 36px;
-        border-radius: 9999px;
+        border-radius: 50%;
         background: #0f4c5c;
         color: white;
         border: none;
         cursor: pointer;
-        transition: all 0.3s ease;
-    }
-
-    .search-btn:hover {
-        background: #0d3d4a;
-        transform: translateY(-50%) scale(1.05);
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
     .search-icon {
-        width: 20px;
-        height: 20px;
         stroke: currentColor;
         stroke-width: 2;
-        fill: none;
     }
 
     /* Navigation */
     .navbar-nav {
         display: flex;
         gap: 2rem;
-        align-items: center;
         list-style: none;
         margin: 0;
         padding: 0;
+        align-items: center;
     }
 
     .nav-link {
-        font-size: 1rem;
-        font-weight: 500;
         color: #374151;
+        font-weight: 500;
+        font-size: 1rem;
         text-decoration: none;
-        transition: color 0.3s ease;
         background: none;
         border: none;
         cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 0.4rem;
-        padding: 0.5rem 0;
+        padding: 0.5rem 1rem;
+        transition: color 0.2s;
     }
 
     .nav-link:hover {
         color: #0f4c5c;
     }
 
-    /* Chevron Animation */
-    .chevron {
-        transition: transform 0.3s ease;
-        stroke-width: 2.5;
-    }
-
-    .nav-dropdown.active .chevron {
-        transform: rotate(180deg);
-    }
-
-    /* Dropdown Menu - SMOOTH ANIMATIONS */
-    .nav-dropdown {
-        position: relative;
-    }
-
-    .dropdown-menu {
+    /* SHOP DROPDOWN - BULLETPROOF */
+    .shop-dropdown {
         position: absolute;
-        top: calc(100% + 0.5rem);
+        top: 100%;
         left: 0;
+        margin-top: 0.5rem;
         min-width: 220px;
         background: white;
         border: 1px solid #e5e7eb;
-        border-radius: 0.5rem;
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        border-radius: 8px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
         list-style: none;
         padding: 0.5rem 0;
+        z-index: 9999;
+
+        /* HIDDEN BY DEFAULT */
+        display: none;
+    }
+
+    /* SHOW CLASS - CRITICAL! */
+    .shop-dropdown.open {
+        display: block !important;
+        animation: fadeIn 0.2s ease-out;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .shop-dropdown li {
         margin: 0;
-        z-index: 1000;
-
-        /* ANIMATION SETUP */
-        opacity: 0;
-        visibility: hidden;
-        transform: translateY(-10px);
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        pointer-events: none;
     }
 
-    /* SHOW STATE - SMOOTH FADE IN */
-    .dropdown-menu.show {
-        opacity: 1;
-        visibility: visible;
-        transform: translateY(0);
-        pointer-events: auto;
-    }
-
-    .dropdown-menu li {
-        margin: 0;
-    }
-
-    .dropdown-item {
+    .shop-dropdown a {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 0.75rem;
         padding: 0.75rem 1rem;
         color: #374151;
         text-decoration: none;
-        font-size: 0.95rem;
-        transition: all 0.2s ease;
-        border: none;
-        background: none;
-        width: 100%;
-        text-align: left;
-        cursor: pointer;
+        transition: background 0.2s;
     }
 
-    .dropdown-item:hover {
+    .shop-dropdown a:hover {
         background: #f3f4f6;
         color: #0f4c5c;
-        transform: translateX(4px);
     }
 
-    .dropdown-item.logout {
-        color: #dc2626;
-    }
-
-    .dropdown-item svg {
-        stroke-width: 2;
-        flex-shrink: 0;
-    }
-
-    .category-badge {
+    .badge-count {
         background: #f3f4f6;
         color: #6b7280;
         font-size: 0.75rem;
         padding: 2px 8px;
         border-radius: 9999px;
         font-weight: 600;
-        transition: all 0.2s ease;
     }
 
-    .dropdown-item:hover .category-badge {
+    .shop-dropdown a:hover .badge-count {
         background: #0f4c5c;
         color: white;
     }
@@ -417,6 +320,51 @@
         border: none;
     }
 
+    /* USER DROPDOWN */
+    .user-dropdown {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        margin-top: 0.5rem;
+        min-width: 240px;
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        z-index: 9999;
+        display: none;
+    }
+
+    .user-dropdown.open {
+        display: block !important;
+        animation: fadeIn 0.2s ease-out;
+    }
+
+    .user-dropdown a,
+    .user-dropdown button {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem 1rem;
+        color: #374151;
+        text-decoration: none;
+        background: none;
+        border: none;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+
+    .user-dropdown a:hover,
+    .user-dropdown button:hover {
+        background: #f3f4f6;
+        color: #0f4c5c;
+    }
+
+    .user-dropdown svg {
+        stroke-width: 2;
+        flex-shrink: 0;
+    }
+
     /* Actions */
     .navbar-actions {
         display: flex;
@@ -426,278 +374,126 @@
 
     .action-link {
         position: relative;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 0.5rem;
         color: #374151;
+        padding: 0.5rem;
+        cursor: pointer;
         background: none;
         border: none;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        text-decoration: none;
+        transition: color 0.2s;
     }
 
     .action-link:hover {
         color: #0f4c5c;
-        transform: scale(1.1);
     }
 
-    .action-icon {
-        width: 24px;
-        height: 24px;
+    .action-link svg {
         stroke: currentColor;
         stroke-width: 2;
-        fill: none;
     }
 
-    /* User Avatar */
-    .user-avatar-small {
+    .user-avatar {
         width: 32px;
         height: 32px;
         border-radius: 50%;
         object-fit: cover;
         border: 2px solid #0f4c5c;
-        transition: all 0.3s ease;
     }
 
-    .user-avatar-small:hover {
-        border-color: #0d3d4a;
-        transform: scale(1.05);
-    }
-
-    /* Cart Badge - PULSE ANIMATION */
-    .badge {
+    .cart-badge {
         position: absolute;
         top: -4px;
         right: -4px;
         background: #dc2626;
         color: white;
         font-size: 0.75rem;
-        font-weight: 600;
         padding: 2px 6px;
         border-radius: 9999px;
         min-width: 20px;
         text-align: center;
         line-height: 1;
-        animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-
-        0%,
-        100% {
-            transform: scale(1);
-        }
-
-        50% {
-            transform: scale(1.1);
-        }
-    }
-
-    /* User Dropdown */
-    .user-dropdown {
-        position: relative;
-    }
-
-    .user-dropdown-menu {
-        right: 0;
-        left: auto;
-        min-width: 240px;
-    }
-
-    .dropdown-header {
-        padding: 1rem;
-        display: flex;
-        flex-direction: column;
-        gap: 0.25rem;
-    }
-
-    .dropdown-header strong {
-        color: #111827;
-        font-size: 0.875rem;
-    }
-
-    .dropdown-header small {
-        color: #6b7280;
-        font-size: 0.75rem;
-    }
-
-    /* Mobile responsive */
-    @media (max-width: 767px) {
-        .navbar-inner {
-            flex-wrap: wrap;
-        }
-
-        .navbar-search {
-            order: 3;
-            flex: 1 1 100%;
-            max-width: none;
-            margin-top: 1rem;
-        }
-
-        .navbar-nav {
-            gap: 1rem;
-        }
     }
 </style>
 
 <script>
-    /* ==========================================
-       NAVBAR JAVASCRIPT WITH DEBUG LOGS
-       ========================================== */
+    /* BULLETPROOF DROPDOWN LOGIC */
+    console.log('🚀 Navbar loaded');
 
-    console.log('🔧 Navbar script loading...');
+    function toggleShopDropdown(event) {
+        event.stopPropagation();
+        console.log('🖱️ Shop clicked');
 
-    document.addEventListener('DOMContentLoaded', function () {
-        console.log('✅ DOM Content Loaded');
+        const dropdown = document.getElementById('shopDropdown');
+        const userDropdown = document.getElementById('userDropdown');
 
-        // Shop Dropdown
-        const shopDropdownBtn = document.getElementById('shopDropdown');
-        const shopDropdownMenu = document.getElementById('shopDropdownMenu');
-        const shopDropdownParent = shopDropdownBtn?.closest('.nav-dropdown');
+        // Close user dropdown
+        if (userDropdown) {
+            userDropdown.classList.remove('open');
+        }
 
-        console.log('🔍 Shop Button:', shopDropdownBtn);
-        console.log('🔍 Shop Menu:', shopDropdownMenu);
-        console.log('🔍 Parent:', shopDropdownParent);
+        // Toggle shop dropdown
+        const isOpen = dropdown.classList.contains('open');
+        console.log('Was open:', isOpen);
 
-        if (shopDropdownBtn && shopDropdownMenu && shopDropdownParent) {
-            console.log('✅ All shop dropdown elements found!');
-
-            shopDropdownBtn.addEventListener('click', function (e) {
-                e.preventDefault();
-                e.stopPropagation(); // CRITICAL: Stop event from bubbling to document
-
-                console.log('🖱️ Shop button clicked!');
-
-                const isOpen = shopDropdownMenu.classList.contains('show');
-                console.log('📊 Currently open?', isOpen);
-
-                // Close OTHER dropdowns first
-                document.querySelectorAll('.dropdown-menu').forEach(menu => {
-                    if (menu !== shopDropdownMenu) {
-                        menu.classList.remove('show');
-                    }
-                });
-                document.querySelectorAll('.nav-dropdown').forEach(nav => {
-                    if (nav !== shopDropdownParent) {
-                        nav.classList.remove('active');
-                    }
-                });
-
-                // Toggle THIS dropdown
-                if (!isOpen) {
-                    shopDropdownMenu.classList.add('show');
-                    shopDropdownParent.classList.add('active');
-                    shopDropdownBtn.setAttribute('aria-expanded', 'true');
-                    console.log('✅ Opened dropdown');
-                } else {
-                    shopDropdownMenu.classList.remove('show');
-                    shopDropdownParent.classList.remove('active');
-                    shopDropdownBtn.setAttribute('aria-expanded', 'false');
-                    console.log('✅ Closed dropdown');
-                }
-
-                console.log('📊 Final classes:', shopDropdownMenu.className);
-            });
-
-            // IMPORTANT: Also stop propagation on menu clicks
-            shopDropdownMenu.addEventListener('click', function (e) {
-                e.stopPropagation();
-            });
+        if (isOpen) {
+            dropdown.classList.remove('open');
+            console.log('❌ Closed');
         } else {
-            console.error('❌ Shop dropdown elements NOT found!');
+            dropdown.classList.add('open');
+            console.log('✅ Opened - classes:', dropdown.className);
+        }
+    }
+
+    function toggleUserDropdown(event) {
+        event.stopPropagation();
+
+        const dropdown = document.getElementById('userDropdown');
+        const shopDropdown = document.getElementById('shopDropdown');
+
+        // Close shop dropdown
+        if (shopDropdown) {
+            shopDropdown.classList.remove('open');
         }
 
-        // User Dropdown
-        const userDropdownBtn = document.getElementById('userDropdownBtn');
-        const userDropdownMenu = document.getElementById('userDropdownMenu');
+        // Toggle user dropdown
+        dropdown.classList.toggle('open');
+    }
 
-        if (userDropdownBtn && userDropdownMenu) {
-            console.log('✅ User dropdown elements found');
+    // Close all dropdowns when clicking outside
+    document.addEventListener('click', function (event) {
+        const shopDropdown = document.getElementById('shopDropdown');
+        const userDropdown = document.getElementById('userDropdown');
 
-            userDropdownBtn.addEventListener('click', function (e) {
-                e.preventDefault(); // Add this
-                e.stopPropagation();
-                const isOpen = userDropdownMenu.classList.contains('show');
-
-                // Close OTHER dropdowns
-                document.querySelectorAll('.dropdown-menu').forEach(menu => {
-                    if (menu !== userDropdownMenu) {
-                        menu.classList.remove('show');
-                    }
-                });
-                document.querySelectorAll('.nav-dropdown').forEach(nav => {
-                    nav.classList.remove('active');
-                });
-
-                // Toggle THIS dropdown
-                if (!isOpen) {
-                    userDropdownMenu.classList.add('show');
-                    userDropdownBtn.setAttribute('aria-expanded', 'true');
-                } else {
-                    userDropdownMenu.classList.remove('show');
-                    userDropdownBtn.setAttribute('aria-expanded', 'false');
-                }
-            });
-
-            // Stop propagation on menu clicks
-            userDropdownMenu.addEventListener('click', function (e) {
-                e.stopPropagation();
-            });
+        if (shopDropdown && !shopDropdown.contains(event.target)) {
+            shopDropdown.classList.remove('open');
         }
 
-        // Close dropdowns when clicking outside
-        document.addEventListener('click', function (e) {
-            if (!e.target.closest('.nav-dropdown') && !e.target.closest('.user-dropdown')) {
-                document.querySelectorAll('.dropdown-menu').forEach(menu => {
-                    menu.classList.remove('show');
-                });
-                document.querySelectorAll('.nav-dropdown').forEach(nav => {
-                    nav.classList.remove('active');
-                });
-                document.querySelectorAll('[aria-expanded]').forEach(btn => {
-                    btn.setAttribute('aria-expanded', 'false');
-                });
-            }
-        });
-
-        // Close on escape key
-        document.addEventListener('keydown', function (e) {
-            if (e.key === 'Escape') {
-                document.querySelectorAll('.dropdown-menu').forEach(menu => {
-                    menu.classList.remove('show');
-                });
-                document.querySelectorAll('.nav-dropdown').forEach(nav => {
-                    nav.classList.remove('active');
-                });
-            }
-        });
-
-        // Load cart count
-        updateCartCount();
+        if (userDropdown && !userDropdown.contains(event.target)) {
+            userDropdown.classList.remove('open');
+        }
     });
 
-    /* ==========================================
-       UPDATE CART COUNT
-       ========================================== */
+    // Close on Escape key
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') {
+            document.querySelectorAll('.shop-dropdown, .user-dropdown').forEach(el => {
+                el.classList.remove('open');
+            });
+        }
+    });
 
+    // Load cart count
     async function updateCartCount() {
         try {
             const response = await fetch('/cart/data/');
             const data = await response.json();
-
             if (data.success) {
-                const cartBadge = document.getElementById('cartCount');
-                if (cartBadge) {
-                    cartBadge.textContent = data.cart_count;
-                }
+                document.getElementById('cartCount').textContent = data.cart_count;
             }
         } catch (error) {
-            console.error('Failed to load cart count:', error);
+            console.error('Cart count error:', error);
         }
     }
 
-    // Make function globally available
     window.updateCartCount = updateCartCount;
+    updateCartCount();
 </script>

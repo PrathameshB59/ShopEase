@@ -3,217 +3,220 @@
 <html lang="en">
 
 <head>
-    <!-- ========================================
+     <!-- ========================================
          META TAGS - Security & SEO
          ======================================== -->
 
-    <!-- Character encoding - ALWAYS UTF-8 for international support -->
-    <meta charset="UTF-8">
+     <!-- Character encoding - ALWAYS UTF-8 for international support -->
+     <meta charset="UTF-8">
 
-    <!-- Viewport - Essential for mobile responsiveness -->
-    <!-- width=device-width: Use device's actual width (not zoomed out) -->
-    <!-- initial-scale=1.0: Don't zoom in or out by default -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <!-- Viewport - Essential for mobile responsiveness -->
+     <!-- width=device-width: Use device's actual width (not zoomed out) -->
+     <!-- initial-scale=1.0: Don't zoom in or out by default -->
+     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <!-- X-UA-Compatible - Force latest IE rendering engine -->
-    <!-- Prevents old IE compatibility mode bugs -->
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+     <!-- X-UA-Compatible - Force latest IE rendering engine -->
+     <!-- Prevents old IE compatibility mode bugs -->
+     <meta http-equiv="X-UA-Compatible" content="IE=edge">
 
-    <!-- ========================================
+     <!-- ========================================
          SECURITY HEADERS (Critical!)
          ======================================== -->
 
-    <!-- Content Security Policy - Prevents XSS attacks -->
-    <!-- Restricts what resources (scripts, styles, images) can load -->
-    <!-- 'self': Only load resources from our domain -->
-    <!-- 'unsafe-inline': Allow inline styles (we'll remove this later for max security) -->
-    <!-- https://cdn.jsdelivr.net: Allow Bootstrap CDN -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; 
+     <!-- Content Security Policy - Prevents XSS attacks -->
+     <!-- Restricts what resources (scripts, styles, images) can load -->
+     <!-- 'self': Only load resources from our domain -->
+     <!-- 'unsafe-inline': Allow inline styles (we'll remove this later for max security) -->
+     <!-- https://cdn.jsdelivr.net: Allow Bootstrap CDN -->
+     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; 
                    style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; 
                    font-src 'self' https://fonts.gstatic.com;
                    script-src 'self' 'unsafe-inline';
                    img-src 'self' data: https:;">
 
-    <!-- X-Content-Type-Options - Prevents MIME type sniffing -->
-    <!-- Stops browsers from guessing file types (security risk) -->
-    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+     <!-- X-Content-Type-Options - Prevents MIME type sniffing -->
+     <!-- Stops browsers from guessing file types (security risk) -->
+     <meta http-equiv="X-Content-Type-Options" content="nosniff">
 
-    <!-- Referrer Policy - Controls what info is sent in Referer header -->
-    <!-- 'strict-origin-when-cross-origin': Don't leak full URL to other sites -->
-    <meta name="referrer" content="strict-origin-when-cross-origin">
+     <!-- Referrer Policy - Controls what info is sent in Referer header -->
+     <!-- 'strict-origin-when-cross-origin': Don't leak full URL to other sites -->
+     <meta name="referrer" content="strict-origin-when-cross-origin">
 
-    <!-- ========================================
+     <!-- ========================================
          SEO META TAGS
          ======================================== -->
 
-    <title>{% block title %}ShopEase - Premium Online Shopping{% endblock %}</title>
+     <title>{% block title %}ShopEase - Premium Online Shopping{% endblock %}</title>
 
-    <!-- Meta description - Shows in search results (150-160 chars optimal) -->
-    <meta name="description"
-        content="{% block meta_description %}Shop premium products with fast shipping and secure checkout. Discover curated collections at ShopEase.{% endblock %}">
+     <!-- Meta description - Shows in search results (150-160 chars optimal) -->
+     <meta name="description"
+          content="{% block meta_description %}Shop premium products with fast shipping and secure checkout. Discover curated collections at ShopEase.{% endblock %}">
 
-    <!-- Keywords - Less important for SEO now, but still good to have -->
-    <meta name="keywords" content="online shopping, e-commerce, premium products, secure checkout">
+     <!-- Keywords - Less important for SEO now, but still good to have -->
+     <meta name="keywords" content="online shopping, e-commerce, premium products, secure checkout">
 
-    <!-- Author -->
-    <meta name="author" content="ShopEase">
+     <!-- Author -->
+     <meta name="author" content="ShopEase">
 
-    <!-- Robots - Tell search engines how to index this page -->
-    <meta name="robots" content="index, follow">
+     <!-- Robots - Tell search engines how to index this page -->
+     <meta name="robots" content="index, follow">
 
-    <!-- ========================================
+     <!-- ========================================
          OPEN GRAPH (Social Media Sharing)
          ======================================== -->
 
-    <!-- When someone shares your link on Facebook/Twitter, this controls what they see -->
-    <meta property="og:title" content="{% block og_title %}ShopEase - Premium Online Shopping{% endblock %}">
-    <meta property="og:description"
-        content="{% block og_description %}Shop premium products with fast shipping and secure checkout.{% endblock %}">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="{{ request.build_absolute_uri }}">
-    <meta property="og:image" content="{% static 'images/og-image.jpg' %}">
+     <!-- When someone shares your link on Facebook/Twitter, this controls what they see -->
+     <meta property="og:title" content="{% block og_title %}ShopEase - Premium Online Shopping{% endblock %}">
+     <meta property="og:description"
+          content="{% block og_description %}Shop premium products with fast shipping and secure checkout.{% endblock %}">
+     <meta property="og:type" content="website">
+     <meta property="og:url" content="{{ request.build_absolute_uri }}">
+     <meta property="og:image" content="{% static 'images/og-image.jpg' %}">
 
-    <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="{% block twitter_title %}ShopEase{% endblock %}">
-    <meta name="twitter:description"
-        content="{% block twitter_description %}Premium online shopping experience{% endblock %}">
+     <!-- Twitter Card -->
+     <meta name="twitter:card" content="summary_large_image">
+     <meta name="twitter:title" content="{% block twitter_title %}ShopEase{% endblock %}">
+     <meta name="twitter:description"
+          content="{% block twitter_description %}Premium online shopping experience{% endblock %}">
 
-    <!-- ========================================
+     <!-- ========================================
          FAVICON (Browser Tab Icon)
          ======================================== -->
 
-    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'images/favicon-32x32.png' %}">
-    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'images/favicon-16x16.png' %}">
-    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'images/apple-touch-icon.png' %}">
+     <link rel="icon" type="image/png" sizes="32x32" href="{% static 'images/favicon-32x32.png' %}">
+     <link rel="icon" type="image/png" sizes="16x16" href="{% static 'images/favicon-16x16.png' %}">
+     <link rel="apple-touch-icon" sizes="180x180" href="{% static 'images/apple-touch-icon.png' %}">
 
-    <!-- ========================================
+     <!-- ========================================
          FONTS - Google Fonts for Typography
          ======================================== -->
 
-    <!-- Preconnect to Google Fonts - Speeds up font loading -->
-    <!-- dns-prefetch: Resolve DNS early -->
-    <!-- preconnect: Establish connection early (faster than dns-prefetch) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+     <!-- Preconnect to Google Fonts - Speeds up font loading -->
+     <!-- dns-prefetch: Resolve DNS early -->
+     <!-- preconnect: Establish connection early (faster than dns-prefetch) -->
+     <link rel="preconnect" href="https://fonts.googleapis.com">
+     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-    <!-- Load fonts - Playfair Display (elegant serif) + Inter (clean sans-serif) -->
-    <!-- display=swap: Show fallback font immediately, swap when custom font loads -->
-    <!-- This prevents invisible text during font loading (FOIT) -->
-    <link
-        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap"
-        rel="stylesheet">
+     <!-- Load fonts - Playfair Display (elegant serif) + Inter (clean sans-serif) -->
+     <!-- display=swap: Show fallback font immediately, swap when custom font loads -->
+     <!-- This prevents invisible text during font loading (FOIT) -->
+     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap"
+          rel="stylesheet">
 
-    <!-- ========================================
+     <!-- ========================================
          CSS STYLESHEETS - Load in Order
          ======================================== -->
 
-    <!-- Base CSS - Core styles, variables, resets -->
-    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+     <!-- Base CSS - Core styles, variables, resets -->
+     <link rel="stylesheet" href="{% static 'css/base.css' %}">
 
-    <!-- Page-specific CSS - Override base styles as needed -->
-    {% block extra_css %}{% endblock %}
+     <!-- Page-specific CSS - Override base styles as needed -->
+     {% block extra_css %}{% endblock %}
 
-    <!-- ========================================
+     <!-- ========================================
          PRELOAD CRITICAL RESOURCES
          ======================================== -->
 
-    <!-- Preload hero image for faster perceived performance -->
-    <!-- User sees hero image instantly instead of waiting for CSS to load -->
-    <link rel="preload" as="image" href="{% static 'images/hero-bg.jpg' %}" type="image/jpeg">
+     <!-- Preload hero image for faster perceived performance -->
+     <!-- User sees hero image instantly instead of waiting for CSS to load -->
+     <link rel="preload" as="image" href="{% static 'images/hero-bg.jpg' %}" type="image/jpeg">
 
-    <!-- ========================================
+     <!-- ========================================
          CSRF TOKEN (Django Security)
          ======================================== -->
 
-    <!-- CSRF token prevents Cross-Site Request Forgery attacks -->
-    <!-- Every POST request MUST include this token -->
-    <!-- Without it, malicious sites can't submit forms to your site -->
-    {% csrf_token %}
+     <!-- CSRF token prevents Cross-Site Request Forgery attacks -->
+     <!-- Every POST request MUST include this token -->
+     <!-- Without it, malicious sites can't submit forms to your site -->
+     {% csrf_token %}
 
-    <!-- Make CSRF token available to JavaScript -->
-    <!-- We'll need this for AJAX requests (cart updates, etc.) -->
-    <script>
-        // Store CSRF token in JavaScript variable
-        // Django generates unique token for each session
-        // Attackers can't guess this token
-        const csrftoken = '{{ csrf_token }}';
+     <!-- Make CSRF token available to JavaScript -->
+     <!-- We'll need this for AJAX requests (cart updates, etc.) -->
+     <script>
+          // Store CSRF token in JavaScript variable
+          // Django generates unique token for each session
+          // Attackers can't guess this token
+          const csrftoken = '{{ csrf_token }}';
 
-        // Store it in a cookie for easy access
-        // 'Secure' flag only sends over HTTPS (production)
-        // 'SameSite=Strict' prevents CSRF attacks
-        document.cookie = 'csrftoken=' + csrftoken + '; Secure; SameSite=Strict';
-    </script>
+          // Store it in a cookie for easy access
+          // 'Secure' flag only sends over HTTPS (production)
+          // 'SameSite=Strict' prevents CSRF attacks
+          document.cookie = 'csrftoken=' + csrftoken + '; Secure; SameSite=Strict';
+     </script>
+     <!-- Cart Notifications CSS -->
+     <link rel="stylesheet" href="{% static 'css/cart_notifications.css' %}">
 </head>
 
 <body>
-    <!-- ========================================
+     <!-- ========================================
          NAVIGATION BAR
          ======================================== -->
 
-    <!-- Include navbar component (DRY principle - Don't Repeat Yourself) -->
-    <!-- This navbar appears on ALL pages that extend base.html -->
-    {% include 'includes/navbar.html' %}
+     <!-- Include navbar component (DRY principle - Don't Repeat Yourself) -->
+     <!-- This navbar appears on ALL pages that extend base.html -->
+     {% include 'includes/navbar.html' %}
 
-    <!-- ========================================
+     <!-- ========================================
          FLASH MESSAGES
          ======================================== -->
 
-    <!-- Display success/error/info messages -->
-    <!-- Examples: "Product added to cart", "Login successful", "Invalid password" -->
-    {% include 'includes/messages.html' %}
+     <!-- Display success/error/info messages -->
+     <!-- Examples: "Product added to cart", "Login successful", "Invalid password" -->
+     {% include 'includes/messages.html' %}
 
-    <!-- ========================================
+     <!-- ========================================
          MAIN CONTENT AREA
          ======================================== -->
 
-    <main id="main-content" role="main">
-        <!-- Content from child templates goes here -->
-        <!-- Each page (home.html, product_list.html, etc.) fills this block -->
-        {% block content %}{% endblock %}
-    </main>
+     <main id="main-content" role="main">
+          <!-- Content from child templates goes here -->
+          <!-- Each page (home.html, product_list.html, etc.) fills this block -->
+          {% block content %}{% endblock %}
+     </main>
 
-    <!-- ========================================
+     <!-- ========================================
          FOOTER
          ======================================== -->
 
-    <!-- Include footer component -->
-    {% include 'includes/footer.html' %}
+     <!-- Include footer component -->
+     {% include 'includes/footer.html' %}
 
-    <!-- ========================================
+     <!-- ========================================
          JAVASCRIPT - Load at Bottom for Performance
          ======================================== -->
 
-    <!-- Why at bottom? -->
-    <!-- 1. Page content loads first (better user experience) -->
-    <!-- 2. Scripts can access DOM elements (they exist now) -->
-    <!-- 3. Doesn't block HTML parsing -->
+     <!-- Why at bottom? -->
+     <!-- 1. Page content loads first (better user experience) -->
+     <!-- 2. Scripts can access DOM elements (they exist now) -->
+     <!-- 3. Doesn't block HTML parsing -->
 
-    <!-- CSRF handling for AJAX requests -->
-    <script src="{% static 'js/csrf.js' %}"></script>
+     <!-- CSRF handling for AJAX requests -->
+     <script src="{% static 'js/csrf.js' %}"></script>
 
-    <!-- Main JavaScript -->
-    <script src="{% static 'js/main.js' %}"></script>
+     <!-- Main JavaScript -->
+     <script src="{% static 'js/main.js' %}"></script>
 
-    <!-- Page-specific JavaScript -->
-    {% block extra_js %}{% endblock %}
+     <!-- Page-specific JavaScript -->
+     {% block extra_js %}{% endblock %}
 
-    <!-- ========================================
+     <!-- ========================================
          GOOGLE ANALYTICS (Production Only)
          ======================================== -->
 
-    {% if not debug %}
-    <!-- Only load analytics in production (when DEBUG=False) -->
-    <!-- Don't track developers during development -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=YOUR-GA-ID"></script>
-    <script>
-        // Google Analytics tracking code
-        window.dataLayer = window.dataLayer || [];
-        function gtag() { dataLayer.push(arguments); }
-        gtag('js', new Date());
-        gtag('config', 'YOUR-GA-ID');
-    </script>
-    {% endif %}
+     {% if not debug %}
+     <!-- Only load analytics in production (when DEBUG=False) -->
+     <!-- Don't track developers during development -->
+     <script async src="https://www.googletagmanager.com/gtag/js?id=YOUR-GA-ID"></script>
+     <script>
+          // Google Analytics tracking code
+          window.dataLayer = window.dataLayer || [];
+          function gtag() { dataLayer.push(arguments); }
+          gtag('js', new Date());
+          gtag('config', 'YOUR-GA-ID');
+     </script>
+     {% endif %}
+     <!-- Cart Operations JavaScript -->
+     <script src="{% static 'js/cart_operations.js' %}"></script>
 </body>
 
 </html>
