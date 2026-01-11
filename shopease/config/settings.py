@@ -243,5 +243,5 @@ TWILIO_ENABLED = bool(TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN and TWILIO_PHONE_
 # Production: Send real SMS via Twilio
 if DEBUG and not TWILIO_ENABLED:
     print("\n" + "="*60)
-    print("📱 TWILIO NOT CONFIGURED - OTPs will print to console")
+    print("TWILIO NOT CONFIGURED - OTPs will print to console")
     print("="*60 + "\n")

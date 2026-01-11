@@ -34,11 +34,12 @@ from django.contrib.auth.views import (
 from django.urls import reverse_lazy
 from django.views.generic import CreateView
 from .forms import (
-    UserRegistrationForm, 
+    UserRegistrationForm,
     UserLoginForm,
     UserUpdateForm,
     ProfileUpdateForm
 )
+from .models import Profile
 from apps.cart.cart import CartService
 
 
@@ -515,22 +516,54 @@ class CustomPasswordResetCompleteView(PasswordResetCompleteView):
 def dashboard(request):
     """
     User dashboard overview.
-    
+
     URL: /accounts/dashboard/
-    
+
     Shows:
     - Recent orders
     - Order status
     - Saved addresses
     - Wishlist (TODO)
     - Account statistics
-    
+
     This is a placeholder for future implementation.
     """
+
+    # Calculate profile completion percentage
+    profile = request.user.profile
+    completion_items = [
+        bool(request.user.email),                    # Email verified
+        bool(profile.phone),                         # Phone number added
+        bool(profile.shipping_address_line1),        # Shipping address
+        bool(profile.avatar),                        # Profile picture
+    ]
+
+    completed_count = sum(completion_items)
+    total_items = len(completion_items)
+    profile_completion = int((completed_count / total_items) * 100)
+
+    # Get cart count
+    from apps.cart.cart import CartService
+    cart_service = CartService(request)
+    cart_count = cart_service.get_item_count()
+
+    # TODO: Get actual orders when orders app is implemented
+    # For now, use placeholder data
+    recent_orders = []
+    total_orders = 0
+    total_spent = 0.00
+    review_count = 0
+
     context = {
-        'page_title': 'Dashboard'
+        'page_title': 'Dashboard',
+        'profile_completion': profile_completion,
+        'cart_count': cart_count,
+        'recent_orders': recent_orders,
+        'total_orders': total_orders,
+        'total_spent': total_spent,
+        'review_count': review_count,
     }
-    
+
     return render(request, 'accounts/dashboard.html', context)
     
     # ==========================================
@@ -540,21 +573,21 @@ def dashboard(request):
 def send_otp(request):
     """
     Send OTP to phone number.
-    
+
     URL: /accounts/send-otp/
     Method: POST (AJAX)
-    
+
     Request body:
         {
             "phone": "+911234567890"
         }
-    
+
     Response:
         {
             "success": true,
             "message": "OTP sent successfully"
         }
-    
+
     Security:
     - Rate limiting needed (max 3 per hour)
     - Phone validation
@@ -564,43 +597,95 @@ def send_otp(request):
     from django.http import JsonResponse
     from django.views.decorators.csrf import csrf_exempt
     from django.contrib.auth.models import User
-    
+
+    print("\n" + "="*60)
+    print("OTP REQUEST RECEIVED")
+    print("="*60)
+
     if request.method != 'POST':
+        print("ERROR - Invalid method:", request.method)
         return JsonResponse({'success': False, 'message': 'Invalid method'})
-    
+
     try:
         data = json.loads(request.body)
         phone = data.get('phone', '').strip()
-        
+
+        print(f"Phone number received: {phone}")
+
         # Validate phone number
         if not phone or len(phone) < 10:
+            print(f"ERROR - Invalid phone number: {phone}")
             return JsonResponse({
                 'success': False,
                 'message': 'Invalid phone number'
             })
-        
+
         # Check if phone exists in database
+        # Try to find profile with exact match or without country code
+        profile = None
+
+        # Try exact match first
         try:
             profile = Profile.objects.get(phone=phone)
-            
+            print(f"SUCCESS - Profile found (exact match): {phone}")
+        except Profile.DoesNotExist:
+            # Try without +91 prefix
+            phone_without_prefix = phone.replace('+91', '')
+            try:
+                profile = Profile.objects.get(phone=phone_without_prefix)
+                print(f"SUCCESS - Profile found (without prefix): {phone_without_prefix}")
+                # Update profile with proper format
+                profile.phone = phone
+                profile.save()
+                print(f"Updated phone number to: {phone}")
+            except Profile.DoesNotExist:
+                # Try with +91 prefix if phone doesn't have it
+                if not phone.startswith('+91'):
+                    phone_with_prefix = '+91' + phone
+                    try:
+                        profile = Profile.objects.get(phone=phone_with_prefix)
+                        print(f"SUCCESS - Profile found (with prefix): {phone_with_prefix}")
+                    except Profile.DoesNotExist:
+                        pass
+
+        if profile:
+            import sys
+            print(f"User: {profile.user.username}", flush=True)
+
             # Generate and send OTP
-            profile.send_otp_sms()
-            
+            print("\n" + "*"*60, flush=True)
+            print("GENERATING OTP - CHECK BELOW FOR THE CODE", flush=True)
+            print("*"*60, flush=True)
+
+            otp_code = profile.send_otp_sms()
+
+            print("*"*60, flush=True)
+            print(f"OTP SENT SUCCESSFULLY: {otp_code}", flush=True)
+            print("*"*60 + "\n", flush=True)
+            sys.stdout.flush()
+
             return JsonResponse({
                 'success': True,
                 'message': f'OTP sent to {phone}',
                 'phone': phone
             })
-        
-        except Profile.DoesNotExist:
+        else:
+            print(f"ERROR - No profile found with phone: {phone}")
+            print("Available phone numbers in database:")
+            for p in Profile.objects.exclude(phone__isnull=True).exclude(phone=''):
+                print(f"   - {p.phone} ({p.user.username})")
+
             # New phone number - allow registration
             return JsonResponse({
                 'success': True,
                 'message': 'Phone number not registered. Please register first.',
                 'new_user': True
             })
-    
+
     except Exception as e:
+        print(f"ERROR: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return JsonResponse({
             'success': False,
             'message': str(e)

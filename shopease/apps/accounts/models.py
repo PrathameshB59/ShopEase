@@ -244,119 +244,122 @@ class Profile(models.Model):
             self.shipping_postal_code,
             self.shipping_country
         ])
-    
-def generate_otp(self):
-    """
-    Generate 6-digit OTP code.
-    
-    Returns: String (6-digit code)
-    Security: Random, unpredictable
-    """
-    import random
-    from django.utils import timezone
-    
-    # Generate random 6-digit code
-    code = ''.join([str(random.randint(0, 9)) for _ in range(6)])
-    
-    # Save to profile
-    self.otp_code = code
-    self.otp_created_at = timezone.now()
-    self.save()
-    
-    return code
 
-def verify_otp(self, code):
-    """
-    Verify OTP code.
-    
-    Args:
-        code: String (user-entered code)
-    
-    Returns: Boolean (valid or not)
-    
-    Security:
-    - Time limit: 10 minutes
-    - Single-use: Clears after verification
-    - Case-insensitive comparison
-    """
-    from django.utils import timezone
-    from datetime import timedelta
-    
-    # Check if OTP exists
-    if not self.otp_code:
-        return False
-    
-    # Check if OTP expired (10 minutes)
-    if self.otp_created_at:
-        expiry = self.otp_created_at + timedelta(minutes=10)
-        if timezone.now() > expiry:
-            # OTP expired
+    def generate_otp(self):
+        """
+        Generate 6-digit OTP code.
+
+        Returns: String (6-digit code)
+        Security: Random, unpredictable
+        """
+        import random
+        from django.utils import timezone
+
+        # Generate random 6-digit code
+        code = ''.join([str(random.randint(0, 9)) for _ in range(6)])
+
+        # Save to profile
+        self.otp_code = code
+        self.otp_created_at = timezone.now()
+        self.save()
+
+        return code
+
+    def verify_otp(self, code):
+        """
+        Verify OTP code.
+
+        Args:
+            code: String (user-entered code)
+
+        Returns: Boolean (valid or not)
+
+        Security:
+        - Time limit: 10 minutes
+        - Single-use: Clears after verification
+        - Case-insensitive comparison
+        """
+        from django.utils import timezone
+        from datetime import timedelta
+
+        # Check if OTP exists
+        if not self.otp_code:
+            return False
+
+        # Check if OTP expired (10 minutes)
+        if self.otp_created_at:
+            expiry = self.otp_created_at + timedelta(minutes=10)
+            if timezone.now() > expiry:
+                # OTP expired
+                self.otp_code = None
+                self.otp_created_at = None
+                self.save()
+                return False
+
+        # Verify code
+        if self.otp_code == code:
+            # Mark phone as verified
+            self.phone_verified = True
+            # Clear OTP (single-use)
             self.otp_code = None
             self.otp_created_at = None
             self.save()
-            return False
-    
-    # Verify code
-    if self.otp_code == code:
-        # Mark phone as verified
-        self.phone_verified = True
-        # Clear OTP (single-use)
-        self.otp_code = None
-        self.otp_created_at = None
-        self.save()
-        return True
-    
-    return False
+            return True
 
-def send_otp_sms(self):
-    """
-    Send OTP via SMS using Twilio.
-    
-    Development mode: Prints to console
-    Production mode: Sends real SMS via Twilio
-    
-    Returns: OTP code
-    """
-    from django.conf import settings
-    
-    # Generate OTP
-    code = self.generate_otp()
-    
-    # Check if Twilio is configured
-    if settings.TWILIO_ENABLED:
-        # PRODUCTION: Send real SMS via Twilio
-        try:
-            from twilio.rest import Client
-            
-            # Initialize Twilio client
-            client = Client(
-                settings.TWILIO_ACCOUNT_SID,
-                settings.TWILIO_AUTH_TOKEN
-            )
-            
-            # Send SMS
-            message = client.messages.create(
-                body=f"Your ShopEase verification code is: {code}\nValid for 10 minutes.\n\nDo not share this code with anyone.",
-                from_=settings.TWILIO_PHONE_NUMBER,
-                to=self.phone
-            )
-            
-            print(f"✅ SMS sent successfully to {self.phone} (SID: {message.sid})")
-            
-        except Exception as e:
-            # Log error but don't crash
-            print(f"❌ SMS sending failed: {str(e)}")
-            # Still return code so development can continue
-    
-    else:
-        # DEVELOPMENT: Print to console
-        print(f"\n{'='*60}")
-        print(f"📱 OTP for {self.phone}: {code}")
-        print(f"⏰ Valid for 10 minutes")
-        print(f"🔒 Do not share this code")
-        print(f"{'='*60}\n")
-    
-    return code
+        return False
+
+    def send_otp_sms(self):
+        """
+        Send OTP via SMS using Twilio.
+
+        Development mode: Prints to console
+        Production mode: Sends real SMS via Twilio
+
+        Returns: OTP code
+        """
+        from django.conf import settings
+
+        # Generate OTP
+        code = self.generate_otp()
+
+        # Check if Twilio is configured
+        if settings.TWILIO_ENABLED:
+            # PRODUCTION: Send real SMS via Twilio
+            try:
+                from twilio.rest import Client
+
+                # Initialize Twilio client
+                client = Client(
+                    settings.TWILIO_ACCOUNT_SID,
+                    settings.TWILIO_AUTH_TOKEN
+                )
+
+                # Send SMS
+                message = client.messages.create(
+                    body=f"Your ShopEase verification code is: {code}\nValid for 10 minutes.\n\nDo not share this code with anyone.",
+                    from_=settings.TWILIO_PHONE_NUMBER,
+                    to=self.phone
+                )
+
+                print(f"SUCCESS - SMS sent to {self.phone} (SID: {message.sid})")
+
+            except Exception as e:
+                # Log error but don't crash
+                print(f"ERROR - SMS sending failed: {str(e)}")
+                # Still return code so development can continue
+
+        else:
+            # DEVELOPMENT: Print to console
+            import sys
+            print(f"\n{'='*60}", flush=True)
+            print(f"*** OTP CODE: {code} ***", flush=True)
+            print(f"Phone: {self.phone}", flush=True)
+            print(f"Valid for 10 minutes", flush=True)
+            print(f"Do not share this code", flush=True)
+            print(f"{'='*60}\n", flush=True)
+            sys.stdout.flush()
+
+        return code
 
 # ==========================================
 # SIGNALS - Auto-create Profile

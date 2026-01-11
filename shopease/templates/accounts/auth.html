@@ -56,7 +56,10 @@
                         <div class="form-group">
                             <input type="text" id="loginOTP" class="form-control otp-input"
                                 placeholder="Enter 6-digit OTP" maxlength="6">
-                            <small class="form-help">OTP sent to <span id="phoneDisplay"></span></small>
+                            <small class="form-help">
+                                OTP sent to <span id="phoneDisplay"></span> ·
+                                <a href="javascript:void(0)" onclick="resendOTP()" style="color: #667eea; text-decoration: none;">Resend OTP</a>
+                            </small>
                         </div>
                         <button type="button" class="btn-submit" onclick="verifyLoginOTP()">Verify & Login</button>
                         <button type="button" class="btn-secondary" onclick="backToPhone()">Change Number</button>
@@ -132,6 +135,9 @@
             </div>
         </div>
     </div>
+
+    <!-- Notification Container -->
+    <div class="notification-container" id="notificationContainer"></div>
 </section>
 
 {% endblock %}
@@ -476,6 +482,150 @@
         transform: translateX(20%);
     }
 
+    /* MODERN NOTIFICATION SYSTEM */
+    .notification-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 10000;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        max-width: 420px;
+    }
+
+    .notification {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+        animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        border-left: 4px solid;
+        transition: all 0.3s;
+    }
+
+    .notification:hover {
+        transform: translateX(-5px);
+        box-shadow: 0 15px 50px rgba(0, 0, 0, 0.2);
+    }
+
+    .notification.success {
+        border-left-color: #10b981;
+        background: linear-gradient(to right, rgba(16, 185, 129, 0.05), white);
+    }
+
+    .notification.error {
+        border-left-color: #ef4444;
+        background: linear-gradient(to right, rgba(239, 68, 68, 0.05), white);
+    }
+
+    .notification.info {
+        border-left-color: #667eea;
+        background: linear-gradient(to right, rgba(102, 126, 234, 0.05), white);
+    }
+
+    .notification.warning {
+        border-left-color: #f59e0b;
+        background: linear-gradient(to right, rgba(245, 158, 11, 0.05), white);
+    }
+
+    .notification-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        font-weight: bold;
+        color: white;
+        font-size: 16px;
+    }
+
+    .notification.success .notification-icon {
+        background: linear-gradient(135deg, #10b981, #059669);
+    }
+
+    .notification.error .notification-icon {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+    }
+
+    .notification.info .notification-icon {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+    }
+
+    .notification.warning .notification-icon {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+    }
+
+    .notification-content {
+        flex: 1;
+    }
+
+    .notification-title {
+        font-weight: 600;
+        color: #111827;
+        margin-bottom: 6px;
+        font-size: 1rem;
+    }
+
+    .notification-message {
+        color: #6b7280;
+        font-size: 0.875rem;
+        line-height: 1.6;
+    }
+
+    .notification-close {
+        background: none;
+        border: none;
+        color: #9ca3af;
+        cursor: pointer;
+        font-size: 1.5rem;
+        padding: 0;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+        flex-shrink: 0;
+        border-radius: 4px;
+    }
+
+    .notification-close:hover {
+        color: #374151;
+        background: rgba(0, 0, 0, 0.05);
+    }
+
+    @keyframes slideIn {
+        from {
+            transform: translateX(450px);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    @keyframes slideOut {
+        from {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateX(450px);
+            opacity: 0;
+        }
+    }
+
+    .notification.removing {
+        animation: slideOut 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
     /* RESPONSIVE */
     @media (max-width: 768px) {
         .auth-panel {
@@ -493,6 +643,12 @@
 
         .form-row {
             grid-template-columns: 1fr;
+        }
+
+        .notification-container {
+            left: 10px;
+            right: 10px;
+            max-width: none;
         }
     }
 </style>
@@ -525,16 +681,70 @@
         });
     });
 
+    // Modern Notification System
+    function showNotification(title, message, type = 'info', duration = 5000) {
+        const container = document.getElementById('notificationContainer');
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+
+        const icons = {
+            success: '✓',
+            error: '✕',
+            info: 'i',
+            warning: '⚠'
+        };
+
+        notification.innerHTML = `
+            <div class="notification-icon">${icons[type]}</div>
+            <div class="notification-content">
+                <div class="notification-title">${title}</div>
+                <div class="notification-message">${message}</div>
+            </div>
+            <button class="notification-close" onclick="closeNotification(this)">×</button>
+        `;
+
+        container.appendChild(notification);
+
+        if (duration > 0) {
+            setTimeout(() => {
+                closeNotification(notification.querySelector('.notification-close'));
+            }, duration);
+        }
+
+        return notification;
+    }
+
+    function closeNotification(button) {
+        const notification = button.closest('.notification');
+        notification.classList.add('removing');
+        setTimeout(() => {
+            notification.remove();
+        }, 300);
+    }
+
     let currentPhone = '';
 
     async function sendLoginOTP() {
         const phoneInput = document.getElementById('loginPhone');
-        const phone = phoneInput.value.trim();
+        let phone = phoneInput.value.trim();
 
-        if (!phone.match(/^\+[0-9]{12}$/)) {
-            alert('Please enter valid phone number: +91XXXXXXXXXX');
+        // Auto-add +91 if not present
+        if (phone.match(/^[0-9]{10}$/)) {
+            phone = '+91' + phone;
+            phoneInput.value = phone;
+        }
+
+        // Validate phone format
+        if (!phone.match(/^\+91[0-9]{10}$/)) {
+            showNotification(
+                'Invalid Phone Number',
+                'Please enter a valid 10-digit phone number (with or without +91)',
+                'error'
+            );
             return;
         }
+
+        console.log('Sending OTP to:', phone);
 
         try {
             const response = await fetch('/accounts/send-otp/', {
@@ -547,24 +757,43 @@
             });
 
             const data = await response.json();
+            console.log('OTP Response:', data);
 
             if (data.success) {
                 if (data.new_user) {
-                    alert('Phone not registered. Please create an account first.');
-                    authBox.classList.add('active');
+                    showNotification(
+                        'Phone Not Registered',
+                        'This phone number is not registered. Please create an account first.',
+                        'warning',
+                        6000
+                    );
+                    setTimeout(() => authBox.classList.add('active'), 1500);
                 } else {
                     currentPhone = phone;
                     document.getElementById('phoneStep').style.display = 'none';
                     document.getElementById('otpStep').style.display = 'block';
                     document.getElementById('phoneDisplay').textContent = phone;
-                    alert(data.message);
+                    showNotification(
+                        'OTP Sent Successfully!',
+                        'Check your server console/terminal for the 6-digit OTP code.',
+                        'success',
+                        7000
+                    );
                 }
             } else {
-                alert(data.message || 'Failed to send OTP');
+                showNotification(
+                    'Failed to Send OTP',
+                    data.message || 'Something went wrong. Please try again.',
+                    'error'
+                );
             }
         } catch (error) {
             console.error('Error:', error);
-            alert('Something went wrong.');
+            showNotification(
+                'Network Error',
+                'Unable to connect to server. Please check your connection and try again.',
+                'error'
+            );
         }
     }
 
@@ -573,7 +802,11 @@
         const otp = otpInput.value.trim();
 
         if (otp.length !== 6) {
-            alert('Please enter 6-digit OTP');
+            showNotification(
+                'Invalid OTP',
+                'Please enter the complete 6-digit OTP code',
+                'error'
+            );
             return;
         }
 
@@ -590,22 +823,51 @@
             const data = await response.json();
 
             if (data.success) {
-                alert('Login successful!');
-                window.location.href = '/';
+                showNotification(
+                    'Login Successful!',
+                    'Redirecting to homepage...',
+                    'success',
+                    2000
+                );
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 1500);
             } else {
-                alert(data.message || 'Invalid OTP');
+                showNotification(
+                    'Verification Failed',
+                    data.message || 'Invalid or expired OTP. Please try again.',
+                    'error',
+                    6000
+                );
             }
         } catch (error) {
-            alert('Something went wrong.');
+            showNotification(
+                'Network Error',
+                'Unable to verify OTP. Please check your connection and try again.',
+                'error'
+            );
         }
     }
 
     function backToPhone() {
         document.getElementById('phoneStep').style.display = 'block';
         document.getElementById('otpStep').style.display = 'none';
+        document.getElementById('loginOTP').value = '';
+        showNotification(
+            'Phone Number Changed',
+            'Enter a new phone number to receive OTP',
+            'info',
+            3000
+        );
     }
 
     function resendOTP() {
+        showNotification(
+            'Resending OTP',
+            'Please wait while we send a new OTP code...',
+            'info',
+            3000
+        );
         sendLoginOTP();
     }
 

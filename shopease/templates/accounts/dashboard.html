@@ -168,9 +168,9 @@
                             <span>Phone number added</span>
                         </div>
 
-                        <div class="checklist-item {% if user.profile.address_line1 %}completed{% endif %}">
+                        <div class="checklist-item {% if user.profile.shipping_address_line1 %}completed{% endif %}">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                {% if user.profile.address_line1 %}
+                                {% if user.profile.shipping_address_line1 %}
                                 <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
                                 <path d="M22 4L12 14.01l-3-3" />
                                 {% else %}
