@@ -6,6 +6,7 @@
             <!-- Logo -->
             <div class="navbar-brand">
                 <a href="{% url 'home' %}" class="brand-link">
+                    <img src="{% static 'images/shopease icon.png' %}" alt="ShopEase Logo" class="brand-logo">
                     <span class="brand-text">ShopEase</span>
                 </a>
             </div>
@@ -163,6 +164,20 @@
     }
 
     /* Brand */
+    .brand-link {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-decoration: none;
+    }
+
+    .brand-logo {
+        width: 80px;
+        height: 80px;
+        object-fit: contain;
+        border-radius: 12px;
+    }
+
     .brand-text {
         font-family: 'Playfair Display', Georgia, serif;
         font-size: 1.5rem;
