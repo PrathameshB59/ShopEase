@@ -288,7 +288,10 @@ if not DEBUG:
     SECURE_HSTS_PRELOAD = True
 
 # Set ALLOWED_HOSTS
-ALLOWED_HOSTS = [
-    'yoursite.com',
-    'www.yoursite.com',
-]
+if DEBUG:
+    ALLOWED_HOSTS = ['localhost', '127.0.0.1', '[::1]']
+else:
+    ALLOWED_HOSTS = [
+        'yoursite.com',
+        'www.yoursite.com',
+    ]
