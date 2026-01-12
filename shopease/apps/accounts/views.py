@@ -26,10 +26,12 @@ from django.contrib import messages
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import (
-    PasswordResetView, 
+    PasswordResetView,
     PasswordResetDoneView,
     PasswordResetConfirmView,
-    PasswordResetCompleteView
+    PasswordResetCompleteView,
+    PasswordChangeView,
+    PasswordChangeDoneView
 )
 from django.urls import reverse_lazy
 from django.views.generic import CreateView
@@ -453,24 +455,25 @@ def profile(request):
 class CustomPasswordResetView(PasswordResetView):
     """
     Password reset request view.
-    
+
     URL: /accounts/password-reset/
-    
+
     Process:
     1. User enters email
     2. System sends reset link
     3. Link expires after 1 hour
     4. User clicks link, sets new password
-    
+
     SECURITY:
     - Email validation
     - Token generation (random, unique, time-limited)
     - Rate limiting (TODO: max 3 resets per hour)
     - No user enumeration (same message for valid/invalid email)
     """
-    
+
     template_name = 'accounts/password_reset.html'
-    email_template_name = 'accounts/password_reset_email.html'
+    email_template_name = 'accounts/password_reset_email.txt'  # Plain text version
+    html_email_template_name = 'accounts/password_reset_email.html'  # HTML version
     subject_template_name = 'accounts/password_reset_subject.txt'
     success_url = reverse_lazy('accounts:password_reset_done')
 
@@ -502,10 +505,47 @@ class CustomPasswordResetConfirmView(PasswordResetConfirmView):
 class CustomPasswordResetCompleteView(PasswordResetCompleteView):
     """
     Password reset complete (success message).
-    
+
     URL: /accounts/reset/done/
     """
     template_name = 'accounts/password_reset_complete.html'
+
+
+# ==========================================
+# PASSWORD CHANGE (For Logged-in Users)
+# ==========================================
+
+class CustomPasswordChangeView(PasswordChangeView):
+    """
+    Password change for logged-in users.
+
+    URL: /accounts/password-change/
+
+    Requires:
+    - User must be logged in (@login_required)
+    - Current password (for verification)
+    - New password (with validation)
+
+    Security:
+    - Validates current password before changing
+    - New password strength requirements
+    - Invalidates all other sessions after change
+
+    Difference from Password Reset:
+    - Password Change: For logged-in users (requires old password)
+    - Password Reset: For users who forgot password (email verification)
+    """
+    template_name = 'accounts/password_change.html'
+    success_url = reverse_lazy('accounts:password_change_done')
+
+
+class CustomPasswordChangeDoneView(PasswordChangeDoneView):
+    """
+    Password change success confirmation.
+
+    URL: /accounts/password-change/done/
+    """
+    template_name = 'accounts/password_change_done.html'
 
 
 # ==========================================

@@ -44,9 +44,9 @@ urlpatterns = [
     path('dashboard/', views.dashboard, name='dashboard'),
     
     # ==========================================
-    # PASSWORD RESET
+    # PASSWORD RESET (For users who forgot password)
     # ==========================================
-    
+
     # Step 1: Request password reset
     # User enters email
     path(
@@ -54,14 +54,14 @@ urlpatterns = [
         views.CustomPasswordResetView.as_view(),
         name='password_reset'
     ),
-    
+
     # Step 2: Email sent confirmation
     path(
         'password-reset/done/',
         views.CustomPasswordResetDoneView.as_view(),
         name='password_reset_done'
     ),
-    
+
     # Step 3: Set new password
     # Token in URL validates request
     path(
@@ -69,12 +69,30 @@ urlpatterns = [
         views.CustomPasswordResetConfirmView.as_view(),
         name='password_reset_confirm'
     ),
-    
+
     # Step 4: Success message
     path(
         'reset/done/',
         views.CustomPasswordResetCompleteView.as_view(),
         name='password_reset_complete'
+    ),
+
+    # ==========================================
+    # PASSWORD CHANGE (For logged-in users)
+    # ==========================================
+
+    # Change password (requires current password)
+    path(
+        'password-change/',
+        views.CustomPasswordChangeView.as_view(),
+        name='password_change'
+    ),
+
+    # Password change success
+    path(
+        'password-change/done/',
+        views.CustomPasswordChangeDoneView.as_view(),
+        name='password_change_done'
     ),
 
     # ==========================================

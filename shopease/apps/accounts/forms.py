@@ -109,23 +109,28 @@ class UserRegistrationForm(UserCreationForm):
 class UserLoginForm(AuthenticationForm):
     """
     Custom login form with styled fields.
-    
+
     Extends Django's AuthenticationForm.
-    
+
+    Features:
+    - Accepts email OR username for login
+    - Works with EmailOrUsernameBackend
+
     Security features (built-in):
     - Password hashing verification
     - Account lockout after failed attempts (add django-axes)
     - Session fixation prevention
     """
-    
+
     username = forms.CharField(
+        label='Email or Username',
         widget=forms.TextInput(attrs={
             'class': 'form-control',
-            'placeholder': 'Username',
+            'placeholder': 'Email or Username',
             'autofocus': True
         })
     )
-    
+
     password = forms.CharField(
         widget=forms.PasswordInput(attrs={
             'class': 'form-control',

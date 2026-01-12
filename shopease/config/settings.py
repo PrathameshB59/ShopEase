@@ -186,6 +186,13 @@ SESSION_SAVE_EVERY_REQUEST = False
 # AUTHENTICATION SETTINGS
 # ==========================================
 
+# Custom authentication backends (allows login with email OR username)
+# Multiple backends are tried in order until one succeeds
+AUTHENTICATION_BACKENDS = [
+    'apps.accounts.backends.EmailOrUsernameBackend',  # Try email/username first
+    'django.contrib.auth.backends.ModelBackend',      # Fallback to default
+]
+
 # Where to redirect after login/logout
 LOGIN_URL = '/accounts/login/'  # Where to redirect if @login_required
 LOGIN_REDIRECT_URL = '/'  # After successful login
@@ -254,15 +261,19 @@ RAZORPAY_KEY_SECRET = config('RAZORPAY_KEY_SECRET', default='')
 RAZORPAY_MERCHANT_NAME = config('RAZORPAY_MERCHANT_NAME', default='ShopEase')
 
 # Email Configuration
-if DEBUG:
-    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-else:
+# Use real SMTP if credentials are provided, otherwise use console backend
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+
+if EMAIL_HOST_USER and EMAIL_HOST_PASSWORD:
+    # Real email sending (Gmail SMTP)
     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
     EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
     EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
     EMAIL_USE_TLS = True
-    EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
-    EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+else:
+    # Development mode - print emails to console
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@shopease.com')
 ADMIN_EMAIL = config('ADMIN_EMAIL', default='admin@shopease.com')
