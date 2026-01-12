@@ -1,0 +1,250 @@
+<!--
+========================================
+ORDER LIST PAGE (Order History)
+========================================
+
+Shows user's order history.
+
+Copy this to: templates/checkout/order_list.html
+-->
+
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Orders - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .orders-container {
+        max-width: 1200px;
+        margin: 40px auto;
+        padding: 0 20px;
+    }
+
+    .page-header {
+        margin-bottom: 30px;
+    }
+
+    .page-title {
+        font-size: 28px;
+        font-weight: 700;
+        color: #333;
+    }
+
+    .order-card {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .order-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .order-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #eee;
+    }
+
+    .order-number {
+        font-size: 18px;
+        font-weight: 700;
+        color: #333;
+    }
+
+    .order-status {
+        display: inline-block;
+        padding: 6px 12px;
+        border-radius: 16px;
+        font-weight: 600;
+        font-size: 13px;
+    }
+
+    .status-completed {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .status-pending {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .status-cancelled {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .order-info {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-bottom: 15px;
+    }
+
+    .info-item {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .info-label {
+        font-size: 12px;
+        color: #666;
+        margin-bottom: 3px;
+    }
+
+    .info-value {
+        font-size: 14px;
+        color: #333;
+        font-weight: 500;
+    }
+
+    .order-total {
+        font-size: 18px;
+        font-weight: 700;
+        color: #007bff;
+    }
+
+    .view-order-btn {
+        display: inline-block;
+        padding: 10px 20px;
+        background: #007bff;
+        color: white;
+        text-decoration: none;
+        border-radius: 6px;
+        font-weight: 600;
+        transition: background 0.3s;
+    }
+
+    .view-order-btn:hover {
+        background: #0056b3;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .empty-icon {
+        font-size: 64px;
+        margin-bottom: 20px;
+    }
+
+    .empty-title {
+        font-size: 24px;
+        font-weight: 700;
+        color: #333;
+        margin-bottom: 10px;
+    }
+
+    .empty-text {
+        font-size: 16px;
+        color: #666;
+        margin-bottom: 20px;
+    }
+
+    .shop-now-btn {
+        display: inline-block;
+        padding: 12px 30px;
+        background: #28a745;
+        color: white;
+        text-decoration: none;
+        border-radius: 6px;
+        font-weight: 600;
+        transition: background 0.3s;
+    }
+
+    .shop-now-btn:hover {
+        background: #218838;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="orders-container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1 class="page-title">My Orders</h1>
+        <p style="color: #666;">View and manage your orders</p>
+    </div>
+
+    {% if orders %}
+    <!-- Orders List -->
+    {% for order in orders %}
+    <div class="order-card">
+        <!-- Order Header -->
+        <div class="order-header">
+            <div class="order-number">
+                Order #{{ order.order_id|slice:":8" }}
+            </div>
+            <div>
+                <span class="order-status status-{{ order.status|lower }}">
+                    {{ order.get_status_display }}
+                </span>
+            </div>
+        </div>
+
+        <!-- Order Info -->
+        <div class="order-info">
+            <div class="info-item">
+                <div class="info-label">Order Date</div>
+                <div class="info-value">
+                    {{ order.created_at|date:"M d, Y" }}
+                </div>
+            </div>
+
+            <div class="info-item">
+                <div class="info-label">Total Items</div>
+                <div class="info-value">
+                    {{ order.get_total_items }} item{{ order.get_total_items|pluralize }}
+                </div>
+            </div>
+
+            <div class="info-item">
+                <div class="info-label">Shipping To</div>
+                <div class="info-value">
+                    {{ order.shipping_city }}, {{ order.shipping_state }}
+                </div>
+            </div>
+
+            <div class="info-item">
+                <div class="info-label">Total Amount</div>
+                <div class="info-value order-total">
+                    ₹{{ order.total_amount|floatformat:2 }}
+                </div>
+            </div>
+        </div>
+
+        <!-- View Order Button -->
+        <a href="{% url 'orders:order_detail' order.order_id %}" class="view-order-btn">
+            View Order Details →
+        </a>
+    </div>
+    {% endfor %}
+
+    {% else %}
+    <!-- Empty State -->
+    <div class="empty-state">
+        <div class="empty-icon">📦</div>
+        <h2 class="empty-title">No orders yet</h2>
+        <p class="empty-text">
+            You haven't placed any orders yet. Start shopping to see your orders here!
+        </p>
+        <a href="{% url 'products:product_list' %}" class="shop-now-btn">
+            Start Shopping
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

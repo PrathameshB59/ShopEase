@@ -13,6 +13,7 @@ import os
 from pathlib import Path
 from decouple import config
 
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -46,7 +47,8 @@ INSTALLED_APPS = [
     'apps.products',
     'apps.core',
     'apps.cart',
-    'apps.accounts',      # ← ADD THIS
+    'apps.accounts',
+    'apps.orders',  # ADD THIS LINE# ← ADD THIS
 ]
 
 MIDDLEWARE = [
@@ -245,3 +247,48 @@ if DEBUG and not TWILIO_ENABLED:
     print("\n" + "="*60)
     print("TWILIO NOT CONFIGURED - OTPs will print to console")
     print("="*60 + "\n")
+    
+# Razorpay Configuration
+RAZORPAY_KEY_ID = config('RAZORPAY_KEY_ID', default='')
+RAZORPAY_KEY_SECRET = config('RAZORPAY_KEY_SECRET', default='')
+RAZORPAY_MERCHANT_NAME = config('RAZORPAY_MERCHANT_NAME', default='ShopEase')
+
+# Email Configuration
+if DEBUG:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
+    EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
+    EMAIL_USE_TLS = True
+    EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
+    EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@shopease.com')
+ADMIN_EMAIL = config('ADMIN_EMAIL', default='admin@shopease.com')
+
+# Currency Configuration
+DEFAULT_CURRENCY = 'INR'
+CURRENCY_SYMBOL = '₹'
+DEFAULT_TAX_RATE = 0.18  # 18% GST
+
+# Shipping Configuration
+SHIPPING_COST = 50.00
+FREE_SHIPPING_THRESHOLD = 1000.00
+
+# config/settings.py
+
+# Production settings
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+
+# Set ALLOWED_HOSTS
+ALLOWED_HOSTS = [
+    'yoursite.com',
+    'www.yoursite.com',
+]

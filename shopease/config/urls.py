@@ -28,6 +28,7 @@ urlpatterns = [
     path('', include('apps.core.urls')),
     path('cart/', include('apps.cart.urls', namespace='cart')), # <--- Check this line
     path('accounts/', include('apps.accounts.urls')),
+    path('orders/', include('apps.orders.urls', namespace='orders')),  # ADD THIS LINE
 ]
 
 if settings.DEBUG:

@@ -1,0 +1,433 @@
+<!--
+========================================
+CHECKOUT PAGE - FAKE VERSION (Development)
+========================================
+
+Simplified checkout without payment processing.
+
+Copy this to: templates/checkout/checkout.html
+-->
+
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Checkout - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Checkout page styles */
+    .checkout-container {
+        max-width: 1200px;
+        margin: 40px auto;
+        padding: 0 20px;
+    }
+
+    .checkout-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+        margin-top: 30px;
+    }
+
+    @media (max-width: 768px) {
+        .checkout-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .checkout-section {
+        background: white;
+        border-radius: 8px;
+        padding: 25px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .section-title {
+        font-size: 20px;
+        font-weight: 600;
+        margin-bottom: 20px;
+        color: #333;
+        border-bottom: 2px solid #007bff;
+        padding-bottom: 10px;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 500;
+        color: #555;
+    }
+
+    .form-group label .required {
+        color: #dc3545;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        font-size: 14px;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: #007bff;
+        box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+    }
+
+    .error {
+        color: #dc3545;
+        font-size: 13px;
+        margin-top: 5px;
+        display: block;
+    }
+
+    .help-text {
+        font-size: 12px;
+        color: #6c757d;
+        margin-top: 3px;
+        display: block;
+    }
+
+    /* Cart items */
+    .cart-item {
+        display: flex;
+        gap: 15px;
+        padding: 15px 0;
+        border-bottom: 1px solid #eee;
+    }
+
+    .cart-item:last-child {
+        border-bottom: none;
+    }
+
+    .item-image {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        border-radius: 5px;
+    }
+
+    .item-details {
+        flex: 1;
+    }
+
+    .item-name {
+        font-weight: 500;
+        color: #333;
+        margin-bottom: 5px;
+    }
+
+    .item-quantity {
+        color: #666;
+        font-size: 14px;
+    }
+
+    .item-price {
+        font-weight: 600;
+        color: #007bff;
+    }
+
+    /* Price breakdown */
+    .price-breakdown {
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 2px solid #eee;
+    }
+
+    .price-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        font-size: 14px;
+    }
+
+    .price-row.total {
+        font-size: 18px;
+        font-weight: 700;
+        color: #007bff;
+        border-top: 2px solid #eee;
+        margin-top: 10px;
+        padding-top: 15px;
+    }
+
+    /* Submit button */
+    .checkout-btn {
+        width: 100%;
+        padding: 15px;
+        background: #28a745;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.3s;
+        margin-top: 20px;
+    }
+
+    .checkout-btn:hover {
+        background: #218838;
+    }
+
+    /* Alert messages */
+    .alert {
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+    }
+
+    .alert-danger {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+
+    .alert-success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    .alert-warning {
+        background: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeaa7;
+    }
+
+    .badge {
+        display: inline-block;
+        padding: 5px 10px;
+        background: #ffc107;
+        color: #000;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 600;
+        margin-bottom: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="checkout-container">
+    <!-- Page header -->
+    <h1>Checkout</h1>
+    <div class="badge">⚠️ FAKE CHECKOUT MODE - No real payment</div>
+    <p>Fill in your shipping details below. Order will be created immediately.</p>
+
+    <!-- Show Django messages -->
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }}">
+        {{ message }}
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <div class="checkout-grid">
+        <!-- LEFT: Shipping Form -->
+        <div>
+            <form method="post">
+                {% csrf_token %}
+
+                <div class="checkout-section">
+                    <h2 class="section-title">Shipping Information</h2>
+
+                    <!-- Full Name -->
+                    <div class="form-group">
+                        <label for="{{ form.full_name.id_for_label }}">
+                            {{ form.full_name.label }}
+                            <span class="required">*</span>
+                        </label>
+                        {{ form.full_name }}
+                        {% if form.full_name.errors %}
+                        {% for error in form.full_name.errors %}
+                        <span class="error">{{ error }}</span>
+                        {% endfor %}
+                        {% endif %}
+                    </div>
+
+                    <!-- Email -->
+                    <div class="form-group">
+                        <label for="{{ form.email.id_for_label }}">
+                            {{ form.email.label }}
+                            <span class="required">*</span>
+                        </label>
+                        {{ form.email }}
+                        {% if form.email.errors %}
+                        {% for error in form.email.errors %}
+                        <span class="error">{{ error }}</span>
+                        {% endfor %}
+                        {% endif %}
+                    </div>
+
+                    <!-- Phone -->
+                    <div class="form-group">
+                        <label for="{{ form.phone.id_for_label }}">
+                            {{ form.phone.label }}
+                            <span class="required">*</span>
+                        </label>
+                        {{ form.phone }}
+                        {% if form.phone.errors %}
+                        {% for error in form.phone.errors %}
+                        <span class="error">{{ error }}</span>
+                        {% endfor %}
+                        {% endif %}
+                        {% if form.phone.help_text %}
+                        <span class="help-text">{{ form.phone.help_text }}</span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Address Line 1 -->
+                    <div class="form-group">
+                        <label for="{{ form.address_line1.id_for_label }}">
+                            {{ form.address_line1.label }}
+                            <span class="required">*</span>
+                        </label>
+                        {{ form.address_line1 }}
+                        {% if form.address_line1.errors %}
+                        {% for error in form.address_line1.errors %}
+                        <span class="error">{{ error }}</span>
+                        {% endfor %}
+                        {% endif %}
+                    </div>
+
+                    <!-- Address Line 2 -->
+                    <div class="form-group">
+                        <label for="{{ form.address_line2.id_for_label }}">
+                            {{ form.address_line2.label }}
+                        </label>
+                        {{ form.address_line2 }}
+                    </div>
+
+                    <!-- City, State, Postal Code -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                        <div class="form-group">
+                            <label for="{{ form.city.id_for_label }}">
+                                {{ form.city.label }}
+                                <span class="required">*</span>
+                            </label>
+                            {{ form.city }}
+                            {% if form.city.errors %}
+                            <span class="error">{{ form.city.errors.0 }}</span>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.state.id_for_label }}">
+                                {{ form.state.label }}
+                                <span class="required">*</span>
+                            </label>
+                            {{ form.state }}
+                            {% if form.state.errors %}
+                            <span class="error">{{ form.state.errors.0 }}</span>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.postal_code.id_for_label }}">
+                                {{ form.postal_code.label }}
+                                <span class="required">*</span>
+                            </label>
+                            {{ form.postal_code }}
+                            {% if form.postal_code.errors %}
+                            <span class="error">{{ form.postal_code.errors.0 }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Country -->
+                    <div class="form-group">
+                        <label for="{{ form.country.id_for_label }}">
+                            {{ form.country.label }}
+                            <span class="required">*</span>
+                        </label>
+                        {{ form.country }}
+                        {% if form.country.errors %}
+                        {% for error in form.country.errors %}
+                        <span class="error">{{ error }}</span>
+                        {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Order Notes -->
+                <div class="checkout-section" style="margin-top: 20px;">
+                    <h2 class="section-title">Order Notes (Optional)</h2>
+
+                    <div class="form-group">
+                        <label for="{{ form.order_notes.id_for_label }}">
+                            {{ form.order_notes.label }}
+                        </label>
+                        {{ form.order_notes }}
+                        {% if form.order_notes.help_text %}
+                        <span class="help-text">{{ form.order_notes.help_text }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Submit Button (inside LEFT column) -->
+                <button type="submit" class="checkout-btn">
+                    🚀 Place Order (Fake Checkout)
+                </button>
+            </form>
+        </div>
+
+        <!-- RIGHT: Order Summary -->
+        <div>
+            <div class="checkout-section">
+                <h2 class="section-title">Order Summary</h2>
+
+                <!-- Cart items -->
+                <div class="cart-items">
+                    {% for item in cart_items %}
+                    <div class="cart-item">
+                        {% if item.product.image %}
+                        <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" class="item-image">
+                        {% endif %}
+                        <div class="item-details">
+                            <div class="item-name">{{ item.product.name }}</div>
+                            <div class="item-quantity">Quantity: {{ item.quantity }}</div>
+                        </div>
+                        <div class="item-price">
+                            ₹{{ item.get_total|floatformat:2 }}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Price breakdown -->
+                <div class="price-breakdown">
+                    <div class="price-row">
+                        <span>Subtotal</span>
+                        <span>₹{{ subtotal|floatformat:2 }}</span>
+                    </div>
+                    <div class="price-row">
+                        <span>Tax (18% GST)</span>
+                        <span>₹{{ tax|floatformat:2 }}</span>
+                    </div>
+                    <div class="price-row">
+                        <span>Shipping</span>
+                        <span>
+                            {% if shipping > 0 %}
+                            ₹{{ shipping|floatformat:2 }}
+                            {% else %}
+                            <span style="color: #28a745; font-weight: 600;">FREE</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="price-row total">
+                        <span>Total</span>
+                        <span>₹{{ total|floatformat:2 }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

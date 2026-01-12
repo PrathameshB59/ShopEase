@@ -1,0 +1,342 @@
+<!--
+========================================
+ORDER DETAIL PAGE
+========================================
+
+Shows complete order information.
+
+Copy this to: templates/checkout/order_detail.html
+-->
+
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Order #{{ order.order_id|slice:":8" }} - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .order-container {
+        max-width: 900px;
+        margin: 40px auto;
+        padding: 0 20px;
+    }
+
+    .order-header {
+        background: white;
+        border-radius: 8px;
+        padding: 25px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+    }
+
+    .order-number {
+        font-size: 24px;
+        font-weight: 700;
+        color: #333;
+        margin-bottom: 10px;
+    }
+
+    .order-status {
+        display: inline-block;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 14px;
+    }
+
+    .status-completed {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .status-cancelled {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .order-section {
+        background: white;
+        border-radius: 8px;
+        padding: 25px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+    }
+
+    .section-title {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 15px;
+        color: #333;
+        border-bottom: 2px solid #007bff;
+        padding-bottom: 8px;
+    }
+
+    .info-row {
+        display: flex;
+        padding: 8px 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .info-row:last-child {
+        border-bottom: none;
+    }
+
+    .info-label {
+        font-weight: 600;
+        width: 150px;
+        color: #555;
+    }
+
+    .info-value {
+        flex: 1;
+        color: #333;
+    }
+
+    .order-item {
+        display: flex;
+        gap: 15px;
+        padding: 15px 0;
+        border-bottom: 1px solid #eee;
+    }
+
+    .order-item:last-child {
+        border-bottom: none;
+    }
+
+    .item-image {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        border-radius: 5px;
+    }
+
+    .item-details {
+        flex: 1;
+    }
+
+    .item-name {
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 5px;
+    }
+
+    .item-quantity {
+        color: #666;
+        font-size: 14px;
+    }
+
+    .item-price {
+        text-align: right;
+    }
+
+    .item-unit-price {
+        color: #666;
+        font-size: 14px;
+    }
+
+    .item-subtotal {
+        font-weight: 600;
+        color: #007bff;
+        font-size: 16px;
+    }
+
+    .price-summary {
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 2px solid #eee;
+    }
+
+    .price-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+    }
+
+    .price-row.total {
+        font-size: 20px;
+        font-weight: 700;
+        color: #007bff;
+        border-top: 2px solid #eee;
+        margin-top: 10px;
+        padding-top: 15px;
+    }
+
+    .btn {
+        display: inline-block;
+        padding: 12px 24px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-primary {
+        background: #007bff;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #0056b3;
+    }
+
+    .btn-danger {
+        background: #dc3545;
+        color: white;
+    }
+
+    .btn-danger:hover {
+        background: #c82333;
+    }
+
+    .btn-secondary {
+        background: #6c757d;
+        color: white;
+    }
+
+    .btn-secondary:hover {
+        background: #5a6268;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+    }
+
+    .alert {
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+    }
+
+    .alert-success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    .alert-danger {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="order-container">
+    <!-- Messages -->
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }}">
+        {{ message }}
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <!-- Order Header -->
+    <div class="order-header">
+        <div class="order-number">Order #{{ order.order_id|slice:":8" }}</div>
+        <div>
+            <span class="order-status status-{{ order.status|lower }}">
+                {{ order.get_status_display }}
+            </span>
+        </div>
+        <div style="margin-top: 10px; color: #666;">
+            Placed on {{ order.created_at|date:"F d, Y \a\t g:i A" }}
+        </div>
+    </div>
+
+    <!-- Shipping Information -->
+    <div class="order-section">
+        <h2 class="section-title">Shipping Information</h2>
+
+        <div class="info-row">
+            <div class="info-label">Name:</div>
+            <div class="info-value">{{ order.shipping_full_name }}</div>
+        </div>
+
+        <div class="info-row">
+            <div class="info-label">Email:</div>
+            <div class="info-value">{{ order.shipping_email }}</div>
+        </div>
+
+        <div class="info-row">
+            <div class="info-label">Phone:</div>
+            <div class="info-value">{{ order.shipping_phone }}</div>
+        </div>
+
+        <div class="info-row">
+            <div class="info-label">Address:</div>
+            <div class="info-value">
+                {{ order.shipping_address_line1 }}<br>
+                {% if order.shipping_address_line2 %}
+                {{ order.shipping_address_line2 }}<br>
+                {% endif %}
+                {{ order.shipping_city }}, {{ order.shipping_state }} {{ order.shipping_postal_code }}<br>
+                {{ order.shipping_country }}
+            </div>
+        </div>
+
+        {% if order.order_notes %}
+        <div class="info-row">
+            <div class="info-label">Order Notes:</div>
+            <div class="info-value">{{ order.order_notes }}</div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Order Items -->
+    <div class="order-section">
+        <h2 class="section-title">Order Items ({{ order.get_total_items }} items)</h2>
+
+        {% for item in order.items.all %}
+        <div class="order-item">
+            {% if item.product.image %}
+            <img src="{{ item.product.image.url }}" alt="{{ item.product_name }}" class="item-image">
+            {% endif %}
+
+            <div class="item-details">
+                <div class="item-name">{{ item.product_name }}</div>
+                <div class="item-quantity">Quantity: {{ item.quantity }}</div>
+                {% if item.product_sku %}
+                <div class="item-quantity">SKU: {{ item.product_sku }}</div>
+                {% endif %}
+            </div>
+
+            <div class="item-price">
+                <div class="item-unit-price">₹{{ item.price|floatformat:2 }} each</div>
+                <div class="item-subtotal">₹{{ item.get_subtotal|floatformat:2 }}</div>
+            </div>
+        </div>
+        {% endfor %}
+
+        <!-- Price Summary -->
+        <div class="price-summary">
+            <div class="price-row total">
+                <span>Total Amount</span>
+                <span>₹{{ order.total_amount|floatformat:2 }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="action-buttons">
+        <a href="{% url 'orders:order_list' %}" class="btn btn-secondary">
+            ← Back to Orders
+        </a>
+
+        {% if order.can_be_cancelled %}
+        <form method="post" action="{% url 'orders:cancel_order' order.order_id %}"
+            onsubmit="return confirm('Are you sure you want to cancel this order?');">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">
+                Cancel Order
+            </button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
