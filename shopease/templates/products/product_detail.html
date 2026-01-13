@@ -248,6 +248,100 @@
 
                 <!-- Reviews Tab -->
                 <div id="reviews-tab" class="tab-panel">
+                    <!-- Review Form Section -->
+                    <div class="review-form-section">
+                        {% if user.is_authenticated %}
+                        <h3 class="review-form-title">Write a Review</h3>
+
+                        <!-- Check if user already reviewed this product -->
+                        {% if user_has_reviewed %}
+                        <div class="already-reviewed-message">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <circle cx="12" cy="12" r="10"/>
+                                <line x1="12" y1="8" x2="12" y2="12"/>
+                                <line x1="12" y1="16" x2="12.01" y2="16"/>
+                            </svg>
+                            <p>You have already reviewed this product. You can only submit one review per product.</p>
+                        </div>
+                        {% else %}
+                        <!-- User hasn't reviewed this product yet, show form -->
+                        <form method="POST" action="{% url 'products:submit_review' product.id %}" class="review-form">
+                            {% csrf_token %}
+
+                            <!-- Rating Selection -->
+                            <div class="form-group">
+                                <label for="id_rating">{{ review_form.rating.label }}</label>
+                                <div class="rating-options">
+                                    <label class="rating-option">
+                                        <input type="radio" name="rating" value="5" required>
+                                        <span class="rating-label">5 Stars - Excellent</span>
+                                    </label>
+                                    <label class="rating-option">
+                                        <input type="radio" name="rating" value="4" required>
+                                        <span class="rating-label">4 Stars - Good</span>
+                                    </label>
+                                    <label class="rating-option">
+                                        <input type="radio" name="rating" value="3" required>
+                                        <span class="rating-label">3 Stars - Average</span>
+                                    </label>
+                                    <label class="rating-option">
+                                        <input type="radio" name="rating" value="2" required>
+                                        <span class="rating-label">2 Stars - Poor</span>
+                                    </label>
+                                    <label class="rating-option">
+                                        <input type="radio" name="rating" value="1" required>
+                                        <span class="rating-label">1 Star - Terrible</span>
+                                    </label>
+                                </div>
+                                <small class="form-help">{{ review_form.rating.help_text }}</small>
+                            </div>
+
+                            <!-- Title Field -->
+                            <div class="form-group">
+                                <label for="id_title">{{ review_form.title.label }}</label>
+                                {{ review_form.title }}
+                                <small class="form-help">{{ review_form.title.help_text }}</small>
+                            </div>
+
+                            <!-- Comment Field -->
+                            <div class="form-group">
+                                <label for="id_comment">{{ review_form.comment.label }}</label>
+                                {{ review_form.comment }}
+                                <small class="form-help">{{ review_form.comment.help_text }}</small>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <button type="submit" class="btn-submit-review">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+                                </svg>
+                                Submit Review
+                            </button>
+                        </form>
+                        {% endif %}
+
+                        {% else %}
+                        <!-- User not logged in -->
+                        <div class="login-to-review">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+                                <circle cx="12" cy="7" r="4"/>
+                            </svg>
+                            <h3>Please log in to write a review</h3>
+                            <p>You must be logged in to share your experience with this product.</p>
+                            <a href="{% url 'accounts:login' %}?next={{ request.path }}" class="btn-login">
+                                Log In to Review
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Divider between form and reviews -->
+                    <div class="reviews-divider"></div>
+
+                    <!-- Existing Reviews Section -->
+                    <h3 class="reviews-section-title">Customer Reviews ({{ product.get_review_count }})</h3>
+
                     {% if reviews %}
                     <div class="reviews-list">
                         {% for review in reviews %}
@@ -879,6 +973,220 @@
 
     .no-reviews-message p {
         color: #9ca3af;
+    }
+
+    /* ==========================================
+   REVIEW FORM
+   ========================================== */
+    .review-form-section {
+        margin-bottom: 3rem;
+        padding: 2rem;
+        background: #f9fafb;
+        border-radius: 0.75rem;
+        border: 1px solid #e5e7eb;
+    }
+
+    .review-form-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #111827;
+        margin-bottom: 1.5rem;
+    }
+
+    .review-form {
+        max-width: 700px;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group label {
+        display: block;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 0.5rem;
+        font-size: 0.95rem;
+    }
+
+    .form-help {
+        display: block;
+        margin-top: 0.25rem;
+        font-size: 0.85rem;
+        color: #6b7280;
+    }
+
+    /* Rating Options */
+    .rating-options {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        margin-top: 0.5rem;
+    }
+
+    .rating-option {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem 1rem;
+        background: white;
+        border: 2px solid #e5e7eb;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .rating-option:hover {
+        border-color: #0f4c5c;
+        background: #f0f9ff;
+    }
+
+    .rating-option input[type="radio"] {
+        margin-right: 0.75rem;
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+    }
+
+    .rating-option input[type="radio"]:checked + .rating-label {
+        color: #0f4c5c;
+        font-weight: 600;
+    }
+
+    .rating-option:has(input[type="radio"]:checked) {
+        border-color: #0f4c5c;
+        background: #f0f9ff;
+    }
+
+    .rating-label {
+        font-size: 0.95rem;
+        color: #374151;
+    }
+
+    /* Form Input Fields */
+    .form-input,
+    .form-textarea {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 2px solid #d1d5db;
+        border-radius: 0.5rem;
+        font-size: 1rem;
+        font-family: inherit;
+        transition: border-color 0.2s;
+    }
+
+    .form-input:focus,
+    .form-textarea:focus {
+        outline: none;
+        border-color: #0f4c5c;
+        box-shadow: 0 0 0 3px rgba(15, 76, 92, 0.1);
+    }
+
+    .form-textarea {
+        resize: vertical;
+        min-height: 120px;
+    }
+
+    /* Submit Button */
+    .btn-submit-review {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.875rem 2rem;
+        background: #0f4c5c;
+        color: white;
+        border: none;
+        border-radius: 0.5rem;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        margin-top: 1rem;
+    }
+
+    .btn-submit-review:hover {
+        background: #0d3d4a;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-submit-review svg {
+        stroke-width: 2;
+    }
+
+    /* Login to Review */
+    .login-to-review {
+        text-align: center;
+        padding: 2rem;
+    }
+
+    .login-to-review svg {
+        color: #d1d5db;
+        margin-bottom: 1rem;
+    }
+
+    .login-to-review h3 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 0.5rem;
+    }
+
+    .login-to-review p {
+        color: #6b7280;
+        margin-bottom: 1.5rem;
+    }
+
+    .btn-login {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.75rem 1.5rem;
+        background: #0f4c5c;
+        color: white;
+        text-decoration: none;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        transition: all 0.2s;
+    }
+
+    .btn-login:hover {
+        background: #0d3d4a;
+        transform: translateY(-2px);
+    }
+
+    /* Already Reviewed Message */
+    .already-reviewed-message {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem 1.5rem;
+        background: #fef3c7;
+        border: 1px solid #fcd34d;
+        border-radius: 0.5rem;
+        color: #92400e;
+    }
+
+    .already-reviewed-message svg {
+        flex-shrink: 0;
+        stroke-width: 2;
+    }
+
+    .already-reviewed-message p {
+        margin: 0;
+        font-weight: 500;
+    }
+
+    /* Reviews Divider */
+    .reviews-divider {
+        height: 1px;
+        background: #e5e7eb;
+        margin: 2rem 0;
+    }
+
+    .reviews-section-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #111827;
+        margin-bottom: 1.5rem;
     }
 
     /* ==========================================

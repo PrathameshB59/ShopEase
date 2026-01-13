@@ -36,25 +36,38 @@ urlpatterns = [
     # View: views.product_list
     # Usage: {% url 'products:product_list' %}
     path('', views.product_list, name='product_list'),
-    
+
     # Category products list
     # URL: /products/category/electronics/
     # Name: 'products:category'
     # View: views.category_products
     # Usage: {% url 'products:category' category.slug %}
-    # 
+    #
     # Why 'category/' prefix:
     # - Distinguishes from product detail URLs
     # - Prevents conflicts (what if product slug is 'electronics'?)
     # - More explicit and clear
     path('category/<slug:slug>/', views.category_products, name='category'),
-    
+
+    # Submit product review
+    # URL: /products/review/123/
+    # Name: 'products:submit_review'
+    # View: views.submit_review
+    # Usage: {% url 'products:submit_review' product.id %}
+    #
+    # Why 'review/' prefix:
+    # - POST endpoint for review submission
+    # - Uses product ID (not slug) for uniqueness
+    # - Requires authentication (@login_required)
+    # - Placed before product detail to avoid conflicts
+    path('review/<int:product_id>/', views.submit_review, name='submit_review'),
+
     # Product detail page
     # URL: /products/apple-iphone-15-pro/
     # Name: 'products:detail'
     # View: views.product_detail
     # Usage: {% url 'products:detail' product.slug %}
-    # 
+    #
     # Why last:
     # - Django matches URLs top-to-bottom
     # - More specific patterns go first

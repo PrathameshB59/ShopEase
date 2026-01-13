@@ -1,8 +1,11 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db.models import Q
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 from decimal import Decimal, InvalidOperation
-from .models import Product, Category
+from .models import Product, Category, Review
+from .forms import ReviewForm
 
 
 def product_list(request):
@@ -214,6 +217,14 @@ def product_detail(request, slug):
     reviews = product.reviews.filter(
         is_approved=True
     ).select_related('user').order_by('-created_at')[:10]
+
+    # Check if current user has already reviewed this product
+    user_has_reviewed = False
+    if request.user.is_authenticated:
+        user_has_reviewed = Review.objects.filter(
+            product=product,
+            user=request.user
+        ).exists()
     
     # Get related products (same category, exclude current)
     related_products = Product.objects.filter(
@@ -239,7 +250,78 @@ def product_detail(request, slug):
         'images': images,
         'reviews': reviews,
         'related_products': related_products,
-        'breadcrumbs': breadcrumbs
+        'breadcrumbs': breadcrumbs,
+        'review_form': ReviewForm(),  # Add empty form for new reviews
+        'user_has_reviewed': user_has_reviewed  # Flag to check if user already reviewed
     }
-    
+
     return render(request, 'products/product_detail.html', context)
+
+
+@login_required
+def submit_review(request, product_id):
+    """
+    Handle review submission for a product.
+
+    Security:
+    - @login_required: Only authenticated users can review
+    - Prevents duplicate reviews (one per user per product)
+    - CSRF protection via Django middleware
+    - Input validation via ReviewForm
+
+    URL: POST /products/review/<product_id>/
+    """
+
+    # Get product or 404
+    product = get_object_or_404(Product, id=product_id, is_active=True)
+
+    # Only accept POST requests
+    if request.method != 'POST':
+        messages.error(request, 'Invalid request method.')
+        return redirect('products:detail', slug=product.slug)
+
+    # Check if user already reviewed this product
+    existing_review = Review.objects.filter(
+        product=product,
+        user=request.user
+    ).first()
+
+    if existing_review:
+        messages.warning(
+            request,
+            'You have already reviewed this product. You can only submit one review per product.'
+        )
+        return redirect('products:detail', slug=product.slug)
+
+    # Process form
+    form = ReviewForm(request.POST)
+
+    if form.is_valid():
+        # Create review but don't save yet
+        review = form.save(commit=False)
+
+        # Set the user and product
+        review.user = request.user
+        review.product = product
+
+        # Save to database
+        review.save()
+
+        messages.success(
+            request,
+            'Thank you for your review! Your feedback helps other customers make informed decisions.'
+        )
+        return redirect('products:detail', slug=product.slug)
+    else:
+        # Form has validation errors
+        # Collect all error messages
+        error_messages = []
+        for field, errors in form.errors.items():
+            for error in errors:
+                error_messages.append(f"{field.title()}: {error}")
+
+        # Display errors to user
+        for error in error_messages:
+            messages.error(request, error)
+
+        return redirect('products:detail', slug=product.slug)

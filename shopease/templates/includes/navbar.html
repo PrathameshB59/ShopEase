@@ -34,8 +34,11 @@
 
                 <!-- SHOP DROPDOWN -->
                 <li class="nav-item" style="position: relative;">
-                    <button type="button" class="nav-link" onclick="toggleShopDropdown(event)">
-                        Shop ▼
+                    <button type="button" class="nav-link shop-toggle" id="shopToggleBtn" onclick="toggleShopDropdown(event)">
+                        Shop
+                        <svg class="dropdown-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
                     </button>
                     <ul class="shop-dropdown" id="shopDropdown">
                         <li>
@@ -258,6 +261,24 @@
         color: #0f4c5c;
     }
 
+    /* Shop Toggle Button with Arrow */
+    .shop-toggle {
+        display: flex;
+        align-items: center;
+        gap: 0.375rem;
+    }
+
+    /* Animated Dropdown Arrow */
+    .dropdown-arrow {
+        transition: transform 0.3s ease;
+        stroke: currentColor;
+    }
+
+    /* Rotate arrow when dropdown is open */
+    .shop-toggle.active .dropdown-arrow {
+        transform: rotate(180deg);
+    }
+
     /* SHOP DROPDOWN - BULLETPROOF */
     .shop-dropdown {
         position: absolute;
@@ -438,6 +459,7 @@
         console.log('🖱️ Shop clicked');
 
         const dropdown = document.getElementById('shopDropdown');
+        const toggleBtn = document.getElementById('shopToggleBtn');
         const userDropdown = document.getElementById('userDropdown');
 
         // Close user dropdown
@@ -451,9 +473,11 @@
 
         if (isOpen) {
             dropdown.classList.remove('open');
+            toggleBtn.classList.remove('active');
             console.log('❌ Closed');
         } else {
             dropdown.classList.add('open');
+            toggleBtn.classList.add('active');
             console.log('✅ Opened - classes:', dropdown.className);
         }
     }
@@ -476,10 +500,14 @@
     // Close all dropdowns when clicking outside
     document.addEventListener('click', function (event) {
         const shopDropdown = document.getElementById('shopDropdown');
+        const shopToggleBtn = document.getElementById('shopToggleBtn');
         const userDropdown = document.getElementById('userDropdown');
 
         if (shopDropdown && !shopDropdown.contains(event.target)) {
             shopDropdown.classList.remove('open');
+            if (shopToggleBtn) {
+                shopToggleBtn.classList.remove('active');
+            }
         }
 
         if (userDropdown && !userDropdown.contains(event.target)) {
@@ -490,9 +518,15 @@
     // Close on Escape key
     document.addEventListener('keydown', function (event) {
         if (event.key === 'Escape') {
+            const shopToggleBtn = document.getElementById('shopToggleBtn');
+
             document.querySelectorAll('.shop-dropdown, .user-dropdown').forEach(el => {
                 el.classList.remove('open');
             });
+
+            if (shopToggleBtn) {
+                shopToggleBtn.classList.remove('active');
+            }
         }
     });
 
