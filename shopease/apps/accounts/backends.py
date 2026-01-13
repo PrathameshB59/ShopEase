@@ -96,9 +96,20 @@ class EmailOrUsernameBackend(ModelBackend):
             return None
 
         except User.MultipleObjectsReturned:
-            # Multiple users found (shouldn't happen with unique constraints)
-            # This can occur if database has duplicate usernames/emails
-            # Return None for safety
+            # Multiple users found with same email (duplicate data)
+            # This shouldn't happen but can occur if email uniqueness wasn't enforced
+            # Strategy: Try to find the correct user by checking password on all matches
+            users = User.objects.filter(
+                Q(username__iexact=username) | Q(email__iexact=username)
+            ).filter(is_active=True)
+
+            # Try to authenticate each user with the provided password
+            for user in users:
+                if user.check_password(password):
+                    # Found matching user with correct password
+                    return user
+
+            # No user matched the password
             return None
 
     def get_user(self, user_id):
