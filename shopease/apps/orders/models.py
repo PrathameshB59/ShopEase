@@ -229,17 +229,21 @@ class OrderItem(models.Model):
     def save(self, *args, **kwargs):
         """
         Auto-fill product details when saving.
-        
+
         This saves developer time - just set product and quantity,
         everything else is filled automatically.
         """
         if not self.product_name and self.product:
             self.product_name = self.product.name
-        
+
         if not self.product_sku and self.product:
-            self.product_sku = self.product.sku
-        
+            # Generate SKU from product ID if product doesn't have a sku field
+            if hasattr(self.product, 'sku'):
+                self.product_sku = self.product.sku
+            else:
+                self.product_sku = f'PROD-{self.product.id}'
+
         if self.price is None and self.product:
-            self.price = self.product.price
-        
+            self.price = self.product.get_display_price()
+
         super().save(*args, **kwargs)

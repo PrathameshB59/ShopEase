@@ -49,16 +49,22 @@ def checkout(request):
         ).get(user=request.user)
     except Cart.DoesNotExist:
         # User has no cart
-        messages.warning(request, 'Your cart is empty. Add some products first!')
-        return redirect('cart:view_cart')
-    
+        messages.warning(
+            request,
+            'Your cart is empty. Please add some products before checking out.'
+        )
+        return redirect('cart:cart_view')
+
     # Get cart items
     cart_items = cart.items.all()
-    
+
     # Check if cart is empty
     if not cart_items.exists():
-        messages.warning(request, 'Your cart is empty. Add some products first!')
-        return redirect('cart:view_cart')
+        messages.warning(
+            request,
+            'Your cart is empty. Please add some products before checking out.'
+        )
+        return redirect('cart:cart_view')
     
     # ==========================================
     # STEP 2: VALIDATE STOCK
@@ -78,14 +84,14 @@ def checkout(request):
     # If any items are out of stock, show error
     if out_of_stock_items:
         from django.utils.safestring import mark_safe
-        error_msg = "Sorry, we don't have enough stock:<br><br>"
+        error_msg = "Sorry, some items in your cart are out of stock:<br><br>"
         for item in out_of_stock_items:
-            error_msg += f"<strong>{item['name']}</strong>: "
-            error_msg += f"You want {item['requested']}, "
-            error_msg += f"we have {item['available']}<br>"
-        
+            error_msg += f"• <strong>{item['name']}</strong>: "
+            error_msg += f"You requested {item['requested']} item(s), but only {item['available']} available<br>"
+        error_msg += "<br>Please update your cart quantities to proceed."
+
         messages.error(request, mark_safe(error_msg))
-        return redirect('cart:view_cart')
+        return redirect('cart:cart_view')
     
     # ==========================================
     # STEP 3: CALCULATE TOTALS
@@ -94,8 +100,9 @@ def checkout(request):
     # Using Decimal for exact precision (important for money!)
     
     # Subtotal = sum of all items
+    # Use price_snapshot instead of product.price for accuracy
     subtotal = sum(
-        item.product.price * item.quantity 
+        item.price_snapshot * item.quantity
         for item in cart_items
     )
     
@@ -190,8 +197,8 @@ def checkout(request):
                     # Show success message to user
                     messages.success(
                         request,
-                        f'🎉 Order placed successfully! '
-                        f'Order number: #{str(order.order_id)[:8]}'
+                        f'Order placed successfully! Your order number is #{str(order.order_id)[:8]}. '
+                        f'Thank you for shopping with us!'
                     )
                     
                     # Redirect to order detail page
@@ -199,21 +206,27 @@ def checkout(request):
             
             except Exception as e:
                 # Something went wrong!
-                # Log the error (for debugging)
+                # Log the detailed error for developers
                 import logging
+                import traceback
                 logger = logging.getLogger(__name__)
                 logger.error(f"Order creation failed: {str(e)}")
-                
+                logger.error(traceback.format_exc())
+
                 # Show user-friendly error message
                 messages.error(
                     request,
-                    'Oops! Something went wrong. Please try again.'
+                    'We encountered an issue while processing your order. '
+                    'Please try again or contact support if the problem persists.'
                 )
         
         else:
             # Form has errors
             # Show form again with error messages
-            messages.error(request, 'Please correct the errors below.')
+            messages.error(
+                request,
+                'Please check the form and correct the highlighted errors below.'
+            )
         
         # Render form with errors
         return render(request, 'checkout/checkout.html', {

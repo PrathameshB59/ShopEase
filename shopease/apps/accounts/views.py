@@ -587,12 +587,27 @@ def dashboard(request):
     cart_service = CartService(request)
     cart_count = cart_service.get_item_count()
 
-    # TODO: Get actual orders when orders app is implemented
-    # For now, use placeholder data
-    recent_orders = []
-    total_orders = 0
-    total_spent = 0.00
-    review_count = 0
+    # Get actual orders from database
+    from apps.orders.models import Order
+    from apps.products.models import Review
+    from django.db.models import Sum
+
+    # Get user's orders
+    user_orders = Order.objects.filter(user=request.user)
+
+    # Calculate statistics
+    total_orders = user_orders.count()
+
+    # Calculate total spent (sum of all order amounts)
+    total_spent = user_orders.aggregate(
+        total=Sum('total_amount')
+    )['total'] or 0.00
+
+    # Get recent orders (last 5)
+    recent_orders = user_orders.order_by('-created_at')[:5]
+
+    # Get review count
+    review_count = Review.objects.filter(user=request.user).count()
 
     context = {
         'page_title': 'Dashboard',

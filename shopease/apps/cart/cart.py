@@ -366,8 +366,7 @@ class CartService:
         """
         # Get or create user's cart
         user_cart, created = Cart.objects.get_or_create(
-            user=user,
-            is_active=True
+            user=user
         )
         
         # If session cart has items, merge them

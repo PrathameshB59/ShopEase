@@ -210,6 +210,55 @@ Copy this to: templates/checkout/checkout.html
         font-weight: 600;
         margin-bottom: 10px;
     }
+
+    /* Autocomplete dropdown styles */
+    .autocomplete-wrapper {
+        position: relative;
+    }
+
+    .autocomplete-suggestions {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        background: white;
+        border: 1px solid #ddd;
+        border-top: none;
+        border-radius: 0 0 5px 5px;
+        max-height: 250px;
+        overflow-y: auto;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        display: none;
+    }
+
+    .autocomplete-suggestions.active {
+        display: block;
+    }
+
+    .autocomplete-suggestion {
+        padding: 10px 12px;
+        cursor: pointer;
+        transition: background 0.15s;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .autocomplete-suggestion:last-child {
+        border-bottom: none;
+    }
+
+    .autocomplete-suggestion:hover,
+    .autocomplete-suggestion.selected {
+        background: #f0f7ff;
+        color: #007bff;
+    }
+
+    .autocomplete-no-results {
+        padding: 10px 12px;
+        color: #999;
+        font-style: italic;
+        text-align: center;
+    }
 </style>
 {% endblock %}
 
@@ -307,23 +356,25 @@ Copy this to: templates/checkout/checkout.html
 
                     <!-- City, State, Postal Code -->
                     <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
-                        <div class="form-group">
+                        <div class="form-group autocomplete-wrapper">
                             <label for="{{ form.city.id_for_label }}">
                                 {{ form.city.label }}
                                 <span class="required">*</span>
                             </label>
                             {{ form.city }}
+                            <div class="autocomplete-suggestions" id="city-suggestions"></div>
                             {% if form.city.errors %}
                             <span class="error">{{ form.city.errors.0 }}</span>
                             {% endif %}
                         </div>
 
-                        <div class="form-group">
+                        <div class="form-group autocomplete-wrapper">
                             <label for="{{ form.state.id_for_label }}">
                                 {{ form.state.label }}
                                 <span class="required">*</span>
                             </label>
                             {{ form.state }}
+                            <div class="autocomplete-suggestions" id="state-suggestions"></div>
                             {% if form.state.errors %}
                             <span class="error">{{ form.state.errors.0 }}</span>
                             {% endif %}
@@ -342,12 +393,13 @@ Copy this to: templates/checkout/checkout.html
                     </div>
 
                     <!-- Country -->
-                    <div class="form-group">
+                    <div class="form-group autocomplete-wrapper">
                         <label for="{{ form.country.id_for_label }}">
                             {{ form.country.label }}
                             <span class="required">*</span>
                         </label>
                         {{ form.country }}
+                        <div class="autocomplete-suggestions" id="country-suggestions"></div>
                         {% if form.country.errors %}
                         {% for error in form.country.errors %}
                         <span class="error">{{ error }}</span>
@@ -430,4 +482,191 @@ Copy this to: templates/checkout/checkout.html
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// ==========================================
+// AUTOCOMPLETE FUNCTIONALITY
+// ==========================================
+
+// Data for autocomplete
+const indianCities = [
+    'Mumbai', 'Delhi', 'Bangalore', 'Hyderabad', 'Ahmedabad', 'Chennai', 'Kolkata', 'Surat',
+    'Pune', 'Jaipur', 'Lucknow', 'Kanpur', 'Nagpur', 'Indore', 'Thane', 'Bhopal', 'Visakhapatnam',
+    'Pimpri-Chinchwad', 'Patna', 'Vadodara', 'Ghaziabad', 'Ludhiana', 'Agra', 'Nashik', 'Faridabad',
+    'Meerut', 'Rajkot', 'Kalyan-Dombivali', 'Vasai-Virar', 'Varanasi', 'Srinagar', 'Aurangabad',
+    'Dhanbad', 'Amritsar', 'Navi Mumbai', 'Allahabad', 'Ranchi', 'Howrah', 'Coimbatore', 'Jabalpur',
+    'Gwalior', 'Vijayawada', 'Jodhpur', 'Madurai', 'Raipur', 'Kota', 'Chandigarh', 'Guwahati',
+    'Solapur', 'Hubli-Dharwad', 'Mysore', 'Tiruchirappalli', 'Bareilly', 'Aligarh', 'Tiruppur',
+    'Moradabad', 'Jalandhar', 'Bhubaneswar', 'Salem', 'Warangal', 'Mira-Bhayandar', 'Thiruvananthapuram',
+    'Bhiwandi', 'Saharanpur', 'Guntur', 'Amravati', 'Bikaner', 'Noida', 'Jamshedpur', 'Bhilai',
+    'Cuttack', 'Firozabad', 'Kochi', 'Nellore', 'Bhavnagar', 'Dehradun', 'Durgapur', 'Asansol'
+];
+
+const indianStates = [
+    'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Goa', 'Gujarat',
+    'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Karnataka', 'Kerala', 'Madhya Pradesh',
+    'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Punjab',
+    'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand',
+    'West Bengal', 'Andaman and Nicobar Islands', 'Chandigarh', 'Dadra and Nagar Haveli',
+    'Daman and Diu', 'Delhi', 'Jammu and Kashmir', 'Ladakh', 'Lakshadweep', 'Puducherry'
+];
+
+const countries = [
+    'India', 'United States', 'United Kingdom', 'Canada', 'Australia', 'Germany', 'France',
+    'Italy', 'Spain', 'Netherlands', 'Belgium', 'Switzerland', 'Austria', 'Sweden', 'Norway',
+    'Denmark', 'Finland', 'Ireland', 'Portugal', 'Greece', 'Poland', 'Czech Republic',
+    'Hungary', 'Romania', 'Bulgaria', 'Croatia', 'Slovakia', 'Slovenia', 'Estonia', 'Latvia',
+    'Lithuania', 'Luxembourg', 'Malta', 'Cyprus', 'Japan', 'South Korea', 'China', 'Singapore',
+    'Malaysia', 'Thailand', 'Indonesia', 'Philippines', 'Vietnam', 'Bangladesh', 'Pakistan',
+    'Sri Lanka', 'Nepal', 'Maldives', 'Bhutan', 'Afghanistan', 'Myanmar', 'Cambodia', 'Laos',
+    'UAE', 'Saudi Arabia', 'Qatar', 'Kuwait', 'Bahrain', 'Oman', 'Jordan', 'Lebanon', 'Israel',
+    'Turkey', 'Egypt', 'South Africa', 'Nigeria', 'Kenya', 'Ghana', 'Morocco', 'Tunisia',
+    'Ethiopia', 'Tanzania', 'Uganda', 'Algeria', 'Zimbabwe', 'Zambia', 'Mozambique',
+    'Brazil', 'Argentina', 'Chile', 'Colombia', 'Peru', 'Venezuela', 'Mexico', 'Costa Rica',
+    'Panama', 'Ecuador', 'Uruguay', 'Paraguay', 'Bolivia', 'Guatemala', 'Honduras',
+    'New Zealand', 'Fiji', 'Papua New Guinea', 'Russia', 'Ukraine', 'Belarus', 'Kazakhstan'
+];
+
+// Autocomplete class
+class Autocomplete {
+    constructor(inputElement, suggestionsElement, data) {
+        this.input = inputElement;
+        this.suggestions = suggestionsElement;
+        this.data = data;
+        this.selectedIndex = -1;
+
+        // Bind events
+        this.input.addEventListener('input', () => this.handleInput());
+        this.input.addEventListener('keydown', (e) => this.handleKeydown(e));
+        this.input.addEventListener('blur', () => setTimeout(() => this.hide(), 200));
+        this.input.addEventListener('focus', () => this.handleInput());
+    }
+
+    handleInput() {
+        const value = this.input.value.trim().toLowerCase();
+
+        if (value.length === 0) {
+            this.hide();
+            return;
+        }
+
+        // Filter matching items
+        const matches = this.data.filter(item =>
+            item.toLowerCase().includes(value)
+        ).slice(0, 10); // Limit to 10 results
+
+        if (matches.length === 0) {
+            this.showNoResults();
+            return;
+        }
+
+        this.show(matches, value);
+    }
+
+    show(matches, searchTerm) {
+        // Clear previous suggestions
+        this.suggestions.innerHTML = '';
+        this.selectedIndex = -1;
+
+        // Create suggestion items
+        matches.forEach((match, index) => {
+            const div = document.createElement('div');
+            div.className = 'autocomplete-suggestion';
+
+            // Highlight matching text
+            const regex = new RegExp(`(${searchTerm})`, 'gi');
+            const highlighted = match.replace(regex, '<strong>$1</strong>');
+            div.innerHTML = highlighted;
+
+            // Click handler
+            div.addEventListener('click', () => {
+                this.input.value = match;
+                this.hide();
+            });
+
+            this.suggestions.appendChild(div);
+        });
+
+        this.suggestions.classList.add('active');
+    }
+
+    showNoResults() {
+        this.suggestions.innerHTML = '<div class="autocomplete-no-results">No matches found</div>';
+        this.suggestions.classList.add('active');
+    }
+
+    hide() {
+        this.suggestions.classList.remove('active');
+        this.selectedIndex = -1;
+    }
+
+    handleKeydown(e) {
+        const items = this.suggestions.querySelectorAll('.autocomplete-suggestion');
+
+        if (items.length === 0) return;
+
+        switch(e.key) {
+            case 'ArrowDown':
+                e.preventDefault();
+                this.selectedIndex = Math.min(this.selectedIndex + 1, items.length - 1);
+                this.updateSelection(items);
+                break;
+
+            case 'ArrowUp':
+                e.preventDefault();
+                this.selectedIndex = Math.max(this.selectedIndex - 1, 0);
+                this.updateSelection(items);
+                break;
+
+            case 'Enter':
+                if (this.selectedIndex >= 0) {
+                    e.preventDefault();
+                    items[this.selectedIndex].click();
+                }
+                break;
+
+            case 'Escape':
+                this.hide();
+                break;
+        }
+    }
+
+    updateSelection(items) {
+        // Remove previous selection
+        items.forEach(item => item.classList.remove('selected'));
+
+        // Add selection to current item
+        if (this.selectedIndex >= 0) {
+            items[this.selectedIndex].classList.add('selected');
+            items[this.selectedIndex].scrollIntoView({ block: 'nearest' });
+        }
+    }
+}
+
+// Initialize autocomplete on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // City autocomplete
+    const cityInput = document.getElementById('id_city');
+    const citySuggestions = document.getElementById('city-suggestions');
+    if (cityInput && citySuggestions) {
+        new Autocomplete(cityInput, citySuggestions, indianCities);
+    }
+
+    // State autocomplete
+    const stateInput = document.getElementById('id_state');
+    const stateSuggestions = document.getElementById('state-suggestions');
+    if (stateInput && stateSuggestions) {
+        new Autocomplete(stateInput, stateSuggestions, indianStates);
+    }
+
+    // Country autocomplete
+    const countryInput = document.getElementById('id_country');
+    const countrySuggestions = document.getElementById('country-suggestions');
+    if (countryInput && countrySuggestions) {
+        new Autocomplete(countryInput, countrySuggestions, countries);
+    }
+});
+</script>
 {% endblock %}
