@@ -42,13 +42,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    
+
     # Our apps
     'apps.products',
     'apps.core',
     'apps.cart',
     'apps.accounts',
-    'apps.orders',  # ADD THIS LINE# ← ADD THIS
+    'apps.orders',
+    'apps.admin_panel',  # Custom admin panel with role-based access
 ]
 
 MIDDLEWARE = [

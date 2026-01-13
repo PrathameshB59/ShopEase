@@ -23,12 +23,13 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('products/', include('apps.products.urls', namespace='products')), # <--- Add namespace here
+    path('admin/', admin.site.urls),  # Django admin (backup)
+    path('dashboard/', include('apps.admin_panel.urls', namespace='admin_panel')),  # Custom admin panel
+    path('products/', include('apps.products.urls', namespace='products')),
     path('', include('apps.core.urls')),
-    path('cart/', include('apps.cart.urls', namespace='cart')), # <--- Check this line
+    path('cart/', include('apps.cart.urls', namespace='cart')),
     path('accounts/', include('apps.accounts.urls')),
-    path('orders/', include('apps.orders.urls', namespace='orders')),  # ADD THIS LINE
+    path('orders/', include('apps.orders.urls', namespace='orders')),
 ]
 
 if settings.DEBUG:

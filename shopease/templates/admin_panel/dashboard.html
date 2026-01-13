@@ -1,0 +1,235 @@
+{% extends 'admin_panel/base_admin.html' %}
+
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard Overview{% endblock %}
+
+{% block content %}
+<!-- Stats Cards Row -->
+<div class="row g-3 mb-4">
+    <!-- Today's Orders -->
+    <div class="col-md-3">
+        <div class="card border-primary h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-2">Today's Orders</h6>
+                        <h2 class="mb-0">{{ today_orders_count }}</h2>
+                    </div>
+                    <div class="text-primary">
+                        <i class="bi bi-cart-check" style="font-size: 2.5rem;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Today's Revenue -->
+    <div class="col-md-3">
+        <div class="card border-success h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-2">Today's Revenue</h6>
+                        <h2 class="mb-0">₹{{ today_revenue|floatformat:2 }}</h2>
+                    </div>
+                    <div class="text-success">
+                        <i class="bi bi-currency-rupee" style="font-size: 2.5rem;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Orders -->
+    <div class="col-md-3">
+        <div class="card border-warning h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-2">Pending Orders</h6>
+                        <h2 class="mb-0">{{ pending_orders_count }}</h2>
+                    </div>
+                    <div class="text-warning">
+                        <i class="bi bi-clock-history" style="font-size: 2.5rem;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total Customers -->
+    <div class="col-md-3">
+        <div class="card border-info h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-2">Total Customers</h6>
+                        <h2 class="mb-0">{{ total_customers }}</h2>
+                    </div>
+                    <div class="text-info">
+                        <i class="bi bi-people" style="font-size: 2.5rem;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content Row -->
+<div class="row g-3">
+    <!-- Recent Orders -->
+    {% if user.is_superuser or user_permissions.can_view_orders %}
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-cart-check me-2"></i>Recent Orders</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Customer</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in recent_orders %}
+                            <tr>
+                                <td>#{{ order.order_id|slice:":8" }}</td>
+                                <td>{{ order.shipping_full_name }}</td>
+                                <td>₹{{ order.total_amount }}</td>
+                                <td>
+                                    {% if order.status == 'COMPLETED' %}
+                                        <span class="badge bg-success">{{ order.get_status_display }}</span>
+                                    {% elif order.status == 'PENDING' %}
+                                        <span class="badge bg-warning">{{ order.get_status_display }}</span>
+                                    {% elif order.status == 'CANCELLED' %}
+                                        <span class="badge bg-danger">{{ order.get_status_display }}</span>
+                                    {% else %}
+                                        <span class="badge bg-info">{{ order.get_status_display }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ order.created_at|date:"M d, Y" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center text-muted">No orders yet</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="text-end">
+                    <a href="#" class="btn btn-sm btn-primary disabled">View All Orders <i class="bi bi-arrow-right"></i></a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Sidebar Widgets -->
+    <div class="col-md-4">
+        <!-- Low Stock Alert -->
+        {% if user.is_superuser or user_permissions.can_view_products %}
+        <div class="card mb-3">
+            <div class="card-header bg-danger text-white">
+                <h6 class="mb-0"><i class="bi bi-exclamation-triangle me-2"></i>Low Stock Alert</h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% for product in low_stock_products %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="small">{{ product.name|truncatechars:30 }}</div>
+                            <span class="badge bg-danger">{{ product.stock }} left</span>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="list-group-item text-center text-muted">
+                        All products in stock
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Quick Stats -->
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0"><i class="bi bi-graph-up me-2"></i>Quick Stats</h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <small class="text-muted">Total Products</small>
+                    <h4 class="mb-0">{{ total_products }}</h4>
+                </div>
+                <div class="mb-0">
+                    <small class="text-muted">Your Role</small>
+                    <h5 class="mb-0">
+                        {% if user_role %}
+                            <span class="badge bg-primary">{{ user_role.get_role_display }}</span>
+                        {% else %}
+                            <span class="badge bg-secondary">No Role Assigned</span>
+                        {% endif %}
+                    </h5>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activities (if user can view) -->
+<div class="row g-3 mt-1">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Recent Admin Activities</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Action</th>
+                                <th>Description</th>
+                                <th>Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for activity in recent_activities %}
+                            <tr>
+                                <td>{{ activity.user.username }}</td>
+                                <td><span class="badge bg-secondary">{{ activity.get_action_display }}</span></td>
+                                <td class="small">{{ activity.description|truncatechars:60 }}</td>
+                                <td class="small">{{ activity.timestamp|timesince }} ago</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center text-muted">No recent activities</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Welcome Message for New Users -->
+{% if not user_role %}
+<div class="alert alert-warning mt-3" role="alert">
+    <h5 class="alert-heading"><i class="bi bi-info-circle me-2"></i>Welcome to ShopEase Admin!</h5>
+    <p>You currently don't have an admin role assigned. Please contact a Super Admin to assign you a role with appropriate permissions.</p>
+    <hr>
+    <p class="mb-0">Once assigned, you'll be able to access various sections based on your role.</p>
+</div>
+{% endif %}
+
+{% endblock %}
