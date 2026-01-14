@@ -23,5 +23,10 @@
   "workbench.iconTheme": "vscode-icons",
   "cSpell.words": [
     "onclick"
-  ]
+  ],
+  "python.testing.pytestArgs": [
+    "shopease"
+  ],
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestEnabled": true
 }
