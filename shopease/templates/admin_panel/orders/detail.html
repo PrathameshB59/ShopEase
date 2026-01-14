@@ -1,0 +1,289 @@
+{% extends 'admin_panel/base_admin.html' %}
+
+{% block title %}Order #{{ order.order_id|slice:":8" }}{% endblock %}
+{% block page_title %}Order Details #{{ order.order_id|slice:":8" }}{% endblock %}
+
+{% block header_actions %}
+<div class="d-flex gap-2">
+    <a href="{% url 'admin_panel:order_list' %}" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Back to Orders
+    </a>
+    <a href="{% url 'admin_panel:generate_invoice' order.order_id %}" class="btn btn-primary">
+        <i class="bi bi-file-pdf"></i> Download Invoice
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row g-3">
+    <!-- Order Information -->
+    <div class="col-md-8">
+        <!-- Order Summary Card -->
+        <div class="card mb-3">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Order Summary</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Order ID:</strong> {{ order.order_id }}</p>
+                        <p><strong>Status:</strong>
+                            {% if order.status == 'COMPLETED' %}
+                                <span class="badge bg-success fs-6">{{ order.get_status_display }}</span>
+                            {% elif order.status == 'PENDING' %}
+                                <span class="badge bg-warning text-dark fs-6">{{ order.get_status_display }}</span>
+                            {% elif order.status == 'CANCELLED' %}
+                                <span class="badge bg-danger fs-6">{{ order.get_status_display }}</span>
+                            {% elif order.status == 'SHIPPED' %}
+                                <span class="badge bg-info fs-6">{{ order.get_status_display }}</span>
+                            {% else %}
+                                <span class="badge bg-secondary fs-6">{{ order.get_status_display }}</span>
+                            {% endif %}
+                        </p>
+                        <p><strong>Payment Method:</strong> {{ order.payment_method }}</p>
+                        <p><strong>Total Amount:</strong> <span class="text-success fs-5">₹{{ order.total_amount }}</span></p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Order Date:</strong> {{ order.created_at|date:"M d, Y H:i" }}</p>
+                        <p><strong>Last Updated:</strong> {{ order.updated_at|date:"M d, Y H:i" }}</p>
+                        {% if order.user %}
+                        <p><strong>Customer Account:</strong> {{ order.user.username }}</p>
+                        {% else %}
+                        <p><strong>Customer Account:</strong> <span class="text-muted">Guest</span></p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Order Items Card -->
+        <div class="card mb-3">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="bi bi-box-seam me-2"></i>Order Items</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Product</th>
+                                <th>Price</th>
+                                <th>Quantity</th>
+                                <th class="text-end">Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in order.items.all %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        {% if item.product and item.product.image %}
+                                        <img src="{{ item.product.image.url }}" alt="{{ item.product_name }}" style="width: 50px; height: 50px; object-fit: cover;" class="me-2 rounded">
+                                        {% endif %}
+                                        <div>
+                                            <div>{{ item.product_name }}</div>
+                                            {% if not item.product %}
+                                            <small class="text-danger">Product no longer available</small>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>₹{{ item.price }}</td>
+                                <td>{{ item.quantity }}</td>
+                                <td class="text-end"><strong>₹{{ item.get_subtotal }}</strong></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot class="table-light">
+                            <tr>
+                                <td colspan="3" class="text-end"><strong>Total:</strong></td>
+                                <td class="text-end"><strong class="text-success fs-5">₹{{ order.total_amount }}</strong></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Shipping Information Card -->
+        <div class="card mb-3">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="bi bi-truck me-2"></i>Shipping Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Contact Details</h6>
+                        <p class="mb-1"><strong>Name:</strong> {{ order.shipping_full_name }}</p>
+                        <p class="mb-1"><strong>Email:</strong> {{ order.shipping_email }}</p>
+                        <p class="mb-1"><strong>Phone:</strong> {{ order.shipping_phone }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Shipping Address</h6>
+                        <address>
+                            {{ order.shipping_address_line1 }}<br>
+                            {% if order.shipping_address_line2 %}{{ order.shipping_address_line2 }}<br>{% endif %}
+                            {{ order.shipping_city }}, {{ order.shipping_state }} {{ order.shipping_postal_code }}<br>
+                            {{ order.shipping_country }}
+                        </address>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin Notes -->
+        {% if order.admin_notes %}
+        <div class="card mb-3">
+            <div class="card-header bg-secondary text-white">
+                <h6 class="mb-0"><i class="bi bi-sticky me-2"></i>Admin Notes</h6>
+            </div>
+            <div class="card-body">
+                <pre class="mb-0" style="white-space: pre-wrap;">{{ order.admin_notes }}</pre>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Refunds Section -->
+        {% if refunds %}
+        <div class="card mb-3">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0"><i class="bi bi-cash-coin me-2"></i>Refunds</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Refund ID</th>
+                                <th>Amount</th>
+                                <th>Reason</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for refund in refunds %}
+                            <tr>
+                                <td>#{{ refund.refund_id|slice:":8" }}</td>
+                                <td>₹{{ refund.amount }}</td>
+                                <td>{{ refund.get_reason_display }}</td>
+                                <td>
+                                    {% if refund.status == 'COMPLETED' %}
+                                        <span class="badge bg-success">{{ refund.get_status_display }}</span>
+                                    {% elif refund.status == 'REJECTED' %}
+                                        <span class="badge bg-danger">{{ refund.get_status_display }}</span>
+                                    {% elif refund.status == 'REQUESTED' %}
+                                        <span class="badge bg-warning text-dark">{{ refund.get_status_display }}</span>
+                                    {% else %}
+                                        <span class="badge bg-info">{{ refund.get_status_display }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ refund.created_at|date:"M d, Y" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Sidebar Actions -->
+    <div class="col-md-4">
+        <!-- Update Status Card -->
+        {% if user.is_superuser or user_permissions.can_edit_orders %}
+        <div class="card mb-3">
+            <div class="card-header bg-primary text-white">
+                <h6 class="mb-0"><i class="bi bi-gear me-2"></i>Update Status</h6>
+            </div>
+            <div class="card-body">
+                <form method="post" action="{% url 'admin_panel:update_order_status' order.order_id %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">New Status</label>
+                        <select name="status" class="form-select" required>
+                            <option value="">Select status...</option>
+                            {% for value, label in order.STATUS_CHOICES %}
+                            <option value="{{ value }}" {% if order.status == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Admin Notes (Optional)</label>
+                        <textarea name="admin_notes" class="form-control" rows="3" placeholder="Add internal notes about this status change..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-check-circle me-1"></i> Update Status
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Quick Actions -->
+        <div class="card mb-3">
+            <div class="card-header bg-dark text-white">
+                <h6 class="mb-0"><i class="bi bi-lightning me-2"></i>Quick Actions</h6>
+            </div>
+            <div class="list-group list-group-flush">
+                <a href="{% url 'admin_panel:generate_invoice' order.order_id %}" class="list-group-item list-group-item-action">
+                    <i class="bi bi-file-pdf me-2"></i> Download Invoice
+                </a>
+                {% if user.is_superuser or user_permissions.can_process_refunds %}
+                <button class="list-group-item list-group-item-action" data-bs-toggle="modal" data-bs-target="#refundModal">
+                    <i class="bi bi-cash-coin me-2"></i> Process Refund
+                </button>
+                {% endif %}
+                <a href="mailto:{{ order.shipping_email }}" class="list-group-item list-group-item-action">
+                    <i class="bi bi-envelope me-2"></i> Email Customer
+                </a>
+            </div>
+        </div>
+
+        <!-- Activity Log -->
+        {% if activities %}
+        <div class="card">
+            <div class="card-header bg-secondary text-white">
+                <h6 class="mb-0"><i class="bi bi-clock-history me-2"></i>Activity Log</h6>
+            </div>
+            <div class="list-group list-group-flush">
+                {% for activity in activities %}
+                <div class="list-group-item">
+                    <div class="d-flex justify-content-between">
+                        <small class="fw-bold">{{ activity.user.username }}</small>
+                        <small class="text-muted">{{ activity.timestamp|timesince }} ago</small>
+                    </div>
+                    <small class="text-muted">{{ activity.get_action_display }}</small>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Refund Modal (Placeholder) -->
+{% if user.is_superuser or user_permissions.can_process_refunds %}
+<div class="modal fade" id="refundModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Process Refund</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Refund processing feature will be fully implemented in the next phase.
+                </p>
+                <p>For now, you can manually process refunds through your payment gateway.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

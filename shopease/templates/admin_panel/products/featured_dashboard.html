@@ -1,0 +1,202 @@
+{% extends 'admin_panel/base_admin.html' %}
+
+{% block title %}Featured Products Dashboard - {{ block.super }}{% endblock %}
+
+{% block page_title %}Featured Products Dashboard{% endblock %}
+
+{% block content %}
+<!-- Summary Cards -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <h5 class="card-title">Total Featured</h5>
+                <h2 class="mb-0">{{ total_featured }}</h2>
+                <small>Active featured products</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <h5 class="card-title">Auto-Featured</h5>
+                <h2 class="mb-0">{{ auto_featured }}</h2>
+                <small>Automatically selected</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-info">
+            <div class="card-body">
+                <h5 class="card-title">Manual Featured</h5>
+                <h2 class="mb-0">{{ manual_featured }}</h2>
+                <small>Manually selected</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Top Products by Score -->
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Top 10 Products by Featured Score</h5>
+        <span class="badge bg-secondary">Last 7 days</span>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Product</th>
+                        <th class="text-end">Featured Score</th>
+                        <th class="text-end">Views</th>
+                        <th class="text-end">Purchases</th>
+                        <th class="text-end">Revenue</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in top_products %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                {% if item.product.images.first %}
+                                <img src="{{ item.product.images.first.image.url }}"
+                                     alt="{{ item.product.name }}"
+                                     class="rounded me-2"
+                                     style="width: 40px; height: 40px; object-fit: cover;">
+                                {% endif %}
+                                <div>
+                                    <strong>{{ item.product.name }}</strong><br>
+                                    <small class="text-muted">₹{{ item.product.price }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="text-end">
+                            <span class="badge bg-primary fs-6">{{ item.avg_score }}</span>
+                        </td>
+                        <td class="text-end">{{ item.total_views|default:0 }}</td>
+                        <td class="text-end">{{ item.total_purchases|default:0 }}</td>
+                        <td class="text-end">₹{{ item.total_revenue|floatformat:2 }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-3">
+                            No analytics data available yet.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Current Featured Products Performance -->
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0">Current Featured Products Performance</h5>
+            </div>
+            <div class="card-body">
+                {% if featured_performance %}
+                <div class="list-group list-group-flush">
+                    {% for item in featured_performance %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">{{ item.featured.product.name }}</h6>
+                                <small class="text-muted">
+                                    {{ item.featured.get_source_display }} •
+                                    Priority: {{ item.featured.priority }} •
+                                    Since: {{ item.featured.start_date }}
+                                </small>
+                            </div>
+                            <span class="badge bg-success">Active</span>
+                        </div>
+                        <div class="row mt-2 text-center">
+                            <div class="col-4">
+                                <small class="text-muted d-block">Views</small>
+                                <strong>{{ item.analytics.total_views|default:0 }}</strong>
+                            </div>
+                            <div class="col-4">
+                                <small class="text-muted d-block">Purchases</small>
+                                <strong>{{ item.analytics.total_purchases|default:0 }}</strong>
+                            </div>
+                            <div class="col-4">
+                                <small class="text-muted d-block">Revenue</small>
+                                <strong>₹{{ item.analytics.total_revenue|floatformat:2 }}</strong>
+                            </div>
+                        </div>
+                        {% if item.featured.reason %}
+                        <div class="mt-2">
+                            <small class="text-muted">Reason: {{ item.featured.reason }}</small>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted text-center py-4">No featured products currently active.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Trending Products -->
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0">Trending Products</h5>
+            </div>
+            <div class="card-body">
+                {% if trending %}
+                <div class="list-group list-group-flush">
+                    {% for item in trending %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center">
+                                {% if item.product.images.first %}
+                                <img src="{{ item.product.images.first.image.url }}"
+                                     alt="{{ item.product.name }}"
+                                     class="rounded me-2"
+                                     style="width: 40px; height: 40px; object-fit: cover;">
+                                {% endif %}
+                                <div>
+                                    <h6 class="mb-0">{{ item.product.name }}</h6>
+                                    <small class="text-muted">
+                                        Score: {{ item.previous_score }} → {{ item.recent_score }}
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-warning text-dark">
+                                    +{{ item.score_change }}%
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted text-center py-4">No trending products found.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Action Buttons -->
+<div class="card">
+    <div class="card-body text-center">
+        <a href="{% url 'admin_panel:manage_featured_products' %}" class="btn btn-primary btn-lg">
+            Manage Featured Products
+        </a>
+        <a href="{% url 'admin_panel:product_analytics_list' %}" class="btn btn-outline-secondary btn-lg ms-2">
+            View All Analytics
+        </a>
+    </div>
+</div>
+{% endblock %}

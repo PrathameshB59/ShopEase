@@ -1,0 +1,182 @@
+{% extends 'admin_panel/base_admin.html' %}
+
+{% block title %}Pending Reviews - {{ block.super }}{% endblock %}
+
+{% block page_title %}Pending Reviews Queue{% endblock %}
+
+{% block content %}
+<!-- Alert Banner -->
+<div class="alert alert-warning d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <strong>{{ pending_count }}</strong> review(s) awaiting moderation
+    </div>
+    <a href="{% url 'admin_panel:review_list' %}" class="btn btn-sm btn-outline-dark">
+        View All Reviews
+    </a>
+</div>
+
+<!-- Search Filter -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-10">
+                <input type="text" class="form-control" name="search"
+                       value="{{ search_query }}" placeholder="Search by product, user, or content...">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">Search</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Bulk Actions Form -->
+<form method="post" id="bulkActionForm">
+    {% csrf_token %}
+
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Pending Reviews</h5>
+            <div class="btn-group">
+                <button type="button" class="btn btn-sm btn-success" onclick="bulkAction('approve')">
+                    Approve Selected
+                </button>
+                <button type="button" class="btn btn-sm btn-danger" onclick="bulkAction('delete')">
+                    Delete Selected
+                </button>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            {% if page_obj %}
+            <div class="list-group list-group-flush">
+                {% for review in page_obj %}
+                <div class="list-group-item">
+                    <div class="row">
+                        <div class="col-auto d-flex align-items-center">
+                            <input type="checkbox" name="review_ids" value="{{ review.id }}"
+                                   class="form-check-input review-checkbox">
+                        </div>
+                        <div class="col">
+                            <!-- Product & User Info -->
+                            <div class="row mb-2">
+                                <div class="col-md-6">
+                                    <strong class="text-primary">{{ review.product.name }}</strong>
+                                </div>
+                                <div class="col-md-6 text-end">
+                                    <small class="text-muted">
+                                        By: <strong>{{ review.user.username }}</strong> ({{ review.user.email }})<br>
+                                        {{ review.created_at|date:"M d, Y \a\t g:i A" }}
+                                    </small>
+                                </div>
+                            </div>
+
+                            <!-- Rating -->
+                            <div class="mb-2">
+                                <span class="badge bg-warning text-dark fs-6">
+                                    {{ review.rating }} ⭐
+                                </span>
+                            </div>
+
+                            <!-- Review Content -->
+                            <div class="mb-3">
+                                <h6 class="mb-1">{{ review.title }}</h6>
+                                <p class="mb-0 text-muted">{{ review.comment }}</p>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="btn-group btn-group-sm">
+                                <form method="post" action="{% url 'admin_panel:approve_review' review.id %}"
+                                      class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="bi bi-check-circle"></i> Approve
+                                    </button>
+                                </form>
+                                <a href="{% url 'admin_panel:review_detail' review.id %}" class="btn btn-outline-info">
+                                    <i class="bi bi-eye"></i> View Details
+                                </a>
+                                <form method="post" action="{% url 'admin_panel:delete_review' review.id %}"
+                                      class="d-inline"
+                                      onsubmit="return confirm('Permanently delete this review?');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-outline-danger">
+                                        <i class="bi bi-trash"></i> Delete
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center text-muted py-5">
+                <i class="bi bi-check-circle display-1 text-success"></i>
+                <h4 class="mt-3">All caught up!</h4>
+                <p>No pending reviews to moderate.</p>
+                <a href="{% url 'admin_panel:review_list' %}" class="btn btn-primary">
+                    View All Reviews
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</form>
+
+<!-- Pagination -->
+{% if page_obj.has_other_pages %}
+<nav aria-label="Review pagination" class="mt-3">
+    <ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}
+        <li class="page-item">
+            <a class="page-link" href="?page=1&search={{ search_query }}">First</a>
+        </li>
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}">Previous</a>
+        </li>
+        {% endif %}
+
+        <li class="page-item active">
+            <span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+        </li>
+
+        {% if page_obj.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.next_page_number }}&search={{ search_query }}">Next</a>
+        </li>
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}&search={{ search_query }}">Last</a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+
+<script>
+// Bulk actions
+function bulkAction(action) {
+    const form = document.getElementById('bulkActionForm');
+    const checkedBoxes = document.querySelectorAll('.review-checkbox:checked');
+
+    if (checkedBoxes.length === 0) {
+        alert('Please select at least one review.');
+        return;
+    }
+
+    let actionUrl, confirmMsg;
+
+    if (action === 'approve') {
+        actionUrl = '{% url "admin_panel:bulk_approve_reviews" %}';
+        confirmMsg = `Approve ${checkedBoxes.length} review(s)?`;
+    } else if (action === 'delete') {
+        actionUrl = '{% url "admin_panel:bulk_delete_reviews" %}';
+        confirmMsg = `Permanently delete ${checkedBoxes.length} review(s)? This cannot be undone.`;
+    }
+
+    if (confirm(confirmMsg)) {
+        form.action = actionUrl;
+        form.submit();
+    }
+}
+</script>
+{% endblock %}

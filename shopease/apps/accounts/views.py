@@ -867,6 +867,7 @@ def auth_page(request):
                 user = authenticate(request, username=username, password=password)
                 
                 if user is not None and user.is_active:
+                    user.backend = 'apps.accounts.backends.EmailOrUsernameBackend'
                     login(request, user)
                     
                     # Merge cart
@@ -877,8 +878,15 @@ def auth_page(request):
                         pass
                     
                     messages.success(request, f'Welcome back, {username}!')
-                    next_page = request.GET.get('next', 'home')
-                    return redirect(next_page)
+
+                    # Redirect staff/admin to admin panel, customers to home
+                    next_page = request.GET.get('next')
+                    if next_page:
+                        return redirect(next_page)
+                    elif user.is_staff or user.is_superuser:
+                        return redirect('admin_panel:dashboard')
+                    else:
+                        return redirect('home')
                 else:
                     messages.error(request, 'Invalid username or password.')
             else:
@@ -893,6 +901,7 @@ def auth_page(request):
                 username = register_form.cleaned_data.get('username')
                 
                 # Auto-login after registration
+                user.backend = 'apps.accounts.backends.EmailOrUsernameBackend'
                 login(request, user)
                 
                 # Merge cart
@@ -905,6 +914,8 @@ def auth_page(request):
                 messages.success(request, f'Welcome {username}! Your account has been created.')
                 return redirect('home')
             else:
+                # Log form errors for debugging
+                print(f"Registration form errors: {register_form.errors}")
                 messages.error(request, 'Please correct the errors below.')
     
     context = {

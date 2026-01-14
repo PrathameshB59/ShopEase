@@ -60,6 +60,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'apps.admin_panel.middleware.ProductViewTrackingMiddleware',  # Product analytics tracking
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -75,6 +76,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'apps.admin_panel.context_processors.admin_permissions',  # Admin permissions
             ],
         },
     },

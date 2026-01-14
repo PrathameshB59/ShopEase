@@ -1,0 +1,286 @@
+{% extends 'admin_panel/base_admin.html' %}
+
+{% block title %}Review Analytics - {{ block.super }}{% endblock %}
+
+{% block page_title %}Review Analytics{% endblock %}
+
+{% block content %}
+<!-- Time Period Filter -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label for="days" class="form-label">Time Period</label>
+                <select class="form-select" id="days" name="days" onchange="this.form.submit()">
+                    <option value="7" {% if days == 7 %}selected{% endif %}>Last 7 days</option>
+                    <option value="30" {% if days == 30 %}selected{% endif %}>Last 30 days</option>
+                    <option value="90" {% if days == 90 %}selected{% endif %}>Last 90 days</option>
+                    <option value="365" {% if days == 365 %}selected{% endif %}>Last year</option>
+                </select>
+            </div>
+            <div class="col-md-9 text-end">
+                <a href="{% url 'admin_panel:review_list' %}" class="btn btn-outline-primary">
+                    Go to Moderation
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Summary Statistics -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <h6 class="card-title">Total Reviews</h6>
+                <h2 class="mb-0">{{ stats.total }}</h2>
+                <small>{{ stats.approved }} approved, {{ stats.pending }} pending</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <h6 class="card-title">Average Rating</h6>
+                <h2 class="mb-0">{{ stats.avg_rating }} ⭐</h2>
+                <small>From approved reviews</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-info">
+            <div class="card-body">
+                <h6 class="card-title">Period Reviews</h6>
+                <h2 class="mb-0">{{ stats.period_count }}</h2>
+                <small>Last {{ days }} days</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-warning text-dark">
+            <div class="card-body">
+                <h6 class="card-title">Period Avg Rating</h6>
+                <h2 class="mb-0">{{ stats.period_avg_rating }} ⭐</h2>
+                <small>Last {{ days }} days</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts -->
+<div class="row mb-4">
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Reviews Over Time</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="reviewsChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Rating Distribution</h5>
+            </div>
+            <div class="card-body">
+                {% for dist in rating_distribution reversed %}
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>{{ dist.rating }} ⭐</span>
+                        <span>{{ dist.count }} ({{ dist.percentage }}%)</span>
+                    </div>
+                    <div class="progress" style="height: 25px;">
+                        <div class="progress-bar bg-warning" role="progressbar"
+                             style="width: {{ dist.percentage }}%"
+                             aria-valuenow="{{ dist.percentage }}"
+                             aria-valuemin="0" aria-valuemax="100">
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Top Products -->
+<div class="row mb-4">
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Most Reviewed Products</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th class="text-end">Reviews</th>
+                                <th class="text-end">Avg Rating</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for product in top_reviewed %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'admin_panel:product_analytics_detail' product.id %}"
+                                       class="text-decoration-none">
+                                        {{ product.name }}
+                                    </a>
+                                </td>
+                                <td class="text-end">{{ product.review_count }}</td>
+                                <td class="text-end">
+                                    {% if product.avg_rating %}
+                                    {{ product.avg_rating|floatformat:1 }} ⭐
+                                    {% else %}
+                                    N/A
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" class="text-center text-muted">No data available</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Top Rated Products</h5>
+                <small class="text-muted">Minimum 3 reviews</small>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th class="text-end">Avg Rating</th>
+                                <th class="text-end">Reviews</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for product in top_rated %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'admin_panel:product_analytics_detail' product.id %}"
+                                       class="text-decoration-none">
+                                        {{ product.name }}
+                                    </a>
+                                </td>
+                                <td class="text-end">
+                                    <span class="badge bg-success">
+                                        {{ product.avg_rating|floatformat:1 }} ⭐
+                                    </span>
+                                </td>
+                                <td class="text-end">{{ product.review_count }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" class="text-center text-muted">No data available</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Reviews -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Recent Reviews</h5>
+    </div>
+    <div class="card-body">
+        <div class="list-group list-group-flush">
+            {% for review in recent_reviews %}
+            <div class="list-group-item">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h6 class="mb-1">
+                            <a href="{% url 'admin_panel:product_analytics_detail' review.product.id %}"
+                               class="text-decoration-none">
+                                {{ review.product.name }}
+                            </a>
+                        </h6>
+                        <p class="mb-1">
+                            <span class="badge bg-warning text-dark">{{ review.rating }} ⭐</span>
+                            <strong>{{ review.title }}</strong>
+                        </p>
+                        <p class="mb-1 text-muted">{{ review.comment|truncatewords:20 }}</p>
+                        <small class="text-muted">
+                            By {{ review.user.username }} on {{ review.created_at|date:"M d, Y" }}
+                        </small>
+                    </div>
+                    <div>
+                        {% if review.is_approved %}
+                        <span class="badge bg-success">Approved</span>
+                        {% else %}
+                        <span class="badge bg-warning text-dark">Pending</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="list-group-item text-center text-muted">
+                No reviews yet
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+// Reviews over time chart
+const chartData = {{ chart_data|safe }};
+
+new Chart(document.getElementById('reviewsChart'), {
+    type: 'line',
+    data: {
+        labels: chartData.dates,
+        datasets: [{
+            label: 'Reviews',
+            data: chartData.counts,
+            borderColor: 'rgb(13, 110, 253)',
+            backgroundColor: 'rgba(13, 110, 253, 0.1)',
+            fill: true,
+            tension: 0.4
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    stepSize: 1
+                },
+                title: {
+                    display: true,
+                    text: 'Number of Reviews'
+                }
+            },
+            x: {
+                title: {
+                    display: true,
+                    text: 'Date'
+                }
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

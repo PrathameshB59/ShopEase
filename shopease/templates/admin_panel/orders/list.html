@@ -1,0 +1,266 @@
+{% extends 'admin_panel/base_admin.html' %}
+
+{% block title %}Orders{% endblock %}
+{% block page_title %}Order Management{% endblock %}
+
+{% block header_actions %}
+<div class="d-flex gap-2">
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#filterModal">
+        <i class="bi bi-funnel"></i> Filters
+    </button>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Statistics Row -->
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="card border-primary">
+            <div class="card-body">
+                <h6 class="text-muted mb-2">Total Orders (Filtered)</h6>
+                <h3 class="mb-0">{{ total_orders }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card border-success">
+            <div class="card-body">
+                <h6 class="text-muted mb-2">Total Revenue (Filtered)</h6>
+                <h3 class="mb-0">₹{{ total_revenue|floatformat:2 }}</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Active Filters -->
+{% if status_filter or search_query or date_from or date_to %}
+<div class="alert alert-info alert-dismissible fade show">
+    <strong>Active Filters:</strong>
+    {% if status_filter %}<span class="badge bg-primary ms-2">Status: {{ status_filter }}</span>{% endif %}
+    {% if search_query %}<span class="badge bg-primary ms-2">Search: {{ search_query }}</span>{% endif %}
+    {% if date_from %}<span class="badge bg-primary ms-2">From: {{ date_from }}</span>{% endif %}
+    {% if date_to %}<span class="badge bg-primary ms-2">To: {{ date_to }}</span>{% endif %}
+    <a href="{% url 'admin_panel:order_list' %}" class="btn btn-sm btn-light ms-3">Clear All</a>
+</div>
+{% endif %}
+
+<!-- Orders Table -->
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="bi bi-cart-check me-2"></i>Orders</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th><input type="checkbox" id="selectAll"></th>
+                        <th>Order ID</th>
+                        <th>Customer</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Payment</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in page_obj %}
+                    <tr>
+                        <td><input type="checkbox" class="order-checkbox" value="{{ order.order_id }}"></td>
+                        <td><a href="{% url 'admin_panel:order_detail' order.order_id %}">#{{ order.order_id|slice:":8" }}</a></td>
+                        <td>
+                            <div>{{ order.shipping_full_name }}</div>
+                            <small class="text-muted">{{ order.shipping_email }}</small>
+                        </td>
+                        <td><strong>₹{{ order.total_amount }}</strong></td>
+                        <td>
+                            {% if order.status == 'COMPLETED' %}
+                                <span class="badge bg-success">{{ order.get_status_display }}</span>
+                            {% elif order.status == 'PENDING' %}
+                                <span class="badge bg-warning text-dark">{{ order.get_status_display }}</span>
+                            {% elif order.status == 'CANCELLED' %}
+                                <span class="badge bg-danger">{{ order.get_status_display }}</span>
+                            {% elif order.status == 'SHIPPED' %}
+                                <span class="badge bg-info">{{ order.get_status_display }}</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ order.get_status_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td><span class="badge bg-light text-dark">{{ order.payment_method }}</span></td>
+                        <td>{{ order.created_at|date:"M d, Y H:i" }}</td>
+                        <td>
+                            <a href="{% url 'admin_panel:order_detail' order.order_id %}" class="btn btn-sm btn-primary" title="View Details">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            <a href="{% url 'admin_panel:generate_invoice' order.order_id %}" class="btn btn-sm btn-secondary" title="Download Invoice">
+                                <i class="bi bi-file-pdf"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center text-muted py-4">
+                            No orders found. Try adjusting your filters.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Bulk Actions Bar -->
+    {% if user.is_superuser or user_permissions.can_edit_orders %}
+    <div class="card-footer bg-light">
+        <form method="post" action="{% url 'admin_panel:bulk_update_status' %}" id="bulkActionForm">
+            {% csrf_token %}
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <div class="input-group">
+                        <label class="input-group-text">Bulk Action:</label>
+                        <select name="status" class="form-select" required>
+                            <option value="">Select Status...</option>
+                            {% for value, label in status_choices %}
+                            <option value="{{ value }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit" class="btn btn-primary" id="applyBulkAction" disabled>
+                            Apply to Selected
+                        </button>
+                    </div>
+                </div>
+                <div class="col-md-4 text-end">
+                    <span id="selectedCount" class="text-muted">0 orders selected</span>
+                </div>
+            </div>
+        </form>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Pagination -->
+{% if page_obj.has_other_pages %}
+<nav aria-label="Order pagination" class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">
+                Previous
+            </a>
+        </li>
+        {% endif %}
+
+        {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ num }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">
+                    {{ num }}
+                </a>
+            </li>
+            {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">
+                Next
+            </a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+
+<!-- Filter Modal -->
+<div class="modal fade" id="filterModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Filter Orders</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="get">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Status</label>
+                        <select name="status" class="form-select">
+                            <option value="">All Statuses</option>
+                            {% for value, label in status_choices %}
+                            <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Search</label>
+                        <input type="text" name="search" class="form-control" placeholder="Order ID, customer name, email..." value="{{ search_query }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Date From</label>
+                        <input type="date" name="date_from" class="form-control" value="{{ date_from }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Date To</label>
+                        <input type="date" name="date_to" class="form-control" value="{{ date_to }}">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <a href="{% url 'admin_panel:order_list' %}" class="btn btn-secondary">Clear Filters</a>
+                    <button type="submit" class="btn btn-primary">Apply Filters</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Bulk action checkbox handling
+const selectAllCheckbox = document.getElementById('selectAll');
+const orderCheckboxes = document.querySelectorAll('.order-checkbox');
+const selectedCountSpan = document.getElementById('selectedCount');
+const applyButton = document.getElementById('applyBulkAction');
+const bulkForm = document.getElementById('bulkActionForm');
+
+function updateSelectedCount() {
+    const checkedBoxes = document.querySelectorAll('.order-checkbox:checked');
+    const count = checkedBoxes.length;
+    selectedCountSpan.textContent = `${count} order${count !== 1 ? 's' : ''} selected`;
+    applyButton.disabled = count === 0;
+}
+
+selectAllCheckbox.addEventListener('change', function() {
+    orderCheckboxes.forEach(cb => cb.checked = this.checked);
+    updateSelectedCount();
+});
+
+orderCheckboxes.forEach(cb => {
+    cb.addEventListener('change', updateSelectedCount);
+});
+
+bulkForm.addEventListener('submit', function(e) {
+    const checkedBoxes = document.querySelectorAll('.order-checkbox:checked');
+    if (checkedBoxes.length === 0) {
+        e.preventDefault();
+        alert('Please select at least one order.');
+        return;
+    }
+
+    // Add order IDs to form
+    checkedBoxes.forEach(cb => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'order_ids[]';
+        input.value = cb.value;
+        bulkForm.appendChild(input);
+    });
+
+    if (!confirm(`Update ${checkedBoxes.length} order(s) to the selected status?`)) {
+        e.preventDefault();
+    }
+});
+</script>
+{% endblock %}

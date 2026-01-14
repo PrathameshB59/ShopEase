@@ -1,0 +1,175 @@
+{% extends 'admin_panel/base_admin.html' %}
+
+{% block title %}Activity Log - {{ block.super }}{% endblock %}
+
+{% block page_title %}Admin Activity Log{% endblock %}
+
+{% block content %}
+<!-- Statistics -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h6 class="text-muted mb-2">Total Activities</h6>
+                <h2 class="mb-0">{{ stats.total }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card border-info">
+            <div class="card-body">
+                <h6 class="text-muted mb-2">Period Activities</h6>
+                <h2 class="mb-0 text-info">{{ stats.period }}</h2>
+                <small class="text-muted">Last {{ days }} days</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label for="search" class="form-label">Search</label>
+                <input type="text" class="form-control" id="search" name="search"
+                       value="{{ search_query }}" placeholder="Description or username">
+            </div>
+            <div class="col-md-2">
+                <label for="user" class="form-label">User</label>
+                <select class="form-select" id="user" name="user">
+                    <option value="">All Users</option>
+                    {% for admin_user in admin_users %}
+                    <option value="{{ admin_user.id }}" {% if selected_user|stringformat:"s" == admin_user.id|stringformat:"s" %}selected{% endif %}>
+                        {{ admin_user.username }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="action" class="form-label">Action</label>
+                <select class="form-select" id="action" name="action">
+                    <option value="">All Actions</option>
+                    {% for act in unique_actions %}
+                    <option value="{{ act }}" {% if selected_action == act %}selected{% endif %}>
+                        {{ act }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="days" class="form-label">Time Period</label>
+                <select class="form-select" id="days" name="days">
+                    <option value="7" {% if days == '7' %}selected{% endif %}>Last 7 days</option>
+                    <option value="30" {% if days == '30' %}selected{% endif %}>Last 30 days</option>
+                    <option value="90" {% if days == '90' %}selected{% endif %}>Last 90 days</option>
+                    <option value="365" {% if days == '365' %}selected{% endif %}>Last year</option>
+                </select>
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Activity Breakdown -->
+{% if activity_breakdown %}
+<div class="card mb-4">
+    <div class="card-header">
+        <h6 class="mb-0">Activity Breakdown (Last 30 Days)</h6>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            {% for item in activity_breakdown %}
+            <div class="col-md-4 mb-2">
+                <div class="d-flex justify-content-between">
+                    <small>{{ item.action }}</small>
+                    <strong>{{ item.count }}</strong>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Activity List -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Activity Log ({{ page_obj.paginator.count }})</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>User</th>
+                        <th>Action</th>
+                        <th>Description</th>
+                        <th>IP Address</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for activity in page_obj %}
+                    <tr>
+                        <td>
+                            <small>
+                                {{ activity.timestamp|date:"M d, Y" }}<br>
+                                {{ activity.timestamp|time:"g:i A" }}
+                            </small>
+                        </td>
+                        <td>
+                            <a href="{% url 'admin_panel:user_detail' activity.user.id %}">
+                                {{ activity.user.username }}
+                            </a>
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary">{{ activity.action }}</span>
+                        </td>
+                        <td>{{ activity.description }}</td>
+                        <td><small class="text-muted">{{ activity.ip_address }}</small></td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-4">
+                            No activity found matching your criteria.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Pagination -->
+{% if page_obj.has_other_pages %}
+<nav aria-label="Activity pagination" class="mt-3">
+    <ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}
+        <li class="page-item">
+            <a class="page-link" href="?page=1&user={{ selected_user }}&action={{ selected_action }}&search={{ search_query }}&days={{ days }}">First</a>
+        </li>
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.previous_page_number }}&user={{ selected_user }}&action={{ selected_action }}&search={{ search_query }}&days={{ days }}">Previous</a>
+        </li>
+        {% endif %}
+
+        <li class="page-item active">
+            <span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+        </li>
+
+        {% if page_obj.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.next_page_number }}&user={{ selected_user }}&action={{ selected_action }}&search={{ search_query }}&days={{ days }}">Next</a>
+        </li>
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}&user={{ selected_user }}&action={{ selected_action }}&search={{ search_query }}&days={{ days }}">Last</a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}

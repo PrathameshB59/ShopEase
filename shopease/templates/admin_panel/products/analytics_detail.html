@@ -1,0 +1,307 @@
+{% extends 'admin_panel/base_admin.html' %}
+
+{% block title %}{{ product.name }} - Analytics - {{ block.super }}{% endblock %}
+
+{% block page_title %}Product Analytics: {{ product.name }}{% endblock %}
+
+{% block content %}
+<!-- Product Header -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <div class="d-flex align-items-center">
+                    {% if product.images.first %}
+                    <img src="{{ product.images.first.image.url }}"
+                         alt="{{ product.name }}"
+                         class="rounded me-3"
+                         style="width: 80px; height: 80px; object-fit: cover;">
+                    {% endif %}
+                    <div>
+                        <h4 class="mb-1">{{ product.name }}</h4>
+                        <p class="text-muted mb-0">
+                            SKU: {{ product.sku }} •
+                            Price: ₹{{ product.price }} •
+                            Stock: {{ product.stock }}
+                        </p>
+                        {% if is_featured %}
+                        <span class="badge bg-success mt-2">Currently Featured</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 text-end">
+                <form method="get" class="d-inline-block">
+                    <select name="days" class="form-select d-inline-block w-auto" onchange="this.form.submit()">
+                        <option value="7" {% if days == 7 %}selected{% endif %}>Last 7 days</option>
+                        <option value="30" {% if days == 30 %}selected{% endif %}>Last 30 days</option>
+                        <option value="90" {% if days == 90 %}selected{% endif %}>Last 90 days</option>
+                    </select>
+                </form>
+                <a href="{% url 'admin_panel:product_analytics_list' %}" class="btn btn-outline-secondary ms-2">
+                    Back to List
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Key Metrics -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <h6 class="card-title">Total Views</h6>
+                <h2 class="mb-0">{{ totals.total_views|default:0 }}</h2>
+                <small>{{ totals.total_unique_viewers|default:0 }} unique visitors</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <h6 class="card-title">Purchases</h6>
+                <h2 class="mb-0">{{ totals.total_purchases|default:0 }}</h2>
+                <small>
+                    {% if totals.total_views %}
+                    {{ totals.total_purchases|default:0|floatformat:2|add:0|mul:100|div:totals.total_views|floatformat:2 }}% conversion
+                    {% else %}
+                    0% conversion
+                    {% endif %}
+                </small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-info">
+            <div class="card-body">
+                <h6 class="card-title">Revenue</h6>
+                <h2 class="mb-0">₹{{ totals.total_revenue|floatformat:2 }}</h2>
+                <small>In selected period</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-warning text-dark">
+            <div class="card-body">
+                <h6 class="card-title">Featured Score</h6>
+                <h2 class="mb-0">{{ totals.avg_score|floatformat:2 }}</h2>
+                <small>Average score</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Engagement Metrics -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Engagement Metrics</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6 mb-3">
+                        <h3 class="text-primary">{{ totals.total_cart_adds|default:0 }}</h3>
+                        <p class="text-muted mb-0">Cart Additions</p>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <h3 class="text-info">{{ totals.total_wishlist|default:0 }}</h3>
+                        <p class="text-muted mb-0">Wishlist Adds</p>
+                    </div>
+                    <div class="col-6">
+                        <h3 class="text-success">
+                            {% if totals.avg_rating %}
+                            {{ totals.avg_rating|floatformat:1 }} ⭐
+                            {% else %}
+                            N/A
+                            {% endif %}
+                        </h3>
+                        <p class="text-muted mb-0">Average Rating</p>
+                    </div>
+                    <div class="col-6">
+                        <h3 class="text-warning">
+                            {% if totals.total_views %}
+                            {{ totals.total_cart_adds|default:0|floatformat:0|add:0|mul:100|div:totals.total_views|floatformat:1 }}%
+                            {% else %}
+                            0%
+                            {% endif %}
+                        </h3>
+                        <p class="text-muted mb-0">Add-to-Cart Rate</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Period Comparison</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm mb-0">
+                    <tbody>
+                        <tr>
+                            <td>Date Range:</td>
+                            <td class="text-end"><strong>{{ date_range.start }} to {{ date_range.end }}</strong></td>
+                        </tr>
+                        <tr>
+                            <td>Average Daily Views:</td>
+                            <td class="text-end">
+                                <strong>
+                                    {% widthratio totals.total_views days 1 %}
+                                </strong>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Average Daily Revenue:</td>
+                            <td class="text-end">
+                                <strong>₹{% widthratio totals.total_revenue days 1 %}</strong>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Average Daily Purchases:</td>
+                            <td class="text-end">
+                                <strong>
+                                    {% widthratio totals.total_purchases days 1 %}
+                                </strong>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts -->
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Views & Purchases Over Time</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="viewsPurchasesChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Revenue Over Time</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="revenueChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Featured Score Trend</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="scoreChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+// Chart data from backend
+const chartData = {{ chart_data|safe }};
+
+// Views & Purchases Chart
+new Chart(document.getElementById('viewsPurchasesChart'), {
+    type: 'line',
+    data: {
+        labels: chartData.dates,
+        datasets: [{
+            label: 'Views',
+            data: chartData.views,
+            borderColor: 'rgb(13, 110, 253)',
+            backgroundColor: 'rgba(13, 110, 253, 0.1)',
+            yAxisID: 'y'
+        }, {
+            label: 'Purchases',
+            data: chartData.purchases,
+            borderColor: 'rgb(25, 135, 84)',
+            backgroundColor: 'rgba(25, 135, 84, 0.1)',
+            yAxisID: 'y1'
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: {
+                type: 'linear',
+                display: true,
+                position: 'left',
+                title: { display: true, text: 'Views' }
+            },
+            y1: {
+                type: 'linear',
+                display: true,
+                position: 'right',
+                title: { display: true, text: 'Purchases' },
+                grid: { drawOnChartArea: false }
+            }
+        }
+    }
+});
+
+// Revenue Chart
+new Chart(document.getElementById('revenueChart'), {
+    type: 'bar',
+    data: {
+        labels: chartData.dates,
+        datasets: [{
+            label: 'Revenue (₹)',
+            data: chartData.revenue,
+            backgroundColor: 'rgba(13, 202, 240, 0.5)',
+            borderColor: 'rgb(13, 202, 240)',
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: {
+                beginAtZero: true,
+                title: { display: true, text: 'Revenue (₹)' }
+            }
+        }
+    }
+});
+
+// Featured Score Chart
+new Chart(document.getElementById('scoreChart'), {
+    type: 'line',
+    data: {
+        labels: chartData.dates,
+        datasets: [{
+            label: 'Featured Score',
+            data: chartData.featured_score,
+            borderColor: 'rgb(255, 193, 7)',
+            backgroundColor: 'rgba(255, 193, 7, 0.1)',
+            fill: true,
+            tension: 0.4
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: {
+                beginAtZero: true,
+                title: { display: true, text: 'Score' }
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

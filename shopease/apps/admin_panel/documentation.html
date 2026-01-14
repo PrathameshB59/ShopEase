@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShopEase Admin Panel - Documentation</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #0d6efd;
+            --sidebar-width: 280px;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.7;
+        }
+
+        /* Sidebar Navigation */
+        .doc-sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            overflow-y: auto;
+            padding: 20px 0;
+            z-index: 1000;
+        }
+
+        .doc-sidebar .nav-link {
+            color: rgba(255,255,255,0.8);
+            padding: 8px 20px;
+            font-size: 0.9rem;
+            border-left: 3px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .doc-sidebar .nav-link:hover {
+            color: #fff;
+            background: rgba(255,255,255,0.1);
+            border-left-color: var(--primary-color);
+        }
+
+        .doc-sidebar .nav-link.active {
+            color: #fff;
+            background: rgba(13, 110, 253, 0.3);
+            border-left-color: var(--primary-color);
+        }
+
+        .doc-sidebar h6 {
+            color: rgba(255,255,255,0.5);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 15px 20px 5px;
+            margin: 0;
+        }
+
+        /* Main Content */
+        .doc-content {
+            margin-left: var(--sidebar-width);
+            padding: 40px 60px;
+            max-width: 900px;
+        }
+
+        /* Header */
+        .doc-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 60px;
+            margin: -40px -60px 40px;
+            border-radius: 0 0 20px 20px;
+        }
+
+        .doc-header h1 {
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        /* Section Styling */
+        section {
+            margin-bottom: 60px;
+            scroll-margin-top: 20px;
+        }
+
+        section h2 {
+            color: #1a1a2e;
+            border-bottom: 3px solid var(--primary-color);
+            padding-bottom: 10px;
+            margin-bottom: 25px;
+        }
+
+        section h3 {
+            color: #16213e;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+
+        /* Code Blocks */
+        pre {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #e83e8c;
+            font-size: 0.9em;
+        }
+
+        pre code {
+            background: none;
+            color: inherit;
+            padding: 0;
+        }
+
+        /* Tables */
+        .table {
+            margin: 20px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .table thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .table th {
+            font-weight: 600;
+            border: none;
+        }
+
+        /* Feature Cards */
+        .feature-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            transition: transform 0.2s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .feature-card i {
+            font-size: 2rem;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+
+        /* URL Cards */
+        .url-card {
+            background: #f8f9fa;
+            border-left: 4px solid var(--primary-color);
+            padding: 15px 20px;
+            margin: 15px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .url-card .url {
+            font-family: monospace;
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        /* Badge styles */
+        .badge-role {
+            padding: 5px 12px;
+            font-size: 0.8rem;
+        }
+
+        /* Alert boxes */
+        .alert-tip {
+            background: #d1ecf1;
+            border-left: 4px solid #0dcaf0;
+            padding: 15px 20px;
+            border-radius: 0 8px 8px 0;
+            margin: 20px 0;
+        }
+
+        .alert-warning-custom {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px 20px;
+            border-radius: 0 8px 8px 0;
+            margin: 20px 0;
+        }
+
+        /* File tree */
+        .file-tree {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.85rem;
+            line-height: 1.8;
+        }
+
+        .file-tree .folder {
+            color: #dcdcaa;
+        }
+
+        .file-tree .file {
+            color: #9cdcfe;
+        }
+
+        /* Responsive */
+        @media (max-width: 992px) {
+            .doc-sidebar {
+                display: none;
+            }
+            .doc-content {
+                margin-left: 0;
+                padding: 20px;
+            }
+            .doc-header {
+                margin: -20px -20px 30px;
+                padding: 40px 20px;
+            }
+        }
+
+        /* Print */
+        @media print {
+            .doc-sidebar {
+                display: none;
+            }
+            .doc-content {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar Navigation -->
+    <nav class="doc-sidebar">
+        <div class="text-center text-white mb-4 px-3">
+            <i class="bi bi-shop display-4"></i>
+            <h5 class="mt-2 mb-0">ShopEase</h5>
+            <small class="text-white-50">Admin Panel Docs</small>
+        </div>
+
+        <h6>Getting Started</h6>
+        <a href="#overview" class="nav-link">Overview</a>
+        <a href="#features" class="nav-link">Features</a>
+        <a href="#installation" class="nav-link">Installation</a>
+
+        <h6>User Management</h6>
+        <a href="#roles" class="nav-link">Roles & Permissions</a>
+        <a href="#permissions-matrix" class="nav-link">Permission Matrix</a>
+
+        <h6>Modules</h6>
+        <a href="#dashboard" class="nav-link">Dashboard</a>
+        <a href="#orders" class="nav-link">Order Management</a>
+        <a href="#products" class="nav-link">Product Analytics</a>
+        <a href="#featured" class="nav-link">Featured Products</a>
+        <a href="#reviews" class="nav-link">Review Management</a>
+        <a href="#users" class="nav-link">User Management</a>
+        <a href="#reports" class="nav-link">Reports & Analytics</a>
+
+        <h6>Technical</h6>
+        <a href="#api" class="nav-link">API Endpoints</a>
+        <a href="#commands" class="nav-link">Management Commands</a>
+        <a href="#file-structure" class="nav-link">File Structure</a>
+        <a href="#customization" class="nav-link">Customization</a>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="doc-content">
+        <!-- Header -->
+        <div class="doc-header">
+            <h1><i class="bi bi-gear-wide-connected me-3"></i>Admin Panel Documentation</h1>
+            <p class="lead mb-0">Complete guide to the ShopEase custom admin panel</p>
+        </div>
+
+        <!-- Overview -->
+        <section id="overview">
+            <h2><i class="bi bi-info-circle me-2"></i>Overview</h2>
+            <p>The ShopEase Admin Panel is a custom-built administrative interface that provides comprehensive management capabilities for your e-commerce platform. Built with Django 5.0 and Bootstrap 5, it offers role-based access control, detailed analytics, and powerful management tools.</p>
+
+            <div class="url-card">
+                <strong>Access URL:</strong>
+                <span class="url">http://localhost:8000/dashboard/</span>
+            </div>
+
+            <h3>Requirements</h3>
+            <ul>
+                <li>Django 5.0+</li>
+                <li>MySQL Database</li>
+                <li>WeasyPrint (for PDF invoices)</li>
+                <li>Bootstrap 5 (included via CDN)</li>
+                <li>Chart.js (included via CDN)</li>
+            </ul>
+        </section>
+
+        <!-- Features -->
+        <section id="features">
+            <h2><i class="bi bi-star me-2"></i>Features</h2>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="feature-card">
+                        <i class="bi bi-shield-lock"></i>
+                        <h5>Role-Based Access</h5>
+                        <p class="text-muted mb-0">5 admin roles with 12 granular permissions</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="feature-card">
+                        <i class="bi bi-cart-check"></i>
+                        <h5>Order Management</h5>
+                        <p class="text-muted mb-0">Full order lifecycle, refunds, PDF invoices</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="feature-card">
+                        <i class="bi bi-graph-up"></i>
+                        <h5>Product Analytics</h5>
+                        <p class="text-muted mb-0">View tracking, engagement metrics, scoring</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="feature-card">
+                        <i class="bi bi-chat-square-text"></i>
+                        <h5>Review Moderation</h5>
+                        <p class="text-muted mb-0">Approve/reject reviews, bulk actions</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="feature-card">
+                        <i class="bi bi-people"></i>
+                        <h5>User Management</h5>
+                        <p class="text-muted mb-0">Staff creation, role assignment, activity logs</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="feature-card">
+                        <i class="bi bi-file-earmark-bar-graph"></i>
+                        <h5>Reports & Export</h5>
+                        <p class="text-muted mb-0">Sales, revenue reports with CSV export</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Installation -->
+        <section id="installation">
+            <h2><i class="bi bi-download me-2"></i>Installation & Setup</h2>
+
+            <h3>Step 1: Add to Installed Apps</h3>
+            <pre><code># config/settings.py
+INSTALLED_APPS = [
+    ...
+    'apps.admin_panel',
+]</code></pre>
+
+            <h3>Step 2: Add Middleware</h3>
+            <pre><code># config/settings.py
+MIDDLEWARE = [
+    ...
+    'apps.admin_panel.middleware.ProductViewTrackingMiddleware',
+]</code></pre>
+
+            <h3>Step 3: Add Context Processor</h3>
+            <pre><code># config/settings.py - Inside TEMPLATES OPTIONS
+'context_processors': [
+    ...
+    'apps.admin_panel.context_processors.admin_permissions',
+]</code></pre>
+
+            <h3>Step 4: Add URL Pattern</h3>
+            <pre><code># config/urls.py
+urlpatterns = [
+    ...
+    path('dashboard/', include('apps.admin_panel.urls', namespace='admin_panel')),
+]</code></pre>
+
+            <h3>Step 5: Run Migrations</h3>
+            <pre><code>python manage.py makemigrations admin_panel
+python manage.py migrate</code></pre>
+
+            <h3>Step 6: Create Superuser</h3>
+            <pre><code>python manage.py createsuperuser</code></pre>
+        </section>
+
+        <!-- Roles & Permissions -->
+        <section id="roles">
+            <h2><i class="bi bi-person-badge me-2"></i>User Roles & Permissions</h2>
+
+            <h3>Available Roles</h3>
+            <div class="mb-4">
+                <span class="badge bg-danger badge-role me-2">SUPER_ADMIN</span>
+                <span class="badge bg-primary badge-role me-2">ORDER_MANAGER</span>
+                <span class="badge bg-success badge-role me-2">INVENTORY_MANAGER</span>
+                <span class="badge bg-info badge-role me-2">MARKETING_MANAGER</span>
+                <span class="badge bg-secondary badge-role">CUSTOMER_SERVICE</span>
+            </div>
+
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Role</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>SUPER_ADMIN</code></td>
+                        <td>Full access to all features and settings</td>
+                    </tr>
+                    <tr>
+                        <td><code>ORDER_MANAGER</code></td>
+                        <td>Manage orders, process refunds, view customers</td>
+                    </tr>
+                    <tr>
+                        <td><code>INVENTORY_MANAGER</code></td>
+                        <td>Manage products, inventory, view analytics</td>
+                    </tr>
+                    <tr>
+                        <td><code>MARKETING_MANAGER</code></td>
+                        <td>Manage featured products, view analytics</td>
+                    </tr>
+                    <tr>
+                        <td><code>CUSTOMER_SERVICE</code></td>
+                        <td>View orders, moderate reviews</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Permission Matrix -->
+        <section id="permissions-matrix">
+            <h2><i class="bi bi-table me-2"></i>Permission Matrix</h2>
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Permission</th>
+                            <th class="text-center">Super Admin</th>
+                            <th class="text-center">Order Mgr</th>
+                            <th class="text-center">Inventory Mgr</th>
+                            <th class="text-center">Marketing Mgr</th>
+                            <th class="text-center">Customer Svc</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>View Orders</td>
+                            <td class="text-center text-success"><i class="bi bi-check-lg"></i></td>
+                            <td class="text-center text-success"><i class="bi bi-check-lg"></i></td>
+                            <td class="text-center text-danger"><i class="bi bi-x-lg"></i></td>
+                            <td class="text-center text-danger"><i class="bi bi-x-lg"></i></td>
+                            <td class="text-center text-success"><i class="bi bi-check-lg"></i></td>
+                        </tr>
+                        <tr>
+                            <td>Edit Orders</td>
+                            <td class="text-center text-success"><i class="bi bi-check-lg"></i></td>
+                            <td class="text-center text-success"><i class="bi bi-check-lg"></i></td>
+                            <td class="text-center text-danger"><i class="bi bi-x-lg"></i></td>
+                            <td class="text-center text-danger"><i class="bi bi-x-lg"></i></td>
+                            <td class="text-center text-danger"><i class="bi bi-x-lg"></i></td>
+                        </tr>
+                        <tr>
+                            <td>Process Refunds</td>
+                            <td class="text-center text-success"><i class="bi bi-check-lg"></i></td>
+                            <td class="text-center text-success"><i class="bi bi-check-lg"></i></td>
+                            <td class="text-center text-danger"><i class="bi bi-x-lg"></i></td>
+                            <td class="text-center text-danger"><i class="bi bi-x-lg"></i></td>
+                            <td class="text-center text-danger"><i class="bi bi-x-lg"></i></td>
+                        </tr>
+                        <tr>
+                            <td>View Products</td>
+                            <td class="text-center text-success"><i class="bi bi-check-lg"></i></td>
+                            <td class="text-center text-danger"><i class="bi bi-x-lg"></i></td>
+                            <td class="text-center text-success"><i class="bi bi-check-lg"></i></td>
+                            <td class="text-center text-success"><i class="bi bi-check-lg"></i></td>
+                            <td class="text-center text-danger"><i class="bi bi-x-lg"></i></td>
+                        </tr>
+                        <tr>
+                            <td>Moderate Reviews</td>
+                            <td class="text-center text-success"><i class="bi bi-check-lg"></i></td>
+                            <td class="text-center text-danger"><i class="bi bi-x-lg"></i></td>
+                            <td class="text-center text-danger"><i class="bi bi-x-lg"></i></td>
+                            <td class="text-center text-danger"><i class="bi bi-x-lg"></i></td>
+                            <td class="text-center text-success"><i class="bi bi-check-lg"></i></td>
+                        </tr>
+                        <tr>
+                            <td>Manage Featured</td>
+                            <td class="text-center text-success"><i class="bi bi-check-lg"></i></td>
+                            <td class="text-center text-danger"><i class="bi bi-x-lg"></i></td>
+                            <td class="text-center text-danger"><i class="bi bi-x-lg"></i></td>
+                            <td class="text-center text-success"><i class="bi bi-check-lg"></i></td>
+                            <td class="text-center text-danger"><i class="bi bi-x-lg"></i></td>
+                        </tr>
+                        <tr>
+                            <td>View Users</td>
+                            <td class="text-center text-success"><i class="bi bi-check-lg"></i></td>
+                            <td class="text-center text-danger"><i class="bi bi-x-lg"></i></td>
+                            <td class="text-center text-danger"><i class="bi bi-x-lg"></i></td>
+                            <td class="text-center text-danger"><i class="bi bi-x-lg"></i></td>
+                            <td class="text-center text-danger"><i class="bi bi-x-lg"></i></td>
+                        </tr>
+                        <tr>
+                            <td>View Analytics</td>
+                            <td class="text-center text-success"><i class="bi bi-check-lg"></i></td>
+                            <td class="text-center text-danger"><i class="bi bi-x-lg"></i></td>
+                            <td class="text-center text-success"><i class="bi bi-check-lg"></i></td>
+                            <td class="text-center text-success"><i class="bi bi-check-lg"></i></td>
+                            <td class="text-center text-danger"><i class="bi bi-x-lg"></i></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Dashboard -->
+        <section id="dashboard">
+            <h2><i class="bi bi-speedometer2 me-2"></i>Dashboard</h2>
+            <div class="url-card">
+                <strong>URL:</strong> <span class="url">/dashboard/</span>
+            </div>
+            <p>The main dashboard provides an overview of key business metrics:</p>
+            <ul>
+                <li>Today's orders and revenue</li>
+                <li>Pending orders count</li>
+                <li>Low stock alerts</li>
+                <li>Recent orders list</li>
+                <li>Quick navigation to all modules</li>
+            </ul>
+        </section>
+
+        <!-- Orders -->
+        <section id="orders">
+            <h2><i class="bi bi-cart-check me-2"></i>Order Management</h2>
+            <div class="url-card">
+                <strong>URL:</strong> <span class="url">/dashboard/orders/</span>
+            </div>
+
+            <h3>Features</h3>
+            <ul>
+                <li>View all orders with filtering (status, date, search)</li>
+                <li>Order detail view with full information</li>
+                <li>Update order status</li>
+                <li>Generate PDF invoices</li>
+                <li>Process refunds with stock restoration</li>
+                <li>Bulk status updates</li>
+                <li>Automatic email notifications</li>
+            </ul>
+
+            <h3>Order Status Flow</h3>
+            <div class="alert-tip">
+                <code>PENDING</code> &rarr; <code>PROCESSING</code> &rarr; <code>SHIPPED</code> &rarr; <code>DELIVERED</code> &rarr; <code>COMPLETED</code>
+                <br><small class="text-muted">Orders can be cancelled at any stage before completion</small>
+            </div>
+        </section>
+
+        <!-- Products -->
+        <section id="products">
+            <h2><i class="bi bi-bar-chart me-2"></i>Product Analytics</h2>
+            <div class="url-card">
+                <strong>URL:</strong> <span class="url">/dashboard/products/</span>
+            </div>
+
+            <h3>Metrics Tracked</h3>
+            <div class="row">
+                <div class="col-md-6">
+                    <ul>
+                        <li>Page views (total & unique)</li>
+                        <li>Cart additions</li>
+                        <li>Wishlist additions</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <ul>
+                        <li>Purchases</li>
+                        <li>Revenue</li>
+                        <li>Average rating</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>Featured Score Formula</h3>
+            <div class="alert-tip">
+                <strong>Score = </strong>Revenue (40%) + Purchases (20%) + Engagement (15%) + Views (10%) + Rating (10%) + Reviews (5%)
+            </div>
+        </section>
+
+        <!-- Featured Products -->
+        <section id="featured">
+            <h2><i class="bi bi-star me-2"></i>Featured Products</h2>
+            <div class="url-card">
+                <strong>URL:</strong> <span class="url">/dashboard/products/featured/dashboard/</span>
+            </div>
+
+            <h3>Features</h3>
+            <ul>
+                <li>View top products by featured score</li>
+                <li>Auto-suggested products based on analytics</li>
+                <li>Manual product featuring</li>
+                <li>Set priority and expiry dates</li>
+                <li>Track featured product performance</li>
+            </ul>
+        </section>
+
+        <!-- Reviews -->
+        <section id="reviews">
+            <h2><i class="bi bi-chat-square-text me-2"></i>Review Management</h2>
+            <div class="url-card">
+                <strong>URL:</strong> <span class="url">/dashboard/reviews/</span>
+            </div>
+
+            <h3>Features</h3>
+            <ul>
+                <li>View all reviews with filtering</li>
+                <li>Pending reviews queue</li>
+                <li>Approve/reject individual reviews</li>
+                <li>Bulk approve/reject/delete</li>
+                <li>Review analytics dashboard</li>
+            </ul>
+        </section>
+
+        <!-- Users -->
+        <section id="users">
+            <h2><i class="bi bi-people me-2"></i>User Management</h2>
+            <div class="url-card">
+                <strong>URL:</strong> <span class="url">/dashboard/users/</span>
+            </div>
+
+            <h3>Features</h3>
+            <ul>
+                <li>View all users (staff and customers)</li>
+                <li>User detail with order/review history</li>
+                <li>Assign/remove admin roles</li>
+                <li>Activate/deactivate accounts</li>
+                <li>Create new staff users</li>
+                <li>Activity log viewer</li>
+            </ul>
+        </section>
+
+        <!-- Reports -->
+        <section id="reports">
+            <h2><i class="bi bi-file-earmark-bar-graph me-2"></i>Reports & Analytics</h2>
+            <div class="url-card">
+                <strong>URL:</strong> <span class="url">/dashboard/reports/</span>
+            </div>
+
+            <h3>Available Reports</h3>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Report</th>
+                        <th>URL</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Sales Report</td>
+                        <td><code>/reports/sales/</code></td>
+                        <td>Orders, revenue, top products</td>
+                    </tr>
+                    <tr>
+                        <td>Revenue Analytics</td>
+                        <td><code>/reports/revenue/</code></td>
+                        <td>Monthly trends, category breakdown</td>
+                    </tr>
+                    <tr>
+                        <td>Product Performance</td>
+                        <td><code>/reports/products/</code></td>
+                        <td>Best sellers, stock alerts</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="alert-tip">
+                <i class="bi bi-download me-2"></i>All reports support CSV export for further analysis
+            </div>
+        </section>
+
+        <!-- API -->
+        <section id="api">
+            <h2><i class="bi bi-code-slash me-2"></i>API Endpoints</h2>
+
+            <h3>Featured Products Auto-Suggest</h3>
+            <pre><code>GET /dashboard/products/featured/auto-suggest/
+
+Parameters:
+- days (int): Number of days to analyze (default: 7)
+- limit (int): Number of suggestions (default: 10)
+
+Response:
+{
+  "success": true,
+  "suggestions": [
+    {
+      "id": 1,
+      "name": "Product Name",
+      "featured_score": 85.5,
+      "revenue": 15000.00,
+      ...
+    }
+  ]
+}</code></pre>
+        </section>
+
+        <!-- Commands -->
+        <section id="commands">
+            <h2><i class="bi bi-terminal me-2"></i>Management Commands</h2>
+
+            <h3>Aggregate Analytics</h3>
+            <p>Run daily to calculate featured product scores:</p>
+            <pre><code># Run for yesterday (default)
+python manage.py aggregate_analytics
+
+# Run for specific date
+python manage.py aggregate_analytics --date 2024-01-15
+
+# Schedule with cron (daily at 2 AM)
+0 2 * * * cd /path/to/shopease && python manage.py aggregate_analytics</code></pre>
+        </section>
+
+        <!-- File Structure -->
+        <section id="file-structure">
+            <h2><i class="bi bi-folder me-2"></i>File Structure</h2>
+            <div class="file-tree">
+<span class="folder">apps/admin_panel/</span>
+├── <span class="file">__init__.py</span>
+├── <span class="file">admin.py</span>
+├── <span class="file">apps.py</span>
+├── <span class="file">context_processors.py</span>
+├── <span class="file">decorators.py</span>
+├── <span class="file">middleware.py</span>
+├── <span class="file">models.py</span>
+├── <span class="file">signals.py</span>
+├── <span class="file">urls.py</span>
+│
+├── <span class="folder">management/commands/</span>
+│   └── <span class="file">aggregate_analytics.py</span>
+│
+├── <span class="folder">utils/</span>
+│   └── <span class="file">pdf_generator.py</span>
+│
+└── <span class="folder">views/</span>
+    ├── <span class="file">dashboard.py</span>
+    ├── <span class="file">orders.py</span>
+    ├── <span class="file">products.py</span>
+    ├── <span class="file">reviews.py</span>
+    ├── <span class="file">users.py</span>
+    └── <span class="file">reports.py</span>
+            </div>
+        </section>
+
+        <!-- Customization -->
+        <section id="customization">
+            <h2><i class="bi bi-sliders me-2"></i>Customization</h2>
+
+            <h3>Adding New Permissions</h3>
+            <pre><code># 1. Add field to AdminRole model
+can_new_permission = models.BooleanField(default=False)
+
+# 2. Update context processor
+'can_new_permission': admin_role.can_new_permission,
+
+# 3. Use in templates
+{% if user_permissions.can_new_permission %}
+    <!-- Content -->
+{% endif %}
+
+# 4. Use in views
+@permission_required('can_new_permission')
+def my_view(request):
+    ...</code></pre>
+
+            <h3>Customizing Email Templates</h3>
+            <p>Edit templates in <code>templates/emails/</code>:</p>
+            <ul>
+                <li><code>order_status_change.html</code> - HTML version</li>
+                <li><code>order_status_change.txt</code> - Plain text version</li>
+            </ul>
+        </section>
+
+        <!-- Footer -->
+        <footer class="border-top pt-4 mt-5 text-muted">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>ShopEase Admin Panel</strong></p>
+                    <p>Version 1.0.0 | Last Updated: January 2025</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p>Built with Django 5.0 & Bootstrap 5</p>
+                </div>
+            </div>
+        </footer>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Highlight active nav link on scroll
+        const sections = document.querySelectorAll('section');
+        const navLinks = document.querySelectorAll('.doc-sidebar .nav-link');
+
+        window.addEventListener('scroll', () => {
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                if (scrollY >= sectionTop - 100) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === '#' + current) {
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

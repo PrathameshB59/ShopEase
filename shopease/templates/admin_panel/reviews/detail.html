@@ -1,0 +1,214 @@
+{% extends 'admin_panel/base_admin.html' %}
+
+{% block title %}Review Detail - {{ block.super }}{% endblock %}
+
+{% block page_title %}Review Detail{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Main Review Content -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Review #{{ review.id }}</h5>
+                <div>
+                    {% if review.is_approved %}
+                    <span class="badge bg-success">Approved</span>
+                    {% else %}
+                    <span class="badge bg-warning text-dark">Pending</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- Product Info -->
+                <div class="mb-4 pb-3 border-bottom">
+                    <h6 class="text-muted mb-2">Product</h6>
+                    <div class="d-flex align-items-center">
+                        {% if review.product.images.first %}
+                        <img src="{{ review.product.images.first.image.url }}"
+                             alt="{{ review.product.name }}"
+                             class="rounded me-3"
+                             style="width: 60px; height: 60px; object-fit: cover;">
+                        {% endif %}
+                        <div>
+                            <h5 class="mb-0">
+                                <a href="{% url 'admin_panel:product_analytics_detail' review.product.id %}"
+                                   class="text-decoration-none">
+                                    {{ review.product.name }}
+                                </a>
+                            </h5>
+                            <small class="text-muted">
+                                SKU: {{ review.product.sku }} • Price: ₹{{ review.product.price }}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User Info -->
+                <div class="mb-4 pb-3 border-bottom">
+                    <h6 class="text-muted mb-2">Reviewer</h6>
+                    <div>
+                        <strong>{{ review.user.get_full_name|default:review.user.username }}</strong><br>
+                        <small class="text-muted">
+                            Username: {{ review.user.username }}<br>
+                            Email: {{ review.user.email }}<br>
+                            User since: {{ review.user.date_joined|date:"M d, Y" }}
+                        </small>
+                    </div>
+                </div>
+
+                <!-- Review Content -->
+                <div class="mb-4 pb-3 border-bottom">
+                    <h6 class="text-muted mb-2">Review</h6>
+                    <div class="mb-3">
+                        <span class="badge bg-warning text-dark fs-5">
+                            {{ review.rating }} ⭐
+                        </span>
+                    </div>
+                    <h4 class="mb-2">{{ review.title }}</h4>
+                    <p class="lead">{{ review.comment }}</p>
+                </div>
+
+                <!-- Timestamps -->
+                <div class="mb-4">
+                    <h6 class="text-muted mb-2">Timeline</h6>
+                    <small class="text-muted">
+                        <strong>Created:</strong> {{ review.created_at|date:"F d, Y \a\t g:i A" }}<br>
+                        <strong>Last Updated:</strong> {{ review.updated_at|date:"F d, Y \a\t g:i A" }}
+                    </small>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="d-flex gap-2">
+                    {% if not review.is_approved %}
+                    <form method="post" action="{% url 'admin_panel:approve_review' review.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check-circle"></i> Approve Review
+                        </button>
+                    </form>
+                    {% else %}
+                    <form method="post" action="{% url 'admin_panel:reject_review' review.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-warning">
+                            <i class="bi bi-x-circle"></i> Reject Review
+                        </button>
+                    </form>
+                    {% endif %}
+
+                    <form method="post" action="{% url 'admin_panel:delete_review' review.id %}"
+                          onsubmit="return confirm('Permanently delete this review?');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-trash"></i> Delete Review
+                        </button>
+                    </form>
+
+                    <a href="{% url 'admin_panel:review_list' %}" class="btn btn-outline-secondary ms-auto">
+                        <i class="bi bi-arrow-left"></i> Back to List
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <!-- Other Reviews by This User -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0">Other Reviews by {{ review.user.username }}</h6>
+            </div>
+            <div class="card-body">
+                {% if user_reviews %}
+                <div class="list-group list-group-flush">
+                    {% for user_review in user_reviews %}
+                    <div class="list-group-item px-0">
+                        <div class="d-flex justify-content-between align-items-start mb-1">
+                            <small class="text-primary">
+                                <a href="{% url 'admin_panel:review_detail' user_review.id %}"
+                                   class="text-decoration-none">
+                                    {{ user_review.product.name }}
+                                </a>
+                            </small>
+                            <span class="badge bg-warning text-dark">
+                                {{ user_review.rating }} ⭐
+                            </span>
+                        </div>
+                        <small class="text-muted d-block">
+                            {{ user_review.title|truncatewords:10 }}
+                        </small>
+                        <small class="text-muted">
+                            {{ user_review.created_at|date:"M d, Y" }}
+                        </small>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted mb-0">No other reviews from this user.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Other Reviews for This Product -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0">Other Reviews for {{ review.product.name }}</h6>
+            </div>
+            <div class="card-body">
+                {% if product_reviews %}
+                <div class="list-group list-group-flush">
+                    {% for prod_review in product_reviews %}
+                    <div class="list-group-item px-0">
+                        <div class="d-flex justify-content-between align-items-start mb-1">
+                            <small>
+                                <a href="{% url 'admin_panel:review_detail' prod_review.id %}"
+                                   class="text-decoration-none">
+                                    By {{ prod_review.user.username }}
+                                </a>
+                            </small>
+                            <span class="badge bg-warning text-dark">
+                                {{ prod_review.rating }} ⭐
+                            </span>
+                        </div>
+                        <small class="text-muted d-block">
+                            {{ prod_review.title|truncatewords:10 }}
+                        </small>
+                        <small class="text-muted">
+                            {{ prod_review.created_at|date:"M d, Y" }}
+                        </small>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted mb-0">No other reviews for this product.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Quick Stats</h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <small class="text-muted d-block">User's Total Reviews</small>
+                    <strong>{{ review.user.reviews.count }}</strong>
+                </div>
+                <div class="mb-3">
+                    <small class="text-muted d-block">User's Average Rating</small>
+                    <strong>
+                        {% widthratio review.user.reviews.all|length 1 review.user.reviews.all|length as user_avg %}
+                        {{ review.user.reviews.all.0.rating|default:"N/A" }} ⭐
+                    </strong>
+                </div>
+                <div class="mb-0">
+                    <small class="text-muted d-block">Product's Total Reviews</small>
+                    <strong>{{ review.product.reviews.filter.count }}</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

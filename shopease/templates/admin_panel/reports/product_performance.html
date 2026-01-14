@@ -1,0 +1,207 @@
+{% extends 'admin_panel/base_admin.html' %}
+
+{% block title %}Product Performance - {{ block.super }}{% endblock %}
+
+{% block page_title %}Product Performance Report{% endblock %}
+
+{% block content %}
+<!-- Period Selector -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label for="days" class="form-label">Time Period</label>
+                <select class="form-select" id="days" name="days" onchange="this.form.submit()">
+                    <option value="7" {% if days == 7 %}selected{% endif %}>Last 7 days</option>
+                    <option value="30" {% if days == 30 %}selected{% endif %}>Last 30 days</option>
+                    <option value="90" {% if days == 90 %}selected{% endif %}>Last 90 days</option>
+                </select>
+            </div>
+            <div class="col-md-8 text-end">
+                <a href="{% url 'admin_panel:export_products_csv' %}?days={{ days }}" class="btn btn-success">
+                    <i class="bi bi-download"></i> Export CSV
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Alerts -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="alert alert-danger">
+            <strong>{{ out_of_stock_count }}</strong> products out of stock
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="alert alert-warning">
+            <strong>{{ low_stock.count }}</strong> products low on stock
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="alert alert-info">
+            <strong>{{ no_sales_count }}</strong> products with no sales
+        </div>
+    </div>
+</div>
+
+<!-- Best Sellers -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">Top 20 Best Selling Products</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Product</th>
+                        <th>SKU</th>
+                        <th class="text-end">Units Sold</th>
+                        <th class="text-end">Revenue</th>
+                        <th class="text-end">Orders</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in best_sellers %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>
+                            <a href="{% url 'admin_panel:product_analytics_detail' product.product_id %}">
+                                {{ product.product__name }}
+                            </a>
+                        </td>
+                        <td><small class="text-muted">{{ product.product__sku }}</small></td>
+                        <td class="text-end"><strong>{{ product.units_sold }}</strong></td>
+                        <td class="text-end">₹{{ product.revenue|floatformat:2 }}</td>
+                        <td class="text-end">{{ product.order_count }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">No sales data</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Stock Alerts -->
+<div class="row mb-4">
+    <div class="col-lg-6 mb-4">
+        <div class="card border-warning">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">Low Stock Alert</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th class="text-end">Stock</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for product in low_stock %}
+                            <tr>
+                                <td>{{ product.name }}</td>
+                                <td class="text-end">
+                                    <span class="badge bg-warning text-dark">{{ product.stock }}</span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="2" class="text-center text-muted">No low stock products</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Rated -->
+    <div class="col-lg-6 mb-4">
+        <div class="card border-success">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">Top Rated Products</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th class="text-end">Rating</th>
+                                <th class="text-end">Reviews</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for product in top_rated %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'admin_panel:product_analytics_detail' product.id %}">
+                                        {{ product.name }}
+                                    </a>
+                                </td>
+                                <td class="text-end">
+                                    <span class="badge bg-success">{{ product.avg_rating|floatformat:1 }} ⭐</span>
+                                </td>
+                                <td class="text-end">{{ product.review_count }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" class="text-center text-muted">No rated products</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Low Rated Products -->
+{% if low_rated %}
+<div class="card border-danger">
+    <div class="card-header bg-danger text-white">
+        <h5 class="mb-0">Attention: Low Rated Products</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm mb-0">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th class="text-end">Rating</th>
+                        <th class="text-end">Reviews</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in low_rated %}
+                    <tr>
+                        <td>{{ product.name }}</td>
+                        <td class="text-end">
+                            <span class="badge bg-danger">{{ product.avg_rating|floatformat:1 }} ⭐</span>
+                        </td>
+                        <td class="text-end">{{ product.review_count }}</td>
+                        <td>
+                            <a href="{% url 'admin_panel:product_analytics_detail' product.id %}" class="btn btn-sm btn-outline-primary">
+                                View Details
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

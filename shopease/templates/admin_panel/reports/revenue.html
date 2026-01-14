@@ -1,0 +1,139 @@
+{% extends 'admin_panel/base_admin.html' %}
+
+{% block title %}Revenue Analytics - {{ block.super }}{% endblock %}
+
+{% block page_title %}Revenue Analytics{% endblock %}
+
+{% block content %}
+<!-- Period Selector -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label for="months" class="form-label">Time Period</label>
+                <select class="form-select" id="months" name="months" onchange="this.form.submit()">
+                    <option value="3" {% if months == 3 %}selected{% endif %}>Last 3 months</option>
+                    <option value="6" {% if months == 6 %}selected{% endif %}>Last 6 months</option>
+                    <option value="12" {% if months == 12 %}selected{% endif %}>Last 12 months</option>
+                    <option value="24" {% if months == 24 %}selected{% endif %}>Last 24 months</option>
+                </select>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Key Metrics -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card border-primary">
+            <div class="card-body text-center">
+                <h6 class="text-muted mb-2">Total Revenue</h6>
+                <h2 class="mb-0 text-primary">₹{{ metrics.total_revenue|floatformat:2 }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <h6 class="text-muted mb-2">Total Orders</h6>
+                <h2 class="mb-0">{{ metrics.total_orders }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-info">
+            <div class="card-body text-center">
+                <h6 class="text-muted mb-2">Previous Period</h6>
+                <h2 class="mb-0 text-info">₹{{ metrics.previous_revenue|floatformat:2 }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card {% if metrics.growth_rate >= 0 %}border-success{% else %}border-danger{% endif %}">
+            <div class="card-body text-center">
+                <h6 class="text-muted mb-2">Growth Rate</h6>
+                <h2 class="mb-0 {% if metrics.growth_rate >= 0 %}text-success{% else %}text-danger{% endif %}">
+                    {{ metrics.growth_rate }}%
+                </h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Monthly Revenue Chart -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">Monthly Revenue Trend</h5>
+    </div>
+    <div class="card-body">
+        <canvas id="monthlyRevenueChart"></canvas>
+    </div>
+</div>
+
+<!-- Revenue by Category -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Revenue by Category</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Category</th>
+                        <th class="text-end">Revenue</th>
+                        <th class="text-end">Orders</th>
+                        <th class="text-end">Products</th>
+                        <th class="text-end">Avg per Order</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for category in revenue_by_category %}
+                    <tr>
+                        <td><strong>{{ category.product__category__name|default:"Uncategorized" }}</strong></td>
+                        <td class="text-end">₹{{ category.total_revenue|floatformat:2 }}</td>
+                        <td class="text-end">{{ category.order_count }}</td>
+                        <td class="text-end">{{ category.product_count }}</td>
+                        <td class="text-end">
+                            ₹{% widthratio category.total_revenue category.order_count 1 %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-4">No data available</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+const chartData = {{ chart_data|safe }};
+
+new Chart(document.getElementById('monthlyRevenueChart'), {
+    type: 'bar',
+    data: {
+        labels: chartData.months,
+        datasets: [{
+            label: 'Revenue (₹)',
+            data: chartData.revenues,
+            backgroundColor: 'rgba(13, 110, 253, 0.5)',
+            borderColor: 'rgb(13, 110, 253)',
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: {
+                beginAtZero: true,
+                title: { display: true, text: 'Revenue (₹)' }
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

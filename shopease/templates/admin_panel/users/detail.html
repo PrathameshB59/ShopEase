@@ -1,0 +1,315 @@
+{% extends 'admin_panel/base_admin.html' %}
+
+{% block title %}{{ user_obj.username }} - {{ block.super }}{% endblock %}
+
+{% block page_title %}User Detail: {{ user_obj.username }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Left Column - User Info -->
+    <div class="col-lg-8 mb-4">
+        <!-- Basic Information -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">User Information</h5>
+                <div>
+                    {% if user_obj.is_superuser %}
+                    <span class="badge bg-danger">Superuser</span>
+                    {% elif user_obj.is_staff %}
+                    <span class="badge bg-primary">Staff</span>
+                    {% else %}
+                    <span class="badge bg-secondary">Customer</span>
+                    {% endif %}
+
+                    {% if user_obj.is_active %}
+                    <span class="badge bg-success">Active</span>
+                    {% else %}
+                    <span class="badge bg-danger">Inactive</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label text-muted">Username</label>
+                        <div><strong>{{ user_obj.username }}</strong></div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label text-muted">Email</label>
+                        <div><strong>{{ user_obj.email }}</strong></div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label text-muted">First Name</label>
+                        <div>{{ user_obj.first_name|default:"Not provided" }}</div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label text-muted">Last Name</label>
+                        <div>{{ user_obj.last_name|default:"Not provided" }}</div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label text-muted">Date Joined</label>
+                        <div>{{ user_obj.date_joined|date:"F d, Y \a\t g:i A" }}</div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label text-muted">Last Login</label>
+                        <div>
+                            {% if user_obj.last_login %}
+                            {{ user_obj.last_login|date:"F d, Y \a\t g:i A" }}
+                            {% else %}
+                            Never
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Admin Actions -->
+                {% if user.is_superuser or user_permissions.can_edit_users %}
+                <div class="border-top pt-3 mt-3">
+                    <h6 class="mb-3">Admin Actions</h6>
+                    <div class="btn-group">
+                        {% if not user_obj.is_superuser and user_obj != user %}
+                        <form method="post" action="{% url 'admin_panel:toggle_user_status' user_obj.id %}"
+                              class="d-inline">
+                            {% csrf_token %}
+                            {% if user_obj.is_active %}
+                            <button type="submit" class="btn btn-warning"
+                                    onclick="return confirm('Deactivate this user?');">
+                                <i class="bi bi-pause-circle"></i> Deactivate User
+                            </button>
+                            {% else %}
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-play-circle"></i> Activate User
+                            </button>
+                            {% endif %}
+                        </form>
+                        {% endif %}
+
+                        <a href="{% url 'admin_panel:user_list' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Back to List
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Role & Permissions (Staff Only) -->
+        {% if user_obj.is_staff %}
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Role & Permissions</h5>
+                {% if user.is_superuser or user_permissions.can_edit_users %}
+                <div class="btn-group btn-group-sm">
+                    <a href="{% url 'admin_panel:assign_role' user_obj.id %}" class="btn btn-primary">
+                        {% if admin_role %}Edit Role{% else %}Assign Role{% endif %}
+                    </a>
+                    {% if admin_role and not user_obj.is_superuser and user_obj != user %}
+                    <form method="post" action="{% url 'admin_panel:remove_role' user_obj.id %}"
+                          class="d-inline"
+                          onsubmit="return confirm('Remove admin role from this user?');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">
+                            Remove Role
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                {% if admin_role %}
+                <div class="mb-3">
+                    <label class="form-label text-muted">Current Role</label>
+                    <div>
+                        <span class="badge bg-info fs-6">{{ admin_role.get_role_display }}</span>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label text-muted">Permissions</label>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <ul class="list-unstyled">
+                                <li>
+                                    <i class="bi bi-{% if admin_role.can_view_orders %}check-circle text-success{% else %}x-circle text-muted{% endif %}"></i>
+                                    View Orders
+                                </li>
+                                <li>
+                                    <i class="bi bi-{% if admin_role.can_edit_orders %}check-circle text-success{% else %}x-circle text-muted{% endif %}"></i>
+                                    Edit Orders
+                                </li>
+                                <li>
+                                    <i class="bi bi-{% if admin_role.can_process_refunds %}check-circle text-success{% else %}x-circle text-muted{% endif %}"></i>
+                                    Process Refunds
+                                </li>
+                                <li>
+                                    <i class="bi bi-{% if admin_role.can_view_products %}check-circle text-success{% else %}x-circle text-muted{% endif %}"></i>
+                                    View Products
+                                </li>
+                                <li>
+                                    <i class="bi bi-{% if admin_role.can_edit_products %}check-circle text-success{% else %}x-circle text-muted{% endif %}"></i>
+                                    Edit Products
+                                </li>
+                                <li>
+                                    <i class="bi bi-{% if admin_role.can_manage_inventory %}check-circle text-success{% else %}x-circle text-muted{% endif %}"></i>
+                                    Manage Inventory
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <ul class="list-unstyled">
+                                <li>
+                                    <i class="bi bi-{% if admin_role.can_moderate_reviews %}check-circle text-success{% else %}x-circle text-muted{% endif %}"></i>
+                                    Moderate Reviews
+                                </li>
+                                <li>
+                                    <i class="bi bi-{% if admin_role.can_manage_featured %}check-circle text-success{% else %}x-circle text-muted{% endif %}"></i>
+                                    Manage Featured Products
+                                </li>
+                                <li>
+                                    <i class="bi bi-{% if admin_role.can_view_users %}check-circle text-success{% else %}x-circle text-muted{% endif %}"></i>
+                                    View Users
+                                </li>
+                                <li>
+                                    <i class="bi bi-{% if admin_role.can_edit_users %}check-circle text-success{% else %}x-circle text-muted{% endif %}"></i>
+                                    Edit Users
+                                </li>
+                                <li>
+                                    <i class="bi bi-{% if admin_role.can_view_analytics %}check-circle text-success{% else %}x-circle text-muted{% endif %}"></i>
+                                    View Analytics
+                                </li>
+                                <li>
+                                    <i class="bi bi-{% if admin_role.can_view_activity %}check-circle text-success{% else %}x-circle text-muted{% endif %}"></i>
+                                    View Activity Log
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <p class="text-muted">No admin role assigned. <a href="{% url 'admin_panel:assign_role' user_obj.id %}">Assign a role</a></p>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Order History -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Order History ({{ total_orders }} total)</h5>
+            </div>
+            <div class="card-body">
+                {% if orders %}
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                                <th class="text-end">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in orders %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'admin_panel:order_detail' order.order_id %}">
+                                        #{{ order.order_id|slice:":8" }}
+                                    </a>
+                                </td>
+                                <td><small>{{ order.created_at|date:"M d, Y" }}</small></td>
+                                <td><span class="badge bg-secondary">{{ order.get_status_display }}</span></td>
+                                <td class="text-end">₹{{ order.total_amount }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted mb-0">No orders yet.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Review Activity -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Review Activity ({{ total_reviews }} total)</h5>
+            </div>
+            <div class="card-body">
+                {% if reviews %}
+                <div class="list-group list-group-flush">
+                    {% for review in reviews %}
+                    <div class="list-group-item px-0">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <a href="{% url 'admin_panel:review_detail' review.id %}">
+                                    <strong>{{ review.product.name }}</strong>
+                                </a>
+                                <br>
+                                <small class="text-muted">{{ review.title }}</small>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-warning text-dark">{{ review.rating }} ⭐</span><br>
+                                <small class="text-muted">{{ review.created_at|date:"M d" }}</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted mb-0">No reviews yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column - Stats & Activity -->
+    <div class="col-lg-4">
+        <!-- Quick Stats -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0">Quick Stats</h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <small class="text-muted d-block">Total Orders</small>
+                    <h4 class="mb-0">{{ total_orders }}</h4>
+                </div>
+                <div class="mb-3">
+                    <small class="text-muted d-block">Total Reviews</small>
+                    <h4 class="mb-0">{{ total_reviews }}</h4>
+                </div>
+                <div class="mb-0">
+                    <small class="text-muted d-block">Account Age</small>
+                    <h4 class="mb-0">{{ user_obj.date_joined|timesince }}</h4>
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin Activity (Staff Only) -->
+        {% if user_obj.is_staff and activities %}
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Recent Admin Activity</h6>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    {% for activity in activities|slice:":10" %}
+                    <div class="list-group-item px-0 py-2">
+                        <small class="text-muted d-block">{{ activity.timestamp|timesince }} ago</small>
+                        <strong class="d-block">{{ activity.action }}</strong>
+                        <small>{{ activity.description|truncatewords:10 }}</small>
+                    </div>
+                    {% endfor %}
+                </div>
+                <a href="{% url 'admin_panel:activity_log' %}?user={{ user_obj.id }}" class="btn btn-sm btn-outline-primary w-100 mt-2">
+                    View All Activity
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

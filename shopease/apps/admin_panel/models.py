@@ -458,3 +458,369 @@ class Refund(models.Model):
                 item.product.save(update_fields=['stock'])
 
         self.save(update_fields=['status', 'processed_by', 'completed_at'])
+
+
+# ==========================================
+# PRODUCT ANALYTICS & TRACKING
+# ==========================================
+
+class ProductView(models.Model):
+    """
+    Track individual product page views.
+
+    Captures every time a product detail page is viewed.
+    Used to calculate view counts and engagement metrics.
+
+    Tracks both authenticated users and anonymous visitors via session.
+    """
+
+    product = models.ForeignKey(
+        'products.Product',
+        on_delete=models.CASCADE,
+        related_name='views',
+        help_text="Product that was viewed"
+    )
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        help_text="User who viewed (if authenticated)"
+    )
+
+    session_key = models.CharField(
+        max_length=40,
+        null=True,
+        blank=True,
+        help_text="Session key for anonymous users"
+    )
+
+    ip_address = models.GenericIPAddressField(
+        null=True,
+        blank=True,
+        help_text="IP address of viewer"
+    )
+
+    user_agent = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text="Browser user agent string"
+    )
+
+    viewed_at = models.DateTimeField(
+        auto_now_add=True,
+        db_index=True,
+        help_text="When the product was viewed"
+    )
+
+    class Meta:
+        verbose_name = "Product View"
+        verbose_name_plural = "Product Views"
+        indexes = [
+            models.Index(fields=['product', '-viewed_at']),
+            models.Index(fields=['-viewed_at']),
+            models.Index(fields=['user', '-viewed_at']),
+        ]
+
+    def __str__(self):
+        user_info = self.user.username if self.user else f"Session {self.session_key[:8]}"
+        return f"{self.product.name} - {user_info} at {self.viewed_at.strftime('%Y-%m-%d %H:%M')}"
+
+
+class ProductEngagement(models.Model):
+    """
+    Track product engagement actions (add to cart, wishlist, etc.).
+
+    Captures customer interaction with products beyond just viewing.
+    Higher engagement = higher interest = better candidate for featuring.
+    """
+
+    ACTION_CHOICES = [
+        ('ADD_TO_CART', 'Added to Cart'),
+        ('ADD_TO_WISHLIST', 'Added to Wishlist'),
+        ('REMOVE_FROM_CART', 'Removed from Cart'),
+        ('REMOVE_FROM_WISHLIST', 'Removed from Wishlist'),
+    ]
+
+    product = models.ForeignKey(
+        'products.Product',
+        on_delete=models.CASCADE,
+        related_name='engagements',
+        help_text="Product being interacted with"
+    )
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        help_text="User who performed action (if authenticated)"
+    )
+
+    session_key = models.CharField(
+        max_length=40,
+        null=True,
+        blank=True,
+        help_text="Session key for anonymous users"
+    )
+
+    action = models.CharField(
+        max_length=20,
+        choices=ACTION_CHOICES,
+        db_index=True,
+        help_text="Type of engagement action"
+    )
+
+    timestamp = models.DateTimeField(
+        auto_now_add=True,
+        db_index=True,
+        help_text="When the action occurred"
+    )
+
+    class Meta:
+        verbose_name = "Product Engagement"
+        verbose_name_plural = "Product Engagements"
+        indexes = [
+            models.Index(fields=['product', 'action', '-timestamp']),
+            models.Index(fields=['-timestamp']),
+        ]
+
+    def __str__(self):
+        user_info = self.user.username if self.user else f"Session {self.session_key[:8]}"
+        return f"{self.product.name} - {self.get_action_display()} by {user_info}"
+
+
+class ProductAnalytics(models.Model):
+    """
+    Aggregated daily analytics per product.
+
+    Updated via scheduled management command (aggregate_analytics).
+    Stores all metrics needed for the featured product scoring algorithm.
+
+    Featured Score Formula:
+    - Revenue: 40%
+    - Purchase count: 20%
+    - Engagement (cart+wishlist): 15%
+    - Views: 10%
+    - Rating: 10%
+    - Reviews: 5%
+    """
+
+    product = models.ForeignKey(
+        'products.Product',
+        on_delete=models.CASCADE,
+        related_name='analytics',
+        help_text="Product these analytics belong to"
+    )
+
+    date = models.DateField(
+        db_index=True,
+        help_text="Date of these analytics"
+    )
+
+    # View metrics
+    view_count = models.PositiveIntegerField(
+        default=0,
+        help_text="Total page views for this day"
+    )
+
+    unique_viewers = models.PositiveIntegerField(
+        default=0,
+        help_text="Unique visitors (by user or session)"
+    )
+
+    # Engagement metrics
+    add_to_cart_count = models.PositiveIntegerField(
+        default=0,
+        help_text="Times added to cart"
+    )
+
+    wishlist_count = models.PositiveIntegerField(
+        default=0,
+        help_text="Times added to wishlist"
+    )
+
+    # Purchase metrics (from OrderItem)
+    purchase_count = models.PositiveIntegerField(
+        default=0,
+        help_text="Number of times purchased"
+    )
+
+    revenue = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0,
+        help_text="Revenue generated from this product"
+    )
+
+    # Review metrics (from Review model)
+    average_rating = models.DecimalField(
+        max_digits=3,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Average customer rating"
+    )
+
+    review_count = models.PositiveIntegerField(
+        default=0,
+        help_text="Total number of reviews"
+    )
+
+    # Calculated featured score (0-100)
+    featured_score = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+        db_index=True,
+        help_text="Calculated score for auto-featuring (0-100)"
+    )
+
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Product Analytics"
+        verbose_name_plural = "Product Analytics"
+        unique_together = ['product', 'date']
+        ordering = ['-date']
+        indexes = [
+            models.Index(fields=['date', '-featured_score']),
+            models.Index(fields=['product', '-date']),
+            models.Index(fields=['-featured_score']),
+        ]
+
+    def __str__(self):
+        return f"{self.product.name} - {self.date} (Score: {self.featured_score})"
+
+    def calculate_featured_score(self):
+        """
+        Calculate weighted score for auto-featuring.
+
+        Weights (customizable):
+        - Revenue: 40% (max 40 points)
+        - Purchase count: 20% (max 20 points)
+        - Engagement: 15% (max 15 points)
+        - Views: 10% (max 10 points)
+        - Rating: 10% (max 10 points)
+        - Reviews: 5% (max 5 points)
+
+        Returns:
+            Decimal: Score from 0-100
+        """
+        score = Decimal('0.00')
+
+        # Revenue component (40 points max)
+        # Normalize: ₹1000 revenue = 40 points
+        score += min(float(self.revenue) / 1000 * 40, 40)
+
+        # Purchase count component (20 points max)
+        # Each purchase = 2 points, capped at 20
+        score += min(self.purchase_count * 2, 20)
+
+        # Engagement component (15 points max)
+        # Cart adds worth more than wishlist adds
+        engagement = self.add_to_cart_count + (self.wishlist_count * 0.5)
+        score += min(engagement / 10 * 15, 15)
+
+        # View count component (10 points max)
+        # 100 views = 10 points
+        score += min(self.view_count / 100 * 10, 10)
+
+        # Rating component (10 points max)
+        # 5-star rating = 10 points
+        if self.average_rating:
+            score += float(self.average_rating) * 2
+
+        # Review count component (5 points max)
+        # 10 reviews = 5 points
+        score += min(self.review_count / 10 * 5, 5)
+
+        return Decimal(str(round(score, 2)))
+
+    def save(self, *args, **kwargs):
+        """Auto-calculate featured score on save."""
+        self.featured_score = self.calculate_featured_score()
+        super().save(*args, **kwargs)
+
+
+class FeaturedProduct(models.Model):
+    """
+    Manual featured product selection with override capability.
+
+    Allows admins to:
+    - Manually select products to feature
+    - Override auto-suggestions
+    - Set priority order
+    - Set expiry dates for temporary promotions
+    """
+
+    SOURCE_CHOICES = [
+        ('MANUAL', 'Manually Selected'),
+        ('AUTO', 'Auto-suggested'),
+    ]
+
+    product = models.OneToOneField(
+        'products.Product',
+        on_delete=models.CASCADE,
+        related_name='featured_entry',
+        help_text="Featured product"
+    )
+
+    source = models.CharField(
+        max_length=10,
+        choices=SOURCE_CHOICES,
+        default='MANUAL',
+        help_text="How this product was featured"
+    )
+
+    priority = models.PositiveIntegerField(
+        default=0,
+        db_index=True,
+        help_text="Display priority (lower = higher priority)"
+    )
+
+    added_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='featured_selections',
+        help_text="Admin who featured this product"
+    )
+
+    reason = models.TextField(
+        blank=True,
+        help_text="Why this product is featured (internal notes)"
+    )
+
+    is_active = models.BooleanField(
+        default=True,
+        db_index=True,
+        help_text="Whether this feature is currently active"
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    expires_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Auto-remove from featured after this date"
+    )
+
+    class Meta:
+        verbose_name = "Featured Product"
+        verbose_name_plural = "Featured Products"
+        ordering = ['priority', '-created_at']
+        indexes = [
+            models.Index(fields=['is_active', 'priority']),
+            models.Index(fields=['expires_at']),
+        ]
+
+    def __str__(self):
+        return f"{self.product.name} - {self.get_source_display()} (Priority: {self.priority})"
+
+    def is_expired(self):
+        """Check if this featured entry has expired."""
+        if self.expires_at:
+            return timezone.now() > self.expires_at
+        return False

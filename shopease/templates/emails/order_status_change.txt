@@ -1,0 +1,34 @@
+========================================
+ORDER STATUS UPDATE
+========================================
+
+Dear {{ customer_name }},
+
+Your order status has been updated!
+
+Order Details:
+--------------
+Order ID: #{{ order_id_short }}
+Previous Status: {{ old_status }}
+New Status: {{ new_status }}
+Total Amount: ₹{{ order.total_amount }}
+
+{% if order.status == 'SHIPPED' %}
+Great news! Your order has been shipped and is on its way to you.
+{% elif order.status == 'COMPLETED' %}
+Your order has been delivered successfully. We hope you enjoy your purchase!
+If you have any feedback, we'd love to hear from you.
+{% elif order.status == 'CANCELLED' %}
+Your order has been cancelled. If you have any questions, please contact our support team.
+{% elif order.status == 'PROCESSING' %}
+Your order is being processed and will be shipped soon.
+{% endif %}
+
+If you have any questions about your order, please don't hesitate to contact us at {{ support_email }}.
+
+Best regards,
+{{ company_name }} Team
+
+========================================
+This is an automated email. Please do not reply directly to this message.
+========================================

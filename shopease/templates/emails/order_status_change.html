@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Status Update</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            border-radius: 10px 10px 0 0;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+        }
+        .content {
+            background: #f9f9f9;
+            padding: 30px;
+            border: 1px solid #ddd;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #28a745;
+            color: white;
+            border-radius: 5px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .status-badge.pending {
+            background: #ffc107;
+            color: #000;
+        }
+        .status-badge.processing {
+            background: #17a2b8;
+        }
+        .status-badge.shipped {
+            background: #007bff;
+        }
+        .status-badge.completed {
+            background: #28a745;
+        }
+        .status-badge.cancelled {
+            background: #dc3545;
+        }
+        .order-info {
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border-left: 4px solid #667eea;
+        }
+        .order-info p {
+            margin: 10px 0;
+        }
+        .order-info strong {
+            color: #667eea;
+        }
+        .footer {
+            background: #f1f1f1;
+            padding: 20px;
+            text-align: center;
+            border-radius: 0 0 10px 10px;
+            font-size: 14px;
+            color: #666;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 30px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .button:hover {
+            background: #5568d3;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📦 Order Status Update</h1>
+    </div>
+
+    <div class="content">
+        <p>Dear {{ customer_name }},</p>
+
+        <p>Your order status has been updated!</p>
+
+        <div class="order-info">
+            <p><strong>Order ID:</strong> #{{ order_id_short }}</p>
+            <p><strong>Previous Status:</strong> {{ old_status }}</p>
+            <p><strong>New Status:</strong>
+                <span class="status-badge {{ new_status|lower }}">{{ new_status }}</span>
+            </p>
+            <p><strong>Total Amount:</strong> ₹{{ order.total_amount }}</p>
+        </div>
+
+        {% if order.status == 'SHIPPED' %}
+        <p>🚚 Great news! Your order has been shipped and is on its way to you.</p>
+        {% elif order.status == 'COMPLETED' %}
+        <p>✅ Your order has been delivered successfully. We hope you enjoy your purchase!</p>
+        <p>If you have any feedback, we'd love to hear from you.</p>
+        {% elif order.status == 'CANCELLED' %}
+        <p>❌ Your order has been cancelled. If you have any questions, please contact our support team.</p>
+        {% elif order.status == 'PROCESSING' %}
+        <p>⏳ Your order is being processed and will be shipped soon.</p>
+        {% endif %}
+
+        <center>
+            <a href="{{ company_website }}" class="button">Track Your Order</a>
+        </center>
+
+        <p>If you have any questions about your order, please don't hesitate to contact us.</p>
+    </div>
+
+    <div class="footer">
+        <p><strong>{{ company_name }}</strong></p>
+        <p>📧 Email: {{ support_email }}</p>
+        <p style="font-size: 12px; color: #999; margin-top: 10px;">
+            This is an automated email. Please do not reply directly to this message.
+        </p>
+    </div>
+</body>
+</html>

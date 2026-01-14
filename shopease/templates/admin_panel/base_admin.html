@@ -32,9 +32,8 @@
 
                 {% if user.is_superuser or user_permissions.can_view_orders %}
                 <!-- Orders -->
-                <a href="#" class="list-group-item list-group-item-action bg-dark text-white disabled">
+                <a href="{% url 'admin_panel:order_list' %}" class="list-group-item list-group-item-action bg-dark text-white {% if 'order' in request.resolver_match.url_name %}active{% endif %}">
                     <i class="bi bi-cart-check me-2"></i>Orders
-                    <span class="badge bg-warning text-dark ms-2">Coming Soon</span>
                 </a>
                 {% endif %}
 
@@ -46,35 +45,45 @@
                 </a>
                 {% endif %}
 
+                {% if user.is_superuser or user_permissions.can_view_analytics %}
+                <!-- Product Analytics -->
+                <a href="{% url 'admin_panel:product_analytics_list' %}" class="list-group-item list-group-item-action bg-dark text-white {% if 'product' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="bi bi-bar-chart me-2"></i>Product Analytics
+                </a>
+                {% endif %}
+
                 {% if user.is_superuser or user_permissions.can_manage_featured %}
                 <!-- Featured Products -->
-                <a href="#" class="list-group-item list-group-item-action bg-dark text-white disabled">
+                <a href="{% url 'admin_panel:featured_products_dashboard' %}" class="list-group-item list-group-item-action bg-dark text-white {% if 'featured' in request.resolver_match.url_name %}active{% endif %}">
                     <i class="bi bi-star me-2"></i>Featured Products
-                    <span class="badge bg-warning text-dark ms-2">Coming Soon</span>
                 </a>
                 {% endif %}
 
                 {% if user.is_superuser or user_permissions.can_moderate_reviews %}
                 <!-- Reviews -->
-                <a href="#" class="list-group-item list-group-item-action bg-dark text-white disabled">
+                <a href="{% url 'admin_panel:review_list' %}" class="list-group-item list-group-item-action bg-dark text-white {% if 'review' in request.resolver_match.url_name %}active{% endif %}">
                     <i class="bi bi-chat-square-text me-2"></i>Reviews
-                    <span class="badge bg-warning text-dark ms-2">Coming Soon</span>
                 </a>
                 {% endif %}
 
                 {% if user.is_superuser or user_permissions.can_view_users %}
                 <!-- Users -->
-                <a href="#" class="list-group-item list-group-item-action bg-dark text-white disabled">
+                <a href="{% url 'admin_panel:user_list' %}" class="list-group-item list-group-item-action bg-dark text-white {% if 'user' in request.resolver_match.url_name or 'staff' in request.resolver_match.url_name %}active{% endif %}">
                     <i class="bi bi-people me-2"></i>Users
-                    <span class="badge bg-warning text-dark ms-2">Coming Soon</span>
+                </a>
+                {% endif %}
+
+                {% if user.is_superuser or user_permissions.can_view_activity %}
+                <!-- Activity Log -->
+                <a href="{% url 'admin_panel:activity_log' %}" class="list-group-item list-group-item-action bg-dark text-white {% if 'activity' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="bi bi-clock-history me-2"></i>Activity Log
                 </a>
                 {% endif %}
 
                 {% if user.is_superuser or user_permissions.can_view_analytics %}
                 <!-- Reports -->
-                <a href="#" class="list-group-item list-group-item-action bg-dark text-white disabled">
+                <a href="{% url 'admin_panel:reports_dashboard' %}" class="list-group-item list-group-item-action bg-dark text-white {% if 'report' in request.resolver_match.url_name or 'sales' in request.resolver_match.url_name or 'revenue' in request.resolver_match.url_name %}active{% endif %}">
                     <i class="bi bi-graph-up me-2"></i>Reports
-                    <span class="badge bg-warning text-dark ms-2">Coming Soon</span>
                 </a>
                 {% endif %}
 
@@ -82,7 +91,7 @@
                 <div class="border-top my-2"></div>
 
                 <!-- Back to Store -->
-                <a href="{% url 'core:home' %}" class="list-group-item list-group-item-action bg-dark text-white">
+                <a href="{% url 'home' %}" class="list-group-item list-group-item-action bg-dark text-white">
                     <i class="bi bi-arrow-left me-2"></i>Back to Store
                 </a>
 

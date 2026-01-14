@@ -1,0 +1,154 @@
+{% extends 'admin_panel/base_admin.html' %}
+
+{% block title %}Product Analytics - {{ block.super }}{% endblock %}
+
+{% block page_title %}Product Analytics{% endblock %}
+
+{% block content %}
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label for="search" class="form-label">Search Products</label>
+                <input type="text" class="form-control" id="search" name="search"
+                       value="{{ search_query }}" placeholder="Name or SKU">
+            </div>
+            <div class="col-md-2">
+                <label for="category" class="form-label">Category</label>
+                <select class="form-select" id="category" name="category">
+                    <option value="">All Categories</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat.id }}" {% if selected_category|stringformat:"s" == cat.id|stringformat:"s" %}selected{% endif %}>
+                        {{ cat.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="days" class="form-label">Time Period</label>
+                <select class="form-select" id="days" name="days">
+                    <option value="7" {% if days == 7 %}selected{% endif %}>Last 7 days</option>
+                    <option value="30" {% if days == 30 %}selected{% endif %}>Last 30 days</option>
+                    <option value="90" {% if days == 90 %}selected{% endif %}>Last 90 days</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="sort" class="form-label">Sort By</label>
+                <select class="form-select" id="sort" name="sort">
+                    <option value="featured_score" {% if sort_by == 'featured_score' %}selected{% endif %}>Featured Score</option>
+                    <option value="revenue" {% if sort_by == 'revenue' %}selected{% endif %}>Revenue</option>
+                    <option value="purchases" {% if sort_by == 'purchases' %}selected{% endif %}>Purchases</option>
+                    <option value="views" {% if sort_by == 'views' %}selected{% endif %}>Views</option>
+                    <option value="conversion_rate" {% if sort_by == 'conversion_rate' %}selected{% endif %}>Conversion Rate</option>
+                </select>
+            </div>
+            <div class="col-md-1">
+                <label for="order" class="form-label">Order</label>
+                <select class="form-select" id="order" name="order">
+                    <option value="desc" {% if order == 'desc' %}selected{% endif %}>Desc</option>
+                    <option value="asc" {% if order == 'asc' %}selected{% endif %}>Asc</option>
+                </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Product Performance</h5>
+        <span class="text-muted">{{ date_range.start }} to {{ date_range.end }}</span>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th class="text-end">Featured Score</th>
+                        <th class="text-end">Views</th>
+                        <th class="text-end">Unique Visitors</th>
+                        <th class="text-end">Cart Adds</th>
+                        <th class="text-end">Purchases</th>
+                        <th class="text-end">Revenue</th>
+                        <th class="text-end">Conversion %</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in page_obj %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                {% if item.product.images.first %}
+                                <img src="{{ item.product.images.first.image.url }}"
+                                     alt="{{ item.product.name }}"
+                                     class="rounded me-2"
+                                     style="width: 40px; height: 40px; object-fit: cover;">
+                                {% endif %}
+                                <div>
+                                    <strong>{{ item.product.name }}</strong><br>
+                                    <small class="text-muted">SKU: {{ item.product.sku }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="text-end">
+                            <span class="badge bg-primary fs-6">{{ item.featured_score|floatformat:2 }}</span>
+                        </td>
+                        <td class="text-end">{{ item.views|default:0 }}</td>
+                        <td class="text-end">{{ item.unique_viewers|default:0 }}</td>
+                        <td class="text-end">{{ item.cart_adds|default:0 }}</td>
+                        <td class="text-end">{{ item.purchases|default:0 }}</td>
+                        <td class="text-end">₹{{ item.revenue|floatformat:2 }}</td>
+                        <td class="text-end">{{ item.conversion_rate|floatformat:2 }}%</td>
+                        <td class="text-center">
+                            <a href="{% url 'admin_panel:product_analytics_detail' item.product.id %}"
+                               class="btn btn-sm btn-outline-primary">
+                                View Details
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="text-center text-muted py-4">
+                            No product analytics data found for the selected period.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <nav aria-label="Product pagination" class="mt-3">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1&search={{ search_query }}&category={{ selected_category }}&days={{ days }}&sort={{ sort_by }}&order={{ order }}">First</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}&category={{ selected_category }}&days={{ days }}&sort={{ sort_by }}&order={{ order }}">Previous</a>
+                </li>
+                {% endif %}
+
+                <li class="page-item active">
+                    <span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                </li>
+
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}&search={{ search_query }}&category={{ selected_category }}&days={{ days }}&sort={{ sort_by }}&order={{ order }}">Next</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}&search={{ search_query }}&category={{ selected_category }}&days={{ days }}&sort={{ sort_by }}&order={{ order }}">Last</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
