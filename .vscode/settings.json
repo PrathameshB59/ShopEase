@@ -28,5 +28,6 @@
     "shopease"
   ],
   "python.testing.unittestEnabled": false,
-  "python.testing.pytestEnabled": true
+  "python.testing.pytestEnabled": true,
+  "markdown.validate.enabled": true
 }

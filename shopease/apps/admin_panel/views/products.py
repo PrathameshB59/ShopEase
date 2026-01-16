@@ -485,6 +485,14 @@ def product_analytics_detail(request, product_id):
         Q(expires_at__isnull=True) | Q(expires_at__gte=end_date)
     ).exists()
 
+    # Calculate conversion rates
+    total_views = totals['total_views'] or 0
+    total_purchases = totals['total_purchases'] or 0
+    total_cart_adds = totals['total_cart_adds'] or 0
+
+    conversion_rate = (total_purchases / total_views * 100) if total_views > 0 else 0
+    cart_rate = (total_cart_adds / total_views * 100) if total_views > 0 else 0
+
     context = {
         'product': product,
         'totals': totals,
@@ -494,7 +502,243 @@ def product_analytics_detail(request, product_id):
         'date_range': {
             'start': start_date,
             'end': end_date
-        }
+        },
+        'conversion_rate': round(conversion_rate, 2),
+        'cart_rate': round(cart_rate, 1),
     }
 
     return render(request, 'admin_panel/products/analytics_detail.html', context)
+
+
+# ========================================
+# PRODUCT CRUD VIEWS
+# ========================================
+
+from apps.products.models import Category
+
+
+@permission_required('can_view_products')
+def product_list(request):
+    """
+    List all products with search, filters, and pagination.
+    """
+    products = Product.objects.select_related('category').all()
+
+    # Search filter
+    search_query = request.GET.get('search', '')
+    if search_query:
+        products = products.filter(
+            Q(name__icontains=search_query) |
+            Q(description__icontains=search_query)
+        )
+
+    # Category filter
+    category_id = request.GET.get('category', '')
+    if category_id:
+        products = products.filter(category_id=category_id)
+
+    # Status filter
+    status = request.GET.get('status', '')
+    if status == 'active':
+        products = products.filter(is_active=True)
+    elif status == 'inactive':
+        products = products.filter(is_active=False)
+
+    # Stock filter
+    stock_status = request.GET.get('stock', '')
+    if stock_status == 'in_stock':
+        products = products.filter(stock__gt=0)
+    elif stock_status == 'out_of_stock':
+        products = products.filter(stock=0)
+    elif stock_status == 'low_stock':
+        products = products.filter(stock__gt=0, stock__lte=10)
+
+    # Sorting
+    sort_by = request.GET.get('sort', '-created_at')
+    if sort_by in ['name', '-name', 'price', '-price', 'stock', '-stock', 'created_at', '-created_at']:
+        products = products.order_by(sort_by)
+
+    # Pagination
+    paginator = Paginator(products, 25)
+    page_number = request.GET.get('page', 1)
+    page_obj = paginator.get_page(page_number)
+
+    # Get categories for filter dropdown
+    categories = Category.objects.all()
+
+    context = {
+        'page_obj': page_obj,
+        'categories': categories,
+        'search_query': search_query,
+        'selected_category': category_id,
+        'selected_status': status,
+        'selected_stock': stock_status,
+        'sort_by': sort_by,
+        'total_products': products.count(),
+    }
+
+    return render(request, 'admin_panel/products/list.html', context)
+
+
+@permission_required('can_edit_products')
+def product_create(request):
+    """
+    Create a new product.
+    """
+    from apps.admin_panel.forms import ProductForm
+
+    if request.method == 'POST':
+        form = ProductForm(request.POST, request.FILES)
+        if form.is_valid():
+            product = form.save()
+            messages.success(request, f'Product "{product.name}" created successfully.')
+            return redirect('admin_panel:product_list')
+    else:
+        form = ProductForm()
+
+    categories = Category.objects.filter(is_active=True)
+
+    context = {
+        'form': form,
+        'categories': categories,
+    }
+
+    return render(request, 'admin_panel/products/create.html', context)
+
+
+@permission_required('can_view_products')
+def product_detail(request, product_id):
+    """
+    View and edit product details.
+    """
+    from apps.admin_panel.forms import ProductForm
+
+    product = get_object_or_404(Product, id=product_id)
+
+    if request.method == 'POST':
+        # Check edit permission for POST
+        if not request.user.is_superuser:
+            try:
+                admin_role = request.user.admin_role
+                if not admin_role.can_edit_products:
+                    messages.error(request, 'You do not have permission to edit products.')
+                    return redirect('admin_panel:product_detail', product_id=product_id)
+            except:
+                messages.error(request, 'You do not have permission to edit products.')
+                return redirect('admin_panel:product_detail', product_id=product_id)
+
+        form = ProductForm(request.POST, request.FILES, instance=product)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'Product "{product.name}" updated successfully.')
+            return redirect('admin_panel:product_detail', product_id=product_id)
+    else:
+        form = ProductForm(instance=product)
+
+    # Get product analytics summary
+    analytics_summary = ProductAnalytics.objects.filter(
+        product=product
+    ).aggregate(
+        total_views=Sum('view_count'),
+        total_purchases=Sum('purchase_count'),
+        total_revenue=Sum('revenue'),
+    )
+
+    categories = Category.objects.filter(is_active=True)
+
+    context = {
+        'product': product,
+        'form': form,
+        'categories': categories,
+        'analytics_summary': analytics_summary,
+    }
+
+    return render(request, 'admin_panel/products/detail.html', context)
+
+
+@permission_required('can_edit_products')
+def product_update(request, product_id):
+    """
+    Update product (POST only, redirects to detail).
+    """
+    from apps.admin_panel.forms import ProductForm
+
+    product = get_object_or_404(Product, id=product_id)
+
+    if request.method == 'POST':
+        form = ProductForm(request.POST, request.FILES, instance=product)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'Product "{product.name}" updated successfully.')
+        else:
+            messages.error(request, 'Please correct the errors below.')
+
+    return redirect('admin_panel:product_detail', product_id=product_id)
+
+
+@permission_required('can_edit_products')
+def product_delete(request, product_id):
+    """
+    Delete a product (soft delete by setting is_active=False).
+    """
+    product = get_object_or_404(Product, id=product_id)
+
+    if request.method == 'POST':
+        action = request.POST.get('action', 'deactivate')
+
+        if action == 'permanent':
+            product_name = product.name
+            product.delete()
+            messages.success(request, f'Product "{product_name}" has been permanently deleted.')
+        else:
+            # Soft delete - just deactivate
+            product.is_active = False
+            product.save(update_fields=['is_active'])
+            messages.success(request, f'Product "{product.name}" has been deactivated.')
+
+        return redirect('admin_panel:product_list')
+
+    context = {
+        'product': product,
+    }
+
+    return render(request, 'admin_panel/products/delete_confirm.html', context)
+
+
+@permission_required('can_edit_products')
+def product_bulk_action(request):
+    """
+    Handle bulk actions on products (activate, deactivate, delete).
+    """
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        product_ids = request.POST.getlist('product_ids')
+
+        if not product_ids:
+            messages.warning(request, 'No products selected.')
+            return redirect('admin_panel:product_list')
+
+        products = Product.objects.filter(id__in=product_ids)
+        count = products.count()
+
+        if action == 'activate':
+            products.update(is_active=True)
+            messages.success(request, f'{count} product(s) activated successfully.')
+
+        elif action == 'deactivate':
+            products.update(is_active=False)
+            messages.success(request, f'{count} product(s) deactivated successfully.')
+
+        elif action == 'feature':
+            products.update(is_featured=True)
+            messages.success(request, f'{count} product(s) marked as featured.')
+
+        elif action == 'unfeature':
+            products.update(is_featured=False)
+            messages.success(request, f'{count} product(s) removed from featured.')
+
+        elif action == 'delete':
+            products.delete()
+            messages.success(request, f'{count} product(s) permanently deleted.')
+
+    return redirect('admin_panel:product_list')

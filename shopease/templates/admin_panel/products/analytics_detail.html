@@ -62,13 +62,7 @@
             <div class="card-body">
                 <h6 class="card-title">Purchases</h6>
                 <h2 class="mb-0">{{ totals.total_purchases|default:0 }}</h2>
-                <small>
-                    {% if totals.total_views %}
-                    {{ totals.total_purchases|default:0|floatformat:2|add:0|mul:100|div:totals.total_views|floatformat:2 }}% conversion
-                    {% else %}
-                    0% conversion
-                    {% endif %}
-                </small>
+                <small>{{ conversion_rate }}% conversion</small>
             </div>
         </div>
     </div>
@@ -120,13 +114,7 @@
                         <p class="text-muted mb-0">Average Rating</p>
                     </div>
                     <div class="col-6">
-                        <h3 class="text-warning">
-                            {% if totals.total_views %}
-                            {{ totals.total_cart_adds|default:0|floatformat:0|add:0|mul:100|div:totals.total_views|floatformat:1 }}%
-                            {% else %}
-                            0%
-                            {% endif %}
-                        </h3>
+                        <h3 class="text-warning">{{ cart_rate }}%</h3>
                         <p class="text-muted mb-0">Add-to-Cart Rate</p>
                     </div>
                 </div>

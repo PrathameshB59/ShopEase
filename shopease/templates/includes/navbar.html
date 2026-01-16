@@ -59,10 +59,31 @@
                         {% endfor %}
                     </ul>
                 </li>
+
+                {% if user.is_staff or user.is_superuser %}
+                <!-- Admin Panel Link - Direct URL to admin server on port 8080 -->
+                <li class="nav-item">
+                    <a href="http://localhost:8080/" class="nav-link admin-link" target="_blank">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
+                            <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                        </svg>
+                        Admin Panel
+                    </a>
+                </li>
+                {% endif %}
             </ul>
 
             <!-- Actions -->
             <div class="navbar-actions">
+                <!-- Help Center Link -->
+                <a href="http://localhost:8001/help/" target="_blank" class="action-link" title="Help Center">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/>
+                        <line x1="12" y1="17" x2="12.01" y2="17"/>
+                    </svg>
+                </a>
+
                 <!-- Cart -->
                 <a href="{% url 'cart:view' %}" class="action-link">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -259,6 +280,25 @@
 
     .nav-link:hover {
         color: #0f4c5c;
+    }
+
+    /* Admin Panel Link */
+    .admin-link {
+        display: flex;
+        align-items: center;
+        background: linear-gradient(135deg, #0f4c5c 0%, #1a6b7d 100%);
+        color: white !important;
+        border-radius: 8px;
+        padding: 0.5rem 1rem !important;
+    }
+
+    .admin-link:hover {
+        background: linear-gradient(135deg, #1a6b7d 0%, #0f4c5c 100%);
+        color: white !important;
+    }
+
+    .admin-link svg {
+        stroke: white;
     }
 
     /* Shop Toggle Button with Arrow */

@@ -258,12 +258,12 @@
         // Find the button
         const button = document.querySelector(`button[data-product-id="${productId}"]`);
         if (!button) return;
-        
+
         // Disable button
         button.disabled = true;
         const originalHTML = button.innerHTML;
         button.innerHTML = '<span>Adding...</span>';
-        
+
         try {
             const response = await fetch('/cart/add/', {
                 method: 'POST',
@@ -276,29 +276,42 @@
                     quantity: 1
                 })
             });
-            
-            const data = await response.json();
-            
+
+            // Check if response is OK
+            if (!response.ok) {
+                throw new Error(`Server error: ${response.status}`);
+            }
+
+            // Try to parse JSON response
+            let data;
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                data = await response.json();
+            } else {
+                // Non-JSON response (like HTML redirect) - assume success
+                data = { success: true, message: `${productName} added to cart!` };
+            }
+
             if (data.success) {
                 // Update cart count
                 const cartBadge = document.getElementById('cartCount');
-                if (cartBadge) {
+                if (cartBadge && data.cart_count !== undefined) {
                     cartBadge.textContent = data.cart_count;
-                    
+
                     // Animate badge
                     cartBadge.style.animation = 'pulse 0.5s ease';
                     setTimeout(() => {
                         cartBadge.style.animation = '';
                     }, 500);
                 }
-                
+
                 // Show success
                 button.innerHTML = '✓ Added!';
                 button.style.background = '#10b981';
-                
+
                 // Show notification
-                showNotification('success', data.message);
-                
+                showNotification('success', data.message || `${productName} added to cart!`);
+
                 // Reset button after 2 seconds
                 setTimeout(() => {
                     button.innerHTML = originalHTML;
@@ -306,13 +319,13 @@
                     button.disabled = false;
                 }, 2000);
             } else {
-                alert(data.message);
+                showNotification('error', data.message || 'Could not add to cart');
                 button.innerHTML = originalHTML;
                 button.disabled = false;
             }
         } catch (error) {
-            console.error('Error:', error);
-            alert('Failed to add to cart. Please try again.');
+            console.error('Error adding to cart:', error);
+            showNotification('error', 'Failed to add to cart. Please try again.');
             button.innerHTML = originalHTML;
             button.disabled = false;
         }

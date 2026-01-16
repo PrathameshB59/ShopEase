@@ -31,9 +31,17 @@ urlpatterns = [
     path('refunds/<uuid:refund_id>/', orders.refund_detail, name='refund_detail'),
     path('refunds/<uuid:refund_id>/process/', orders.process_refund, name='process_refund'),
 
+    # Phase 3: Product Management (CRUD)
+    path('products/manage/', products.product_list, name='product_list'),
+    path('products/create/', products.product_create, name='product_create'),
+    path('products/<int:product_id>/detail/', products.product_detail, name='product_detail'),
+    path('products/<int:product_id>/update/', products.product_update, name='product_update'),
+    path('products/<int:product_id>/delete/', products.product_delete, name='product_delete'),
+    path('products/bulk-action/', products.product_bulk_action, name='product_bulk_action'),
+
     # Phase 3: Products & analytics
-    path('products/', products.product_analytics_list, name='product_analytics_list'),
-    path('products/<int:product_id>/', products.product_analytics_detail, name='product_analytics_detail'),
+    path('products/analytics/', products.product_analytics_list, name='product_analytics_list'),
+    path('products/analytics/<int:product_id>/', products.product_analytics_detail, name='product_analytics_detail'),
     path('products/featured/dashboard/', products.featured_products_dashboard, name='featured_products_dashboard'),
     path('products/featured/manage/', products.manage_featured_products, name='manage_featured_products'),
     path('products/featured/auto-suggest/', products.auto_suggest_featured, name='auto_suggest_featured'),

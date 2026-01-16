@@ -827,101 +827,156 @@ def verify_otp_login(request):
 
 
 # ==========================================
+# ROLE-BASED REDIRECT HELPER
+# ==========================================
+
+def _get_role_based_redirect(request):
+    """
+    Determine redirect URL based on user role and current server.
+
+    Logic:
+    - Staff on admin server (8080) -> dashboard
+    - Staff on customer server (8000) -> redirect to admin server
+    - Customer on customer server (8000) -> home
+    - Customer on admin server (8080) -> redirect to customer server
+    """
+    from django.conf import settings
+
+    user = request.user
+    server_type = getattr(settings, 'SERVER_TYPE', None)
+    admin_port = getattr(settings, 'ADMIN_SERVER_PORT', 8080)
+    customer_port = getattr(settings, 'CUSTOMER_SERVER_PORT', 8000)
+
+    is_staff = user.is_staff or user.is_superuser
+
+    # Debug output
+    print("\n" + "="*60)
+    print("ROLE-BASED REDIRECT DEBUG")
+    print(f"User: {user.username}")
+    print(f"Is Staff: {is_staff}")
+    print(f"SERVER_TYPE: {server_type}")
+    print(f"Admin Port: {admin_port}, Customer Port: {customer_port}")
+
+    if is_staff:
+        if server_type == 'admin':
+            print("REDIRECT: Staff on admin server -> /dashboard/")
+            print("="*60 + "\n")
+            return redirect('admin_panel:dashboard')
+        else:
+            redirect_url = f'http://localhost:{admin_port}/dashboard/'
+            print(f"REDIRECT: Staff on customer server -> {redirect_url}")
+            print("="*60 + "\n")
+            return redirect(redirect_url)
+    else:
+        if server_type == 'customer' or server_type is None:
+            print("REDIRECT: Customer on customer server -> home")
+            print("="*60 + "\n")
+            return redirect('home')
+        else:
+            redirect_url = f'http://localhost:{customer_port}/'
+            print(f"REDIRECT: Customer on admin server -> {redirect_url}")
+            print("="*60 + "\n")
+            return redirect(redirect_url)
+
+
+# ==========================================
 # COMBINED AUTH PAGE
 # ==========================================
 
 def auth_page(request):
     """
     Combined login/register page with sliding panels.
-    
+
     URL: /accounts/auth/
     Methods: GET, POST
-    
+
     Features:
     - Toggle between login and register
     - Username/password login
     - Phone OTP login
     - Social login (Google, Facebook)
+    - Role-based redirect (staff -> admin port, customer -> customer port)
     """
-    
+
     # Redirect if already logged in
     if request.user.is_authenticated:
         messages.info(request, 'You are already logged in.')
-        return redirect('home')
-    
+        return _get_role_based_redirect(request)
+
     # Initialize forms
     login_form = UserLoginForm()
     register_form = UserRegistrationForm()
-    
+
     # Handle POST requests
     if request.method == 'POST':
         action = request.POST.get('action')
-        
+
         if action == 'login':
             # Handle username/password login
             login_form = UserLoginForm(request, data=request.POST)
-            
+
             if login_form.is_valid():
                 username = login_form.cleaned_data.get('username')
                 password = login_form.cleaned_data.get('password')
                 user = authenticate(request, username=username, password=password)
-                
+
                 if user is not None and user.is_active:
                     user.backend = 'apps.accounts.backends.EmailOrUsernameBackend'
                     login(request, user)
-                    
+
                     # Merge cart
                     try:
                         cart_service = CartService(request)
                         cart_service.merge_with_user_cart(user)
                     except:
                         pass
-                    
+
                     messages.success(request, f'Welcome back, {username}!')
 
-                    # Redirect staff/admin to admin panel, customers to home
+                    # Check for 'next' parameter first
                     next_page = request.GET.get('next')
                     if next_page:
                         return redirect(next_page)
-                    elif user.is_staff or user.is_superuser:
-                        return redirect('admin_panel:dashboard')
-                    else:
-                        return redirect('home')
+
+                    # Role and port-based redirect
+                    return _get_role_based_redirect(request)
                 else:
                     messages.error(request, 'Invalid username or password.')
             else:
                 messages.error(request, 'Invalid username or password.')
-        
+
         elif action == 'register':
             # Handle registration
             register_form = UserRegistrationForm(request.POST)
-            
+
             if register_form.is_valid():
                 user = register_form.save()
                 username = register_form.cleaned_data.get('username')
-                
+
                 # Auto-login after registration
                 user.backend = 'apps.accounts.backends.EmailOrUsernameBackend'
                 login(request, user)
-                
+
                 # Merge cart
                 try:
                     cart_service = CartService(request)
                     cart_service.merge_with_user_cart(user)
                 except:
                     pass
-                
+
                 messages.success(request, f'Welcome {username}! Your account has been created.')
-                return redirect('home')
+
+                # New registrations go to customer port (they're not staff)
+                return _get_role_based_redirect(request)
             else:
                 # Log form errors for debugging
                 print(f"Registration form errors: {register_form.errors}")
                 messages.error(request, 'Please correct the errors below.')
-    
+
     context = {
         'login_form': login_form,
         'register_form': register_form,
         'page_title': 'Sign In / Register'
     }
-    
+
     return render(request, 'accounts/auth.html', context)
