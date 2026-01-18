@@ -1,18 +1,28 @@
 """
 Django settings for ShopEase Documentation project.
+
+This project connects to the ShopEase MySQL database for authentication
+and uses a local SQLite database for documentation-specific data.
 """
 import os
 from pathlib import Path
-
+from dotenv import load_dotenv
+from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Path to ShopEase project (for .env file)
+SHOPEASE_BASE_DIR = BASE_DIR.parent / 'shopease'
+
+# Load environment variables from ShopEase .env file
+load_dotenv(SHOPEASE_BASE_DIR / '.env')
+
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-docs-change-this-in-production-key-here'
+SECRET_KEY = config('SECRET_KEY', default='django-insecure-docs-change-this-in-production')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config('DEBUG', default=True, cast=bool)
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
@@ -61,16 +71,36 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-# Database - Using SQLite for simplicity
+# Database Configuration
+# - 'default': ShopEase MySQL database (for authentication)
+# - 'docs': Local SQLite database (for help_center data)
 DATABASES = {
     'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': config('DB_NAME', default='shopease_db'),
+        'USER': config('DB_USER', default='root'),
+        'PASSWORD': config('DB_PASSWORD', default=''),
+        'HOST': config('DB_HOST', default='localhost'),
+        'PORT': config('DB_PORT', default='3306'),
+        'OPTIONS': {
+            'charset': 'utf8mb4',
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+        },
+    },
+    'docs': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    },
 }
 
-# Custom User Model
-AUTH_USER_MODEL = 'accounts.DocUser'
+# Database Router - routes help_center to SQLite, auth to MySQL
+DATABASE_ROUTERS = ['config.routers.DocsRouter']
+
+# Authentication Backend - supports email or username login
+AUTHENTICATION_BACKENDS = [
+    'apps.accounts.backends.EmailOrUsernameBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -96,12 +126,12 @@ USE_I18N = True
 USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Media files
-MEDIA_URL = 'media/'
+MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 # Default primary key field type
@@ -112,8 +142,13 @@ LOGIN_URL = 'accounts:login'
 LOGIN_REDIRECT_URL = 'core:home'
 LOGOUT_REDIRECT_URL = 'core:home'
 
-# Session settings
-SESSION_COOKIE_AGE = 86400 * 7  # 1 week
+# Session Configuration (aligned with ShopEase patterns)
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+SESSION_COOKIE_NAME = 'shopease_docs_sessionid'
+SESSION_COOKIE_AGE = 1209600  # 2 weeks (same as ShopEase)
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SECURE = False  # Set True in production with HTTPS
+SESSION_COOKIE_SAMESITE = 'Lax'
 SESSION_SAVE_EVERY_REQUEST = True
 
 # Security settings (enable in production)

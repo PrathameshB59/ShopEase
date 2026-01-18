@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ title|default:"ShopEase Documentation" }}{% endblock %}</title>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code&display=swap" rel="stylesheet">
+
+    {% load static %}
+    <!-- Base CSS -->
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <a href="{% url 'core:home' %}" class="navbar-brand">
+                <i class="fas fa-book"></i>
+                ShopEase Docs
+            </a>
+
+            <div class="navbar-nav">
+                <a href="{% url 'help_center:index' %}" class="nav-link">
+                    <i class="fas fa-question-circle"></i> Help Center
+                </a>
+                {% if user.is_authenticated and user.is_superuser %}
+                <a href="{% url 'code_docs:overview' %}" class="nav-link">
+                    <i class="fas fa-code"></i> Code Docs
+                </a>
+                {% endif %}
+                <a href="{% url 'core:search' %}" class="nav-link">
+                    <i class="fas fa-search"></i> Search
+                </a>
+            </div>
+
+            <div class="navbar-actions">
+                {% if user.is_authenticated %}
+                <span class="user-info">
+                    <i class="fas fa-user-circle"></i> {{ user.username }}
+                    {% if user.is_superuser %}
+                    <span class="badge badge-admin">Admin</span>
+                    {% endif %}
+                </span>
+                <a href="{% url 'accounts:logout' %}" class="btn btn-outline">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+                {% else %}
+                <a href="{% url 'accounts:login' %}" class="btn btn-primary">
+                    <i class="fas fa-sign-in-alt"></i> Login
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- Messages -->
+    {% if messages %}
+    <div class="messages-container">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">
+            <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% elif message.tags == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %}"></i>
+            {{ message }}
+            <button class="alert-close" onclick="this.parentElement.remove()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Main Content -->
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <i class="fas fa-book"></i> ShopEase Documentation
+                </div>
+                <div class="footer-links">
+                    <a href="{% url 'help_center:index' %}">Help Center</a>
+                    <a href="{% url 'help_center:faq_list' %}">FAQ</a>
+                    <a href="http://localhost:8000/" target="_blank">ShopEase Store</a>
+                </div>
+                <div class="footer-copyright">
+                    &copy; 2024 ShopEase. All rights reserved.
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
