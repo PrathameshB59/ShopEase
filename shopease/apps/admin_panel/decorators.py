@@ -56,7 +56,7 @@ def admin_required(view_func):
                 request,
                 'Access denied. Admin privileges required.'
             )
-            return redirect('core:home')
+            return redirect('accounts:login')
         return view_func(request, *args, **kwargs)
     return wrapper
 
