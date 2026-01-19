@@ -15,7 +15,8 @@ from decouple import config
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+# Note: parent.parent.parent because this file is in config/settings/base.py
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 
 # Quick-start development settings - unsuitable for production
@@ -257,7 +258,7 @@ if DEBUG and not TWILIO_ENABLED:
     print("\n" + "="*60)
     print("TWILIO NOT CONFIGURED - OTPs will print to console")
     print("="*60 + "\n")
-    
+
 # Razorpay Configuration
 RAZORPAY_KEY_ID = config('RAZORPAY_KEY_ID', default='')
 RAZORPAY_KEY_SECRET = config('RAZORPAY_KEY_SECRET', default='')

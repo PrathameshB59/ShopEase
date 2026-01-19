@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/code_docs.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="code-docs-container">
+    <div class="docs-sidebar">
+        <h3><i class="fas fa-code"></i> Code Documentation</h3>
+        <nav class="sidebar-nav">
+            <a href="{% url 'code_docs:overview' %}" class="nav-item">
+                <i class="fas fa-home"></i> Overview
+            </a>
+            <div class="nav-divider">Apps</div>
+            <a href="{% url 'code_docs:app_detail' 'core' %}" class="nav-item">
+                <i class="fas fa-cube"></i> Core
+            </a>
+            <a href="{% url 'code_docs:app_detail' 'products' %}" class="nav-item">
+                <i class="fas fa-box"></i> Products
+            </a>
+            <a href="{% url 'code_docs:app_detail' 'accounts' %}" class="nav-item">
+                <i class="fas fa-users"></i> Accounts
+            </a>
+            <a href="{% url 'code_docs:app_detail' 'cart' %}" class="nav-item">
+                <i class="fas fa-shopping-cart"></i> Cart
+            </a>
+            <a href="{% url 'code_docs:app_detail' 'orders' %}" class="nav-item active">
+                <i class="fas fa-receipt"></i> Orders
+            </a>
+        </nav>
+    </div>
+
+    <div class="docs-content">
+        <h1><i class="fas fa-receipt"></i> Orders App</h1>
+        <p>The Orders app handles checkout and order management.</p>
+
+        <div class="overview-section">
+            <h2>Order Flow</h2>
+            <ol>
+                <li>User proceeds to checkout</li>
+                <li>Enters shipping/billing address</li>
+                <li>Selects payment method</li>
+                <li>Razorpay payment processing</li>
+                <li>Order confirmation and email</li>
+            </ol>
+        </div>
+
+        <div class="overview-section">
+            <h2>Order Statuses</h2>
+            <ul>
+                <li><strong>Pending</strong> - Order created, awaiting payment</li>
+                <li><strong>Confirmed</strong> - Payment received</li>
+                <li><strong>Processing</strong> - Being prepared</li>
+                <li><strong>Shipped</strong> - In transit</li>
+                <li><strong>Delivered</strong> - Completed</li>
+                <li><strong>Cancelled</strong> - Cancelled by user/admin</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

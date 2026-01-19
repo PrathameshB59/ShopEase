@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/code_docs.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="code-docs-container">
+    <div class="docs-sidebar">
+        <h3><i class="fas fa-code"></i> Code Documentation</h3>
+        <nav class="sidebar-nav">
+            <a href="{% url 'code_docs:overview' %}" class="nav-item">
+                <i class="fas fa-home"></i> Overview
+            </a>
+            <a href="{% url 'code_docs:folder_structure' %}" class="nav-item">
+                <i class="fas fa-folder-tree"></i> Folder Structure
+            </a>
+            <a href="{% url 'code_docs:models' %}" class="nav-item">
+                <i class="fas fa-database"></i> Models
+            </a>
+            <a href="{% url 'code_docs:views' %}" class="nav-item active">
+                <i class="fas fa-eye"></i> Views
+            </a>
+            <a href="{% url 'code_docs:templates' %}" class="nav-item">
+                <i class="fas fa-file-code"></i> Templates
+            </a>
+            <a href="{% url 'code_docs:api' %}" class="nav-item">
+                <i class="fas fa-plug"></i> API
+            </a>
+        </nav>
+    </div>
+
+    <div class="docs-content">
+        <h1>{{ title }}</h1>
+        <p>Views handle the business logic and request/response cycle.</p>
+
+        <div class="overview-section">
+            <h2><i class="fas fa-cog"></i> View Types</h2>
+            <ul>
+                <li><strong>Function-Based Views (FBV)</strong> - Most views are function-based for simplicity</li>
+                <li><strong>Class-Based Views (CBV)</strong> - Used for password reset, generic operations</li>
+            </ul>
+        </div>
+
+        <div class="overview-section">
+            <h2><i class="fas fa-shield-alt"></i> Decorators</h2>
+            <ul>
+                <li><strong>@login_required</strong> - Requires authenticated user</li>
+                <li><strong>@admin_required</strong> - Requires staff status</li>
+                <li><strong>@csrf_protect</strong> - CSRF protection for POST requests</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

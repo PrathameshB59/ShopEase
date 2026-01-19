@@ -496,3 +496,30 @@ def staff_list(request):
     }
 
     return render(request, 'admin_panel/users/staff_list.html', context)
+
+
+@admin_required
+def admin_profile(request):
+    """
+    Admin's own profile page.
+
+    Shows:
+    - User information
+    - Admin role and permissions
+    - Recent admin activity
+    """
+    # Get current user's admin role
+    try:
+        admin_role = request.user.admin_role
+    except AdminRole.DoesNotExist:
+        admin_role = None
+
+    # Get recent admin activity
+    activities = AdminActivity.objects.filter(user=request.user).order_by('-timestamp')[:10]
+
+    context = {
+        'admin_role': admin_role,
+        'activities': activities,
+    }
+
+    return render(request, 'admin_panel/users/profile.html', context)

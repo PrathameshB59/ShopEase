@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/code_docs.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="code-docs-container">
+    <div class="docs-sidebar">
+        <h3><i class="fas fa-code"></i> Code Documentation</h3>
+        <nav class="sidebar-nav">
+            <a href="{% url 'code_docs:overview' %}" class="nav-item">
+                <i class="fas fa-home"></i> Overview
+            </a>
+            <a href="{% url 'code_docs:folder_structure' %}" class="nav-item">
+                <i class="fas fa-folder-tree"></i> Folder Structure
+            </a>
+            <a href="{% url 'code_docs:models' %}" class="nav-item">
+                <i class="fas fa-database"></i> Models
+            </a>
+            <a href="{% url 'code_docs:views' %}" class="nav-item">
+                <i class="fas fa-eye"></i> Views
+            </a>
+            <a href="{% url 'code_docs:templates' %}" class="nav-item active">
+                <i class="fas fa-file-code"></i> Templates
+            </a>
+            <a href="{% url 'code_docs:api' %}" class="nav-item">
+                <i class="fas fa-plug"></i> API
+            </a>
+        </nav>
+    </div>
+
+    <div class="docs-content">
+        <h1>{{ title }}</h1>
+        <p>ShopEase uses Django's template engine with template inheritance.</p>
+
+        <div class="overview-section">
+            <h2><i class="fas fa-layer-group"></i> Template Inheritance</h2>
+            <ul>
+                <li><strong>base.html</strong> - Main layout with navbar, footer, CSS/JS</li>
+                <li><strong>includes/</strong> - Reusable components (navbar, footer, forms)</li>
+                <li><strong>App templates</strong> - Extend base.html with specific content</li>
+            </ul>
+        </div>
+
+        <div class="overview-section">
+            <h2><i class="fas fa-tags"></i> Template Tags</h2>
+            <ul>
+                <li><strong>{% verbatim %}{% load static %}{% endverbatim %}</strong> - Load static files</li>
+                <li><strong>{% verbatim %}{% url 'name' %}{% endverbatim %}</strong> - URL reverse lookup</li>
+                <li><strong>{% verbatim %}{% csrf_token %}{% endverbatim %}</strong> - CSRF protection</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

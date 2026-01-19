@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/code_docs.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="code-docs-container">
+    <div class="docs-sidebar">
+        <h3><i class="fas fa-code"></i> Code Documentation</h3>
+        <nav class="sidebar-nav">
+            <a href="{% url 'code_docs:overview' %}" class="nav-item">
+                <i class="fas fa-home"></i> Overview
+            </a>
+            <div class="nav-divider">Apps</div>
+            <a href="{% url 'code_docs:app_detail' 'core' %}" class="nav-item">
+                <i class="fas fa-cube"></i> Core
+            </a>
+            <a href="{% url 'code_docs:app_detail' 'products' %}" class="nav-item">
+                <i class="fas fa-box"></i> Products
+            </a>
+            <a href="{% url 'code_docs:app_detail' 'accounts' %}" class="nav-item">
+                <i class="fas fa-users"></i> Accounts
+            </a>
+            <a href="{% url 'code_docs:app_detail' 'cart' %}" class="nav-item">
+                <i class="fas fa-shopping-cart"></i> Cart
+            </a>
+            <a href="{% url 'code_docs:app_detail' 'orders' %}" class="nav-item">
+                <i class="fas fa-receipt"></i> Orders
+            </a>
+            <a href="{% url 'code_docs:app_detail' 'admin_panel' %}" class="nav-item active">
+                <i class="fas fa-cog"></i> Admin Panel
+            </a>
+        </nav>
+    </div>
+
+    <div class="docs-content">
+        <h1><i class="fas fa-cog"></i> Admin Panel App</h1>
+        <p>The Admin Panel provides staff management functionality.</p>
+
+        <div class="overview-section">
+            <h2>Features</h2>
+            <ul>
+                <li>Dashboard with analytics</li>
+                <li>Product management (CRUD)</li>
+                <li>Order management and status updates</li>
+                <li>User management</li>
+                <li>Reports and exports</li>
+            </ul>
+        </div>
+
+        <div class="overview-section">
+            <h2>Access Control</h2>
+            <p>Uses middleware and decorators:</p>
+            <ul>
+                <li><strong>AdminPortAccessMiddleware</strong> - Restricts access to staff only</li>
+                <li><strong>@admin_required</strong> - View-level protection</li>
+                <li><strong>@permission_required</strong> - Granular permissions</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

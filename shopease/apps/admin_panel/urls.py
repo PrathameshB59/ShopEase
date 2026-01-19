@@ -22,6 +22,9 @@ urlpatterns = [
     # Dashboard - Main landing page
     path('', dashboard.dashboard_view, name='dashboard'),
 
+    # Admin Profile
+    path('profile/', users.admin_profile, name='admin_profile'),
+
     # Phase 2: Order management
     path('orders/', orders.order_list, name='order_list'),
     path('orders/<uuid:order_id>/', orders.order_detail, name='order_detail'),

@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/help_center.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="help-container">
+    <nav class="breadcrumb">
+        <a href="{% url 'help_center:index' %}">Help Center</a>
+        <i class="fas fa-chevron-right"></i>
+        <span>{{ category.name }}</span>
+    </nav>
+
+    <div class="category-header">
+        <div class="category-icon">
+            <i class="{{ category.icon }}"></i>
+        </div>
+        <div class="category-info">
+            <h1>{{ category.name }}</h1>
+            {% if category.description %}
+            <p>{{ category.description }}</p>
+            {% endif %}
+            <span class="article-count">{{ articles|length }} articles</span>
+        </div>
+    </div>
+
+    <section class="help-section">
+        {% if articles %}
+        <div class="articles-list">
+            {% for article in articles %}
+            <a href="{% url 'help_center:article_detail' article.slug %}" class="article-item">
+                <div class="article-info">
+                    <h3>{{ article.title }}</h3>
+                    <p>{{ article.excerpt|truncatewords:25 }}</p>
+                    <span class="article-meta">
+                        <i class="fas fa-eye"></i> {{ article.views }} views
+                    </span>
+                </div>
+                <i class="fas fa-chevron-right"></i>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-file-alt"></i>
+            <h3>No articles yet</h3>
+            <p>Articles in this category will appear here.</p>
+        </div>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

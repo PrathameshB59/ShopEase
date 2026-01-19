@@ -364,17 +364,17 @@ def user_logout(request):
 def profile(request):
     """
     User profile view and edit.
-    
+
     URL: /accounts/profile/
     Methods: GET, POST
     Login required: Yes
-    
+
     Displays:
     - User information
     - Profile details
     - Order history (TODO)
     - Saved addresses
-    
+
     Allows editing:
     - Email, name
     - Phone number
@@ -382,14 +382,19 @@ def profile(request):
     - Billing address
     - Profile picture
     - Preferences
-    
+
     SECURITY:
     - @login_required decorator (redirect to login if not authenticated)
     - Users can only edit their own profile
     - File upload validation (image types only)
     - File size limits (TODO: max 5MB)
     """
-    
+
+    # Redirect admin/staff users to admin profile when on admin server
+    from django.conf import settings
+    if request.user.is_staff and settings.ROOT_URLCONF == 'config.urls_admin':
+        return redirect('admin_panel:admin_profile')
+
     if request.method == 'POST':
         """
         HANDLE PROFILE UPDATE

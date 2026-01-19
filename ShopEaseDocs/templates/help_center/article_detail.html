@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/help_center.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="help-container">
+    <nav class="breadcrumb">
+        <a href="{% url 'help_center:index' %}">Help Center</a>
+        <i class="fas fa-chevron-right"></i>
+        <a href="{% url 'help_center:category_detail' article.category.slug %}">{{ article.category.name }}</a>
+        <i class="fas fa-chevron-right"></i>
+        <span>{{ article.title }}</span>
+    </nav>
+
+    <article class="article-content">
+        <header class="article-header">
+            <span class="article-category-badge">
+                <i class="{{ article.category.icon }}"></i>
+                {{ article.category.name }}
+            </span>
+            <h1>{{ article.title }}</h1>
+            <div class="article-meta">
+                <span><i class="fas fa-calendar"></i> {{ article.created_at|date:"M d, Y" }}</span>
+                <span><i class="fas fa-eye"></i> {{ article.views }} views</span>
+            </div>
+        </header>
+
+        <div class="article-body">
+            {{ article.content|linebreaks }}
+        </div>
+    </article>
+
+    {% if related_articles %}
+    <section class="related-articles">
+        <h2><i class="fas fa-link"></i> Related Articles</h2>
+        <div class="articles-grid">
+            {% for related in related_articles %}
+            <a href="{% url 'help_center:article_detail' related.slug %}" class="article-card-small">
+                <h4>{{ related.title }}</h4>
+                <p>{{ related.excerpt|truncatewords:15 }}</p>
+            </a>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+</div>
+{% endblock %}
