@@ -130,6 +130,7 @@ def register(request):
             
             # Log user in automatically after registration
             # Creates session, sets session cookie
+            user.backend = 'django.contrib.auth.backends.ModelBackend'  # Specify backend
             login(request, user)
             
             # Merge anonymous cart with user's cart
@@ -252,6 +253,7 @@ def user_login(request):
                 if user.is_active:
                     # Log user in
                     # Creates session, sets cookie
+                    user.backend = 'django.contrib.auth.backends.ModelBackend'  # Specify backend
                     login(request, user)
                     
                     # Merge anonymous cart with user cart
@@ -338,22 +340,29 @@ def user_logout(request):
     
     # Store username before logout
     username = request.user.username
-    
+
+    # Mark session as inactive before logout
+    if request.session.session_key:
+        from .models import UserSession
+        UserSession.objects.filter(
+            session_key=request.session.session_key
+        ).update(is_active=False)
+
     # Log user out
     # This function:
     # 1. Deletes session from database
     # 2. Clears session cookie
     # 3. Removes user from request.user
     logout(request)
-    
+
     # Success message
     messages.success(
         request,
         f'Goodbye {username}! You have been logged out successfully.'
     )
-    
-    # Redirect to home
-    return redirect('home')
+
+    # Redirect to landing page
+    return redirect('landing')
 
 
 # ==========================================
@@ -442,15 +451,58 @@ def profile(request):
     
     # Get user's orders (TODO: implement orders app)
     # orders = Order.objects.filter(user=request.user).order_by('-created_at')[:5]
-    
+
+    # Get active sessions (excluding current session)
+    from .models import UserSession
+    active_sessions = UserSession.objects.filter(
+        user=request.user,
+        is_active=True
+    ).exclude(session_key=request.session.session_key)
+
     context = {
         'user_form': user_form,
         'profile_form': profile_form,
         'page_title': 'My Profile',
+        'active_sessions': active_sessions,
+        'current_session_key': request.session.session_key,
         # 'orders': orders,
     }
-    
+
     return render(request, 'accounts/profile.html', context)
+
+
+@login_required
+def terminate_session(request, session_id):
+    """
+    Terminate a specific user session.
+    Users can only terminate their own sessions.
+
+    URL: /accounts/sessions/<session_id>/terminate/
+    Methods: POST
+    Login required: Yes
+
+    Security:
+    - Users can only terminate their own sessions
+    - Cannot terminate current session (use logout instead)
+    - Deletes Django session from database
+    """
+    try:
+        # Get the session (ensure it belongs to the current user)
+        from .models import UserSession
+        session = UserSession.objects.get(id=session_id, user=request.user)
+
+        # Don't allow terminating current session
+        if session.session_key == request.session.session_key:
+            messages.error(request, "Cannot terminate your current session. Please use logout.")
+            return redirect('accounts:profile')
+
+        # Terminate the session
+        session.terminate()
+        messages.success(request, "Session terminated successfully.")
+    except UserSession.DoesNotExist:
+        messages.error(request, "Session not found or you don't have permission.")
+
+    return redirect('accounts:profile')
 
 
 # ==========================================
@@ -798,6 +850,7 @@ def verify_otp_login(request):
             if profile.verify_otp(otp):
                 # Login user
                 user = profile.user
+                user.backend = 'django.contrib.auth.backends.ModelBackend'  # Specify backend
                 login(request, user)
                 
                 # Merge cart
@@ -806,11 +859,15 @@ def verify_otp_login(request):
                     cart_service.merge_with_user_cart(user)
                 except Exception as e:
                     print(f"Cart merge error: {e}")
-                
+
+                # Determine redirect URL based on role
+                redirect_url = _get_role_based_redirect(request, return_url_only=True)
+
                 return JsonResponse({
                     'success': True,
                     'message': 'Login successful',
-                    'username': user.username
+                    'username': user.username,
+                    'redirect_url': redirect_url
                 })
             else:
                 return JsonResponse({
@@ -835,53 +892,166 @@ def verify_otp_login(request):
 # ROLE-BASED REDIRECT HELPER
 # ==========================================
 
-def _get_role_based_redirect(request):
+def _get_role_based_redirect(request, return_url_only=False):
     """
     Determine redirect URL based on user role and current server.
 
-    Logic:
-    - Staff on admin server (8080) -> dashboard
-    - Staff on customer server (8000) -> redirect to admin server
-    - Customer on customer server (8000) -> home
-    - Customer on admin server (8080) -> redirect to customer server
+    Args:
+        request: HTTP request object
+        return_url_only: If True, return URL string (for AJAX). If False, return redirect object.
+
+    Logic (Updated with Token-Based Auth):
+    - Staff on admin server (8080) -> /dashboard/
+    - Staff on customer server (8000) -> generate auth token, redirect to http://127.0.0.1:8080/?auth_token=...
+    - Customer on customer server (8000) -> /home/
+    - Customer on admin server (8080) -> redirect to http://127.0.0.1:8000/
+
+    Preserves 'next' parameter if present.
     """
     from django.conf import settings
+    from apps.accounts.auth_tokens import generate_auth_token
 
     user = request.user
+
+    # Get server configuration
     server_type = getattr(settings, 'SERVER_TYPE', None)
+
+    # Fallback: detect server type from ROOT_URLCONF if not configured
+    if not server_type:
+        root_urlconf = getattr(settings, 'ROOT_URLCONF', '')
+        if 'urls_admin' in root_urlconf:
+            server_type = 'admin'
+        elif 'urls_customer' in root_urlconf:
+            server_type = 'customer'
+
     admin_port = getattr(settings, 'ADMIN_SERVER_PORT', 8080)
     customer_port = getattr(settings, 'CUSTOMER_SERVER_PORT', 8000)
+
+    # Check for 'next' parameter first
+    next_url = request.GET.get('next') or request.POST.get('next')
 
     is_staff = user.is_staff or user.is_superuser
 
     # Debug output
     print("\n" + "="*60)
-    print("ROLE-BASED REDIRECT DEBUG")
+    print("ROLE-BASED REDIRECT DEBUG (Token-Based Auth)")
     print(f"User: {user.username}")
     print(f"Is Staff: {is_staff}")
     print(f"SERVER_TYPE: {server_type}")
+    print(f"Next URL: {next_url}")
     print(f"Admin Port: {admin_port}, Customer Port: {customer_port}")
+    print(f"Return URL Only: {return_url_only}")
 
-    if is_staff:
+    # Determine redirect URL
+    if next_url:
+        # If 'next' parameter exists and is safe, use it
+        redirect_url = next_url
+        print(f"REDIRECT: Using 'next' parameter -> {redirect_url}")
+    elif is_staff:
         if server_type == 'admin':
-            print("REDIRECT: Staff on admin server -> /dashboard/")
-            print("="*60 + "\n")
-            return redirect('admin_panel:dashboard')
+            redirect_url = '/dashboard/' if return_url_only else None
+            if not return_url_only:
+                print("REDIRECT: Staff on admin server -> /dashboard/")
+                print("="*60 + "\n")
+                return redirect('admin_panel:dashboard')
+            else:
+                print(f"REDIRECT: Staff on admin server -> {redirect_url}")
         else:
-            redirect_url = f'http://localhost:{admin_port}/dashboard/'
+            # Staff on customer server - generate token and redirect to admin server
+            token = generate_auth_token(user.id, user.username)
+            redirect_url = f'http://127.0.0.1:{admin_port}/?auth_token={token}'
             print(f"REDIRECT: Staff on customer server -> {redirect_url}")
-            print("="*60 + "\n")
-            return redirect(redirect_url)
+            print(f"  Generated auth token for cross-port authentication")
     else:
         if server_type == 'customer' or server_type is None:
-            print("REDIRECT: Customer on customer server -> home")
-            print("="*60 + "\n")
-            return redirect('home')
+            redirect_url = '/home/'
+            print("REDIRECT: Customer on customer server -> /home/")
         else:
-            redirect_url = f'http://localhost:{customer_port}/'
+            redirect_url = f'http://127.0.0.1:{customer_port}/'
             print(f"REDIRECT: Customer on admin server -> {redirect_url}")
-            print("="*60 + "\n")
-            return redirect(redirect_url)
+
+    print("="*60 + "\n")
+
+    # Return URL string for AJAX or redirect object for normal requests
+    if return_url_only:
+        return redirect_url
+    else:
+        return redirect(redirect_url)
+
+
+# ==========================================
+# TOKEN-BASED AUTO-LOGIN FOR ADMIN SERVER
+# ==========================================
+
+def admin_auto_login(request):
+    """
+    Auto-login view for admin server using one-time authentication token.
+    This view is called when admin users are redirected from customer server.
+
+    Flow:
+    1. User logs in on port 8000 (customer server)
+    2. Customer server generates token and redirects to: http://127.0.0.1:8080/?auth_token=ABC123
+    3. Admin server receives request and calls this view
+    4. View validates token and creates admin session
+    5. User is now logged in on port 8080
+
+    Security:
+    - Tokens expire after 60 seconds
+    - Tokens are single-use (deleted after validation)
+    - Invalid tokens redirect to login page
+    """
+    from django.contrib.auth.models import User
+    from django.contrib.auth import login
+    from apps.accounts.auth_tokens import validate_auth_token
+
+    token = request.GET.get('auth_token')
+
+    print("\n" + "="*60)
+    print("AUTO-LOGIN TOKEN VALIDATION")
+    print(f"Token received: {token[:8] if token and len(token) >= 8 else token}...")
+
+    if not token:
+        messages.error(request, "Invalid authentication token.")
+        print("ERROR: No token provided")
+        print("="*60 + "\n")
+        return redirect('accounts:auth')
+
+    # Validate token
+    result = validate_auth_token(token)
+
+    if not result['valid']:
+        messages.error(request, "Authentication token expired or invalid. Please log in again.")
+        print("ERROR: Token validation failed")
+        print("="*60 + "\n")
+        return redirect('accounts:auth')
+
+    # Get user and create session
+    try:
+        user = User.objects.get(id=result['user_id'])
+        print(f"Token valid for user: {user.username}")
+
+        # Log user in on admin server
+        user.backend = 'django.contrib.auth.backends.ModelBackend'
+        login(request, user)
+        print("User logged in successfully on admin server")
+
+        # Track session
+        from apps.accounts.models import UserSession
+        from apps.accounts.middleware import SessionTrackingMiddleware
+        middleware = SessionTrackingMiddleware(get_response=lambda r: None)
+        middleware.process_request(request)
+        print("Session tracking middleware executed")
+
+        messages.success(request, f"Welcome back, {user.username}!")
+        print(f"REDIRECT: -> /dashboard/ (admin_panel:dashboard)")
+        print("="*60 + "\n")
+        return redirect('admin_panel:dashboard')
+
+    except User.DoesNotExist:
+        messages.error(request, "User not found. Please log in again.")
+        print(f"ERROR: User with ID {result['user_id']} not found")
+        print("="*60 + "\n")
+        return redirect('accounts:auth')
 
 
 # ==========================================

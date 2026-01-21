@@ -29,9 +29,9 @@ ShopEase{% endblock %} {% block extra_css %}
             </div>
 
             <div class="item-price-desktop">
-              <span class="price">${{ item.price_snapshot }}</span>
+              <span class="price">{{ currency_symbol }}{{ item.price_snapshot }}</span>
               {% if item.product.is_on_sale %}
-              <span class="original-price">${{ item.product.price }}</span>
+              <span class="original-price">{{ currency_symbol }}{{ item.product.price }}</span>
               {% endif %}
             </div>
 
@@ -40,7 +40,7 @@ ShopEase{% endblock %} {% block extra_css %}
           </div>
           {% endif %}
 
-          <div class="item-price-mobile">${{ item.price_snapshot }}</div>
+          <div class="item-price-mobile">{{ currency_symbol }}{{ item.price_snapshot }}</div>
         </div>
 
         <div class="item-actions">
@@ -81,7 +81,7 @@ ShopEase{% endblock %} {% block extra_css %}
 
         <div class="item-total-desktop">
           <span class="total-label">Total:</span>
-          <span class="total-amount item-subtotal" data-item-id="{{ item.id }}">${{ item.get_subtotal }}</span>
+          <span class="total-amount item-subtotal" data-item-id="{{ item.id }}">{{ currency_symbol }}{{ item.get_subtotal }}</span>
         </div>
       </div>
       {% endfor %}
@@ -95,7 +95,7 @@ ShopEase{% endblock %} {% block extra_css %}
           <div class="summary-row">
             <span>Subtotal ({{ cart_items|length }} item{{
               cart_items|length|pluralize }}):</span>
-            <span class="cart-subtotal">${{ subtotal }}</span>
+            <span class="cart-subtotal">{{ currency_symbol }}{{ subtotal }}</span>
           </div>
 
           <div class="summary-row">
@@ -105,14 +105,14 @@ ShopEase{% endblock %} {% block extra_css %}
 
           <div class="summary-row">
             <span>Tax:</span>
-            <span class="cart-tax">${{ tax }}</span>
+            <span class="cart-tax">{{ currency_symbol }}{{ tax }}</span>
           </div>
 
           <div class="summary-divider"></div>
 
           <div class="summary-row summary-total">
             <span>Total:</span>
-            <span class="total-amount cart-total">${{ total }}</span>
+            <span class="total-amount cart-total">{{ currency_symbol }}{{ total }}</span>
           </div>
         </div>
 

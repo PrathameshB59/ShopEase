@@ -15,9 +15,13 @@ from . import views  # Import views from current package
 # URL patterns for core app
 # These handle the main site pages (homepage, about, contact, etc.)
 urlpatterns = [
+    # Smart landing page - Redirects based on authentication status and role
+    # Anonymous users → Login page
+    # Logged-in staff → Admin dashboard (port 8080)
+    # Logged-in customers → Customer home page
+    path('', views.landing_page, name='landing'),
+
     # Homepage - Shows featured products and categories
-    # path('') matches the root URL: http://example.com/
-    # views.home is the view function that processes the request
-    # name='home' allows reverse URL lookup in templates: {% url 'home' %}
-    path('', views.home, name='home'),
+    # Actual home page for authenticated customers
+    path('home/', views.home, name='home'),
 ]

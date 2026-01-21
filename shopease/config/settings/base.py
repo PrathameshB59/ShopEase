@@ -59,6 +59,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'apps.accounts.middleware.SessionTrackingMiddleware',  # Session tracking for multi-device support
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'apps.admin_panel.middleware.ProductViewTrackingMiddleware',  # Product analytics tracking
@@ -77,7 +78,9 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'apps.admin_panel.context_processors.server_type',  # Server type (admin/customer)
                 'apps.admin_panel.context_processors.admin_permissions',  # Admin permissions
+                'apps.admin_panel.context_processors.currency_context',  # Currency based on country
             ],
         },
     },
@@ -173,7 +176,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 
 # Session cookie settings
-SESSION_COOKIE_NAME = 'shopease_sessionid'  # Cookie name (default: sessionid)
+# SESSION_COOKIE_NAME = 'shopease_sessionid'  # Now set per-server (customer.py/admin.py)
 SESSION_COOKIE_AGE = 1209600  # 2 weeks in seconds (how long cart persists)
 SESSION_COOKIE_HTTPONLY = True  # JavaScript can't access (prevents XSS)
 SESSION_COOKIE_SECURE = False  # Set True in production (HTTPS only)
@@ -187,6 +190,31 @@ SESSION_SAVE_EVERY_REQUEST = False
 # Run: python manage.py clearsessions (add to cron job)
 
 # ==========================================
+# CACHE CONFIGURATION
+# ==========================================
+
+# Django cache for auth tokens and other temporary data
+# Using FileBasedCache for development - SHARED across both servers (port 8000 and 8080)
+# LocMemCache was causing redirect loops because each server had its own cache
+# Production: Consider Redis or Memcached for better performance
+
+import os
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+        'LOCATION': os.path.join(BASE_DIR, 'cache'),  # Stores cache in shopease/cache/ directory
+        'TIMEOUT': 300,  # 5 minutes default
+        'OPTIONS': {
+            'MAX_ENTRIES': 1000
+        }
+    }
+}
+
+# Create cache directory if it doesn't exist
+os.makedirs(os.path.join(BASE_DIR, 'cache'), exist_ok=True)
+
+# ==========================================
 # AUTHENTICATION SETTINGS
 # ==========================================
 
@@ -198,7 +226,7 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 # Where to redirect after login/logout
-LOGIN_URL = '/accounts/login/'  # Where to redirect if @login_required
+LOGIN_URL = '/accounts/auth/'  # Where to redirect if @login_required (unified auth page)
 LOGIN_REDIRECT_URL = '/'  # After successful login
 LOGOUT_REDIRECT_URL = '/'  # After logout
 
@@ -310,3 +338,7 @@ else:
         'yoursite.com',
         'www.yoursite.com',
     ]
+
+# Server Configuration (for dual-server architecture)
+ADMIN_SERVER_PORT = 8080
+CUSTOMER_SERVER_PORT = 8000

@@ -70,8 +70,22 @@
 
                 {% if user.is_superuser or user_permissions.can_view_users %}
                 <!-- Users -->
-                <a href="{% url 'admin_panel:user_list' %}" class="list-group-item list-group-item-action bg-dark text-white {% if 'user' in request.resolver_match.url_name or 'staff' in request.resolver_match.url_name %}active{% endif %}">
+                <a href="{% url 'admin_panel:user_list' %}" class="list-group-item list-group-item-action bg-dark text-white {% if 'user_list' in request.resolver_match.url_name or 'user_detail' in request.resolver_match.url_name or 'staff' in request.resolver_match.url_name %}active{% endif %}">
                     <i class="bi bi-people me-2"></i>Users
+                </a>
+                {% endif %}
+
+                {% if user.is_superuser %}
+                <!-- Superusers -->
+                <a href="{% url 'admin_panel:superuser_list' %}" class="list-group-item list-group-item-action bg-dark text-white {% if 'superuser' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="bi bi-shield-fill-check me-2"></i>Superusers
+                </a>
+                {% endif %}
+
+                {% if user.is_superuser or user_permissions.can_manage_roles %}
+                <!-- Roles -->
+                <a href="{% url 'admin_panel:role_list' %}" class="list-group-item list-group-item-action bg-dark text-white {% if 'role' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="bi bi-person-badge me-2"></i>Roles
                 </a>
                 {% endif %}
 
@@ -79,6 +93,13 @@
                 <!-- Activity Log -->
                 <a href="{% url 'admin_panel:activity_log' %}" class="list-group-item list-group-item-action bg-dark text-white {% if 'activity' in request.resolver_match.url_name %}active{% endif %}">
                     <i class="bi bi-clock-history me-2"></i>Activity Log
+                </a>
+                {% endif %}
+
+                {% if user.is_superuser %}
+                <!-- Database Status -->
+                <a href="{% url 'admin_panel:database_status' %}" class="list-group-item list-group-item-action bg-dark text-white {% if 'database' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="bi bi-database me-2"></i>Database Status
                 </a>
                 {% endif %}
 
@@ -106,6 +127,41 @@
                     </button>
 
                     <div class="ms-auto d-flex align-items-center">
+                        <!-- Currency Selector -->
+                        <div class="dropdown me-3">
+                            <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="currencyDropdown" data-bs-toggle="dropdown" title="Select Currency">
+                                <i class="bi bi-currency-exchange me-1"></i>
+                                {{ currency_code }} {{ currency_symbol }}
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><h6 class="dropdown-header">Select Currency</h6></li>
+                                <li><a class="dropdown-item" href="{% url 'admin_panel:set_currency' %}?set_currency=IN">
+                                    <i class="bi bi-check-circle me-2 {% if user_country == 'IN' %}text-success{% else %}text-muted{% endif %}"></i>
+                                    INR (₹) - Indian Rupee
+                                </a></li>
+                                <li><a class="dropdown-item" href="{% url 'admin_panel:set_currency' %}?set_currency=US">
+                                    <i class="bi bi-check-circle me-2 {% if user_country == 'US' %}text-success{% else %}text-muted{% endif %}"></i>
+                                    USD ($) - US Dollar
+                                </a></li>
+                                <li><a class="dropdown-item" href="{% url 'admin_panel:set_currency' %}?set_currency=GB">
+                                    <i class="bi bi-check-circle me-2 {% if user_country == 'GB' %}text-success{% else %}text-muted{% endif %}"></i>
+                                    GBP (£) - British Pound
+                                </a></li>
+                                <li><a class="dropdown-item" href="{% url 'admin_panel:set_currency' %}?set_currency=DE">
+                                    <i class="bi bi-check-circle me-2 {% if user_country == 'DE' %}text-success{% else %}text-muted{% endif %}"></i>
+                                    EUR (€) - Euro
+                                </a></li>
+                                <li><a class="dropdown-item" href="{% url 'admin_panel:set_currency' %}?set_currency=JP">
+                                    <i class="bi bi-check-circle me-2 {% if user_country == 'JP' %}text-success{% else %}text-muted{% endif %}"></i>
+                                    JPY (¥) - Japanese Yen
+                                </a></li>
+                                <li><a class="dropdown-item" href="{% url 'admin_panel:set_currency' %}?set_currency=AU">
+                                    <i class="bi bi-check-circle me-2 {% if user_country == 'AU' %}text-success{% else %}text-muted{% endif %}"></i>
+                                    AUD (A$) - Australian Dollar
+                                </a></li>
+                            </ul>
+                        </div>
+
                         <!-- User Info -->
                         <div class="dropdown">
                             <button class="btn btn-secondary dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown">

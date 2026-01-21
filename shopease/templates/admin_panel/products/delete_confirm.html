@@ -1,0 +1,137 @@
+{% extends 'admin_panel/base_admin.html' %}
+
+{% block title %}Delete Product - {{ block.super }}{% endblock %}
+
+{% block page_title %}Delete Product{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0"><i class="bi bi-exclamation-triangle me-2"></i>Confirm Product Deletion</h5>
+            </div>
+            <div class="card-body">
+                <!-- Product Info -->
+                <div class="d-flex align-items-start mb-4 p-3 bg-light rounded">
+                    {% if product.image %}
+                    <img src="{{ product.image.url }}" alt="{{ product.name }}" class="rounded me-3" style="width: 80px; height: 80px; object-fit: cover;">
+                    {% else %}
+                    <div class="bg-secondary rounded me-3 d-flex align-items-center justify-content-center text-white" style="width: 80px; height: 80px;">
+                        <i class="bi bi-image h3 mb-0"></i>
+                    </div>
+                    {% endif %}
+                    <div>
+                        <h5 class="mb-1">{{ product.name }}</h5>
+                        <p class="mb-1 text-muted">SKU: {{ product.sku }}</p>
+                        <p class="mb-1">
+                            <strong>Price:</strong>
+                            {% if product.sale_price %}
+                            <span class="text-decoration-line-through">₹{{ product.price }}</span>
+                            <span class="text-success ms-1">₹{{ product.sale_price }}</span>
+                            {% else %}
+                            ₹{{ product.price }}
+                            {% endif %}
+                            | <strong>Stock:</strong> {{ product.stock }}
+                        </p>
+                        <p class="mb-0">
+                            <strong>Category:</strong> {{ product.category.name }}
+                        </p>
+                    </div>
+                </div>
+
+                <p class="text-muted mb-4">Choose how you want to handle this product:</p>
+
+                <form method="post">
+                    {% csrf_token %}
+
+                    <!-- Option 1: Deactivate (Recommended) -->
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="action" id="deactivate" value="deactivate" checked>
+                                <label class="form-check-label" for="deactivate">
+                                    <strong>Deactivate Product (Recommended)</strong>
+                                </label>
+                            </div>
+                            <p class="text-muted mb-0 ms-4">
+                                The product will be hidden from the store but can be reactivated later.
+                                All data, orders, and analytics will be preserved.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Option 2: Permanent Delete -->
+                    <div class="card mb-4 border-danger">
+                        <div class="card-body">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="action" id="permanent" value="permanent">
+                                <label class="form-check-label text-danger" for="permanent">
+                                    <strong>Permanently Delete</strong>
+                                </label>
+                            </div>
+                            <p class="text-danger mb-0 ms-4">
+                                <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                                <strong>Warning:</strong> This action cannot be undone. The product will be removed from the database along with all related data.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Warning Messages -->
+                    <div class="alert alert-warning">
+                        <h6 class="alert-heading"><i class="bi bi-info-circle me-2"></i>Important Information</h6>
+                        <ul class="mb-0 small">
+                            <li>Past orders containing this product will not be affected</li>
+                            <li>Product analytics will be preserved</li>
+                            <li>If this product is currently featured, it will be removed from featured products</li>
+                        </ul>
+                    </div>
+
+                    <!-- Confirmation Checkbox -->
+                    <div class="form-check mb-4">
+                        <input class="form-check-input" type="checkbox" id="confirmDelete" required>
+                        <label class="form-check-label" for="confirmDelete">
+                            I understand the consequences of this action
+                        </label>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-danger" id="deleteBtn" disabled>
+                            <i class="bi bi-trash me-2"></i>Proceed with Selected Action
+                        </button>
+                        <a href="{% url 'admin_panel:product_detail' product.id %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle me-2"></i>Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Additional Actions -->
+        <div class="mt-3 text-center">
+            <a href="{% url 'admin_panel:product_list' %}" class="text-muted">
+                <i class="bi bi-arrow-left me-1"></i>Back to Product List
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+// Enable/disable delete button based on confirmation checkbox
+document.getElementById('confirmDelete').addEventListener('change', function() {
+    document.getElementById('deleteBtn').disabled = !this.checked;
+});
+
+// Additional confirmation for permanent delete
+document.querySelector('form').addEventListener('submit', function(e) {
+    const action = document.querySelector('input[name="action"]:checked').value;
+
+    if (action === 'permanent') {
+        if (!confirm('Are you absolutely sure you want to PERMANENTLY delete "{{ product.name }}"? This action CANNOT be undone!')) {
+            e.preventDefault();
+        }
+    }
+});
+</script>
+{% endblock %}

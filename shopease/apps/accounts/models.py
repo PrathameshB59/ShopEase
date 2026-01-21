@@ -392,7 +392,58 @@ def create_user_profile(sender, instance, created, **kwargs):
 def save_user_profile(sender, instance, **kwargs):
     """
     Save Profile whenever User is saved.
-    
+
     Ensures Profile stays in sync with User.
     """
     instance.profile.save()
+
+
+# ==========================================
+# USER SESSION TRACKING MODEL
+# ==========================================
+
+class UserSession(models.Model):
+    """
+    Track user login sessions for multi-device support.
+    Allows users to see all active sessions and terminate specific ones.
+
+    This enables:
+    - Viewing all devices/browsers where user is logged in
+    - Remote session termination for security
+    - Activity monitoring (last active time)
+    - Device/browser identification
+    """
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sessions')
+    session_key = models.CharField(max_length=40, unique=True, db_index=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.TextField(blank=True)  # Browser/device info
+    device_name = models.CharField(max_length=200, blank=True)  # Parsed from user agent
+    location = models.CharField(max_length=200, blank=True)  # Optional: City, Country
+    login_time = models.DateTimeField(auto_now_add=True)
+    last_activity = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['-last_activity']
+        verbose_name = 'User Session'
+        verbose_name_plural = 'User Sessions'
+
+    def __str__(self):
+        return f"{self.user.username} - {self.device_name or 'Unknown Device'} ({self.login_time.strftime('%Y-%m-%d %H:%M')})"
+
+    def terminate(self):
+        """Terminate this session by deleting the Django session."""
+        from django.contrib.sessions.models import Session
+        try:
+            session = Session.objects.get(session_key=self.session_key)
+            session.delete()
+        except Session.DoesNotExist:
+            pass
+        self.is_active = False
+        self.save()
+
+    @property
+    def is_current(self):
+        """Check if this is the current session (for display purposes)."""
+        # This will be set in the view when rendering
+        return False

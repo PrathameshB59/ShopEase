@@ -971,12 +971,13 @@
             if (data.success) {
                 showNotification(
                     'Login Successful!',
-                    'Redirecting to homepage...',
+                    'Redirecting...',
                     'success',
                     2000
                 );
                 setTimeout(() => {
-                    window.location.href = '/';
+                    // Use server-provided redirect URL instead of hardcoded '/'
+                    window.location.href = data.redirect_url || '/';
                 }, 1500);
             } else {
                 showNotification(

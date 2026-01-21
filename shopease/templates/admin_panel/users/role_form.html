@@ -1,0 +1,192 @@
+{% extends 'admin_panel/base_admin.html' %}
+
+{% block title %}{{ action }} Custom Role - {{ block.super }}{% endblock %}
+
+{% block page_title %}{{ action }} Custom Role{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-pencil-square me-2"></i>Role Details</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+
+                    <!-- Role Name -->
+                    <div class="mb-3">
+                        <label for="{{ form.custom_role_name.id_for_label }}" class="form-label">
+                            Role Name <span class="text-danger">*</span>
+                        </label>
+                        {{ form.custom_role_name }}
+                        <small class="text-muted">Example: "Inventory Analyst", "Marketing Coordinator"</small>
+                        {% if form.custom_role_name.errors %}
+                        <div class="text-danger small mt-1">{{ form.custom_role_name.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Description -->
+                    <div class="mb-4">
+                        <label for="{{ form.role_description.id_for_label }}" class="form-label">
+                            Description
+                        </label>
+                        {{ form.role_description }}
+                        <small class="text-muted">Describe what this role is responsible for</small>
+                        {% if form.role_description.errors %}
+                        <div class="text-danger small mt-1">{{ form.role_description.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <hr>
+
+                    <!-- Permissions -->
+                    <h6 class="mb-3"><i class="bi bi-key me-2"></i>Permissions</h6>
+
+                    <!-- Order Management Permissions -->
+                    <div class="card mb-3">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0">Order Management</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-check mb-2">
+                                {{ form.can_view_orders }}
+                                <label class="form-check-label" for="{{ form.can_view_orders.id_for_label }}">
+                                    <strong>View Orders</strong> - Can view order list and details
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                {{ form.can_edit_orders }}
+                                <label class="form-check-label" for="{{ form.can_edit_orders.id_for_label }}">
+                                    <strong>Edit Orders</strong> - Can change order status and add notes
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                {{ form.can_process_refunds }}
+                                <label class="form-check-label" for="{{ form.can_process_refunds.id_for_label }}">
+                                    <strong>Process Refunds</strong> - Can approve and process refund requests
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Product Management Permissions -->
+                    <div class="card mb-3">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0">Product Management</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-check mb-2">
+                                {{ form.can_view_products }}
+                                <label class="form-check-label" for="{{ form.can_view_products.id_for_label }}">
+                                    <strong>View Products</strong> - Can view product list and analytics
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                {{ form.can_edit_products }}
+                                <label class="form-check-label" for="{{ form.can_edit_products.id_for_label }}">
+                                    <strong>Edit Products</strong> - Can edit products and manage inventory
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                {{ form.can_manage_featured }}
+                                <label class="form-check-label" for="{{ form.can_manage_featured.id_for_label }}">
+                                    <strong>Manage Featured Products</strong> - Can select and modify featured products
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Other Permissions -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0">Other Permissions</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-check mb-2">
+                                {{ form.can_moderate_reviews }}
+                                <label class="form-check-label" for="{{ form.can_moderate_reviews.id_for_label }}">
+                                    <strong>Moderate Reviews</strong> - Can approve or reject customer reviews
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                {{ form.can_view_users }}
+                                <label class="form-check-label" for="{{ form.can_view_users.id_for_label }}">
+                                    <strong>View Users</strong> - Can view user list and profiles
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                {{ form.can_manage_roles }}
+                                <label class="form-check-label" for="{{ form.can_manage_roles.id_for_label }}">
+                                    <strong>Manage Roles</strong> - Can assign roles to staff users
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                {{ form.can_view_analytics }}
+                                <label class="form-check-label" for="{{ form.can_view_analytics.id_for_label }}">
+                                    <strong>View Analytics</strong> - Can access analytics and reports
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                {{ form.can_export_data }}
+                                <label class="form-check-label" for="{{ form.can_export_data.id_for_label }}">
+                                    <strong>Export Data</strong> - Can export data to CSV or Excel
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle me-2"></i>Save Role
+                        </button>
+                        <a href="{% url 'admin_panel:role_list' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle me-2"></i>Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Help Sidebar -->
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-lightbulb me-2"></i>Tips</h6>
+            </div>
+            <div class="card-body small">
+                <ul class="mb-0">
+                    <li class="mb-2">Choose a clear, descriptive role name</li>
+                    <li class="mb-2">Only grant permissions necessary for the role</li>
+                    <li class="mb-2">Use descriptions to clarify role responsibilities</li>
+                    <li class="mb-2">Review permissions regularly</li>
+                    <li>Follow the principle of least privilege</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-info-circle me-2"></i>Permission Hierarchy</h6>
+            </div>
+            <div class="card-body small">
+                <p class="mb-2"><strong>View permissions</strong> grant read-only access to data.</p>
+                <p class="mb-2"><strong>Edit permissions</strong> allow modifying existing data.</p>
+                <p class="mb-0"><strong>Manage permissions</strong> include create, edit, and delete capabilities.</p>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-shield-check me-2"></i>Security</h6>
+            </div>
+            <div class="card-body small">
+                <p class="mb-0">Custom roles provide granular access control. Regularly audit role assignments and permissions to maintain security.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

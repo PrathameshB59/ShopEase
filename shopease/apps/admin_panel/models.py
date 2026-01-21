@@ -53,7 +53,26 @@ class AdminRole(models.Model):
     role = models.CharField(
         max_length=30,
         choices=ROLE_CHOICES,
-        help_text="Role type determines default permissions"
+        blank=True,
+        null=True,
+        help_text="Role type determines default permissions (blank for custom roles)"
+    )
+
+    # Custom Role Fields (for dynamically created roles)
+    is_custom_role = models.BooleanField(
+        default=False,
+        help_text="True if this is a custom-created role"
+    )
+    custom_role_name = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        help_text="Name of the custom role"
+    )
+    role_description = models.TextField(
+        blank=True,
+        null=True,
+        help_text="Description of what this role does"
     )
 
     # Order Management Permissions
@@ -122,7 +141,15 @@ class AdminRole(models.Model):
         ]
 
     def __str__(self):
+        if self.is_custom_role and self.custom_role_name:
+            return f"{self.user.username} - {self.custom_role_name} (Custom)"
         return f"{self.user.username} - {self.get_role_display()}"
+
+    def get_role_name(self):
+        """Get the display name of the role (custom or predefined)."""
+        if self.is_custom_role and self.custom_role_name:
+            return self.custom_role_name
+        return self.get_role_display() if self.role else "No Role"
 
     @classmethod
     def get_default_permissions(cls, role):

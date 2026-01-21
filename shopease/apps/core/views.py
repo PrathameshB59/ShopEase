@@ -15,8 +15,49 @@ Security:
 - Django ORM prevents SQL injection
 """
 
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from apps.products.models import Product, Category
+
+
+def landing_page(request):
+    """
+    Smart landing page that redirects based on authentication status and role.
+
+    - Anonymous users → Login page (on current port)
+    - Logged-in staff → Admin dashboard (port 8080) via token-based auth
+    - Logged-in customers → Customer home page (/home/)
+
+    Special case: If auth_token is present in URL, redirect to token validation view
+    """
+    from django.conf import settings
+
+    # Check for authentication token (cross-port login)
+    auth_token = request.GET.get('auth_token')
+    if auth_token:
+        # Redirect to token validation view
+        print(f"Landing page: Detected auth_token, redirecting to admin_auto_login")
+        return redirect(f'/accounts/admin-auto-login/?auth_token={auth_token}')
+
+    if not request.user.is_authenticated:
+        # Not logged in → redirect to login page
+        return redirect('accounts:auth')
+
+    # User is logged in - redirect based on role
+    server_type = getattr(settings, 'SERVER_TYPE', None)
+    admin_port = getattr(settings, 'ADMIN_SERVER_PORT', 8080)
+
+    if request.user.is_staff or request.user.is_superuser:
+        # Staff → redirect to admin server dashboard
+        if server_type == 'admin':
+            return redirect('admin_panel:dashboard')
+        else:
+            # Generate token for cross-port auth
+            from apps.accounts.auth_tokens import generate_auth_token
+            token = generate_auth_token(request.user.id, request.user.username)
+            return redirect(f'http://127.0.0.1:{admin_port}/?auth_token={token}')
+    else:
+        # Customer → redirect to home page
+        return redirect('home')
 
 
 def home(request):

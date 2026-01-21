@@ -1,0 +1,189 @@
+{% extends 'admin_panel/base_admin.html' %}
+
+{% block title %}Superuser Management - {{ block.super }}{% endblock %}
+
+{% block page_title %}Superuser Management{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Superusers List -->
+    <div class="col-lg-7">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-shield-fill-check me-2"></i>Superusers ({{ superuser_count }})</h5>
+                <span class="badge bg-info">Full System Access</span>
+            </div>
+            <div class="card-body">
+                {% if superusers %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>Username</th>
+                                <th>Email</th>
+                                <th>Joined</th>
+                                <th>Last Login</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for superuser in superusers %}
+                            <tr>
+                                <td>
+                                    <strong>{{ superuser.username }}</strong>
+                                    {% if superuser == request.user %}
+                                    <span class="badge bg-primary ms-2">You</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ superuser.email }}</td>
+                                <td>{{ superuser.date_joined|date:"M d, Y" }}</td>
+                                <td>
+                                    {% if superuser.last_login %}
+                                    {{ superuser.last_login|date:"M d, Y H:i" }}
+                                    {% else %}
+                                    <span class="text-muted">Never</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{% url 'admin_panel:user_detail' superuser.id %}" class="btn btn-outline-primary" title="View Profile">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        {% if superuser != request.user and superuser_count > 1 %}
+                                        <a href="{% url 'admin_panel:remove_superuser' superuser.id %}" class="btn btn-outline-danger" title="Remove Superuser">
+                                            <i class="bi bi-shield-x"></i>
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="alert alert-info mt-3 mb-0">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <strong>Note:</strong> Superusers have full access to all features and can manage other administrators. At least one superuser must always exist.
+                </div>
+                {% else %}
+                <div class="text-center py-4 text-muted">
+                    <i class="bi bi-shield-x display-4"></i>
+                    <p class="mt-2">No superusers found.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Superuser Form -->
+    <div class="col-lg-5">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-person-plus-fill me-2"></i>Create New Superuser</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+
+                    <!-- Username -->
+                    <div class="mb-3">
+                        <label for="{{ form.username.id_for_label }}" class="form-label">
+                            Username <span class="text-danger">*</span>
+                        </label>
+                        {{ form.username }}
+                        {% if form.username.errors %}
+                        <div class="text-danger small mt-1">{{ form.username.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Email -->
+                    <div class="mb-3">
+                        <label for="{{ form.email.id_for_label }}" class="form-label">
+                            Email <span class="text-danger">*</span>
+                        </label>
+                        {{ form.email }}
+                        {% if form.email.errors %}
+                        <div class="text-danger small mt-1">{{ form.email.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- First Name -->
+                    <div class="mb-3">
+                        <label for="{{ form.first_name.id_for_label }}" class="form-label">
+                            First Name
+                        </label>
+                        {{ form.first_name }}
+                        {% if form.first_name.errors %}
+                        <div class="text-danger small mt-1">{{ form.first_name.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Last Name -->
+                    <div class="mb-3">
+                        <label for="{{ form.last_name.id_for_label }}" class="form-label">
+                            Last Name
+                        </label>
+                        {{ form.last_name }}
+                        {% if form.last_name.errors %}
+                        <div class="text-danger small mt-1">{{ form.last_name.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Password -->
+                    <div class="mb-3">
+                        <label for="{{ form.password1.id_for_label }}" class="form-label">
+                            Password <span class="text-danger">*</span>
+                        </label>
+                        {{ form.password1 }}
+                        {% if form.password1.errors %}
+                        <div class="text-danger small mt-1">{{ form.password1.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Confirm Password -->
+                    <div class="mb-3">
+                        <label for="{{ form.password2.id_for_label }}" class="form-label">
+                            Confirm Password <span class="text-danger">*</span>
+                        </label>
+                        {{ form.password2 }}
+                        {% if form.password2.errors %}
+                        <div class="text-danger small mt-1">{{ form.password2.errors.0 }}</div>
+                        {% endif %}
+                        {% if form.non_field_errors %}
+                        <div class="text-danger small mt-1">{{ form.non_field_errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Warning -->
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <strong>Warning:</strong> Superusers have unrestricted access to all features and data. Only create superuser accounts for fully trusted administrators.
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-shield-fill-plus me-2"></i>Create Superuser
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Security Note -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-shield-lock me-2"></i>Security Guidelines</h6>
+            </div>
+            <div class="card-body small">
+                <ul class="mb-0">
+                    <li>Use strong, unique passwords</li>
+                    <li>Enable two-factor authentication (if available)</li>
+                    <li>Limit the number of superuser accounts</li>
+                    <li>Regularly review superuser access</li>
+                    <li>Monitor superuser activity logs</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

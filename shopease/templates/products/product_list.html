@@ -108,10 +108,10 @@
 
                     <div class="product-price">
                         {% if product.is_on_sale %}
-                        <span class="price-original">${{ product.price }}</span>
-                        <span class="price-sale">${{ product.sale_price }}</span>
+                        <span class="price-original">{{ currency_symbol }}{{ product.price }}</span>
+                        <span class="price-sale">{{ currency_symbol }}{{ product.sale_price }}</span>
                         {% else %}
-                        <span class="price-current">${{ product.price }}</span>
+                        <span class="price-current">{{ currency_symbol }}{{ product.price }}</span>
                         {% endif %}
                     </div>
 

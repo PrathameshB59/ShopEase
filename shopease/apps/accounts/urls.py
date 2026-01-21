@@ -30,7 +30,12 @@ urlpatterns = [
     # Logout
     # POST: Log user out (CSRF protected)
     path('logout/', views.user_logout, name='logout'),
-    
+
+    # Token-based auto-login for cross-port authentication
+    # GET: Validate token and auto-login to admin server
+    # Used when admin users log in on port 8000 and are redirected to port 8080
+    path('admin-auto-login/', views.admin_auto_login, name='admin_auto_login'),
+
     # ==========================================
     # PROFILE MANAGEMENT
     # ==========================================
@@ -39,7 +44,11 @@ urlpatterns = [
     # GET: Display profile
     # POST: Update profile
     path('profile/', views.profile, name='profile'),
-    
+
+    # Session termination
+    # POST: Terminate a specific session
+    path('sessions/<int:session_id>/terminate/', views.terminate_session, name='terminate_session'),
+
     # Dashboard (TODO: implement)
     path('dashboard/', views.dashboard, name='dashboard'),
     
@@ -105,11 +114,4 @@ urlpatterns = [
     # ==========================================
     path('send-otp/', views.send_otp, name='send_otp'),
     path('verify-otp/', views.verify_otp_login, name='verify_otp'),
-    
-    # ==========================================
-    # ORIGINAL AUTHENTICATION (Keep for backward compatibility)
-    # ==========================================
-    path('register/', views.register, name='register'),
-    path('login/', views.user_login, name='login'),
-    path('logout/', views.user_logout, name='logout'),
 ]

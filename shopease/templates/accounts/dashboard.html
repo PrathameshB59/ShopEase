@@ -57,7 +57,7 @@
                 </div>
                 <div class="stat-content">
                     <div class="stat-label">Total Spent</div>
-                    <div class="stat-value">${{ total_spent|floatformat:2 }}</div>
+                    <div class="stat-value">{{ currency_symbol }}{{ total_spent|floatformat:2 }}</div>
                 </div>
             </div>
 
@@ -110,7 +110,7 @@
                         <div class="order-status">
                             <span class="badge badge-{{ order.status }}">{{ order.get_status_display }}</span>
                         </div>
-                        <div class="order-total">${{ order.total|floatformat:2 }}</div>
+                        <div class="order-total">{{ currency_symbol }}{{ order.total|floatformat:2 }}</div>
                     </div>
                     {% endfor %}
                 </div>

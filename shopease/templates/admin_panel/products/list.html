@@ -1,0 +1,272 @@
+{% extends 'admin_panel/base_admin.html' %}
+
+{% block title %}Product Management - {{ block.super }}{% endblock %}
+
+{% block page_title %}Product Management{% endblock %}
+
+{% block content %}
+<!-- Action Bar -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <a href="{% url 'admin_panel:product_create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-2"></i>Add New Product
+        </a>
+    </div>
+
+    <!-- Search Form -->
+    <form method="get" class="d-flex gap-2" style="max-width: 500px;">
+        <input type="text" name="search" class="form-control" placeholder="Search products..." value="{{ search_query }}">
+        <button type="submit" class="btn btn-outline-secondary">
+            <i class="bi bi-search"></i>
+        </button>
+    </form>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">Category</label>
+                <select name="category" class="form-select form-select-sm" onchange="this.form.submit()">
+                    <option value="">All Categories</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat.id }}" {% if selected_category == cat.id|stringformat:"s" %}selected{% endif %}>
+                        {{ cat.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label">Status</label>
+                <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+                    <option value="">All Status</option>
+                    <option value="active" {% if selected_status == 'active' %}selected{% endif %}>Active</option>
+                    <option value="inactive" {% if selected_status == 'inactive' %}selected{% endif %}>Inactive</option>
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label">Stock</label>
+                <select name="stock" class="form-select form-select-sm" onchange="this.form.submit()">
+                    <option value="">All Stock Levels</option>
+                    <option value="in_stock" {% if selected_stock == 'in_stock' %}selected{% endif %}>In Stock</option>
+                    <option value="out_of_stock" {% if selected_stock == 'out_of_stock' %}selected{% endif %}>Out of Stock</option>
+                    <option value="low_stock" {% if selected_stock == 'low_stock' %}selected{% endif %}>Low Stock (&lt;10)</option>
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label">Sort By</label>
+                <select name="sort" class="form-select form-select-sm" onchange="this.form.submit()">
+                    <option value="-created_at" {% if sort_by == '-created_at' %}selected{% endif %}>Newest First</option>
+                    <option value="created_at" {% if sort_by == 'created_at' %}selected{% endif %}>Oldest First</option>
+                    <option value="name" {% if sort_by == 'name' %}selected{% endif %}>Name (A-Z)</option>
+                    <option value="-name" {% if sort_by == '-name' %}selected{% endif %}>Name (Z-A)</option>
+                    <option value="price" {% if sort_by == 'price' %}selected{% endif %}>Price (Low to High)</option>
+                    <option value="-price" {% if sort_by == '-price' %}selected{% endif %}>Price (High to Low)</option>
+                    <option value="stock" {% if sort_by == 'stock' %}selected{% endif %}>Stock (Low to High)</option>
+                    <option value="-stock" {% if sort_by == '-stock' %}selected{% endif %}>Stock (High to Low)</option>
+                </select>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Bulk Actions Bar -->
+<div class="card mb-3 d-none" id="bulkActionsBar">
+    <div class="card-body py-2">
+        <form method="post" action="{% url 'admin_panel:product_bulk_action' %}" id="bulkActionsForm">
+            {% csrf_token %}
+            <div class="d-flex align-items-center gap-3">
+                <span id="selectedCount">0 products selected</span>
+                <select name="action" class="form-select form-select-sm" style="width: auto;" id="bulkAction">
+                    <option value="">Bulk Actions</option>
+                    <option value="activate">Activate</option>
+                    <option value="deactivate">Deactivate</option>
+                    <option value="feature">Mark as Featured</option>
+                    <option value="unfeature">Remove from Featured</option>
+                    <option value="delete">Delete Permanently</option>
+                </select>
+                <button type="submit" class="btn btn-sm btn-primary">Apply</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Products Table -->
+<div class="card">
+    <div class="card-body">
+        {% if products %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th style="width: 40px;">
+                            <input type="checkbox" class="form-check-input" id="selectAll">
+                        </th>
+                        <th style="width: 80px;">Image</th>
+                        <th>Product Name</th>
+                        <th>Category</th>
+                        <th>Price</th>
+                        <th>Stock</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in products %}
+                    <tr>
+                        <td>
+                            <input type="checkbox" class="form-check-input product-checkbox" name="product_ids" value="{{ product.id }}" form="bulkActionsForm">
+                        </td>
+                        <td>
+                            {% if product.image %}
+                            <img src="{{ product.image.url }}" alt="{{ product.name }}" class="rounded" style="width: 50px; height: 50px; object-fit: cover;">
+                            {% else %}
+                            <div class="bg-secondary rounded d-flex align-items-center justify-content-center text-white" style="width: 50px; height: 50px;">
+                                <i class="bi bi-image"></i>
+                            </div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div>
+                                <strong>{{ product.name }}</strong>
+                                {% if product.is_featured %}
+                                <span class="badge bg-warning text-dark ms-2">Featured</span>
+                                {% endif %}
+                            </div>
+                            <small class="text-muted">SKU: {{ product.sku }}</small>
+                        </td>
+                        <td>{{ product.category.name }}</td>
+                        <td>
+                            {% if product.sale_price %}
+                            <div>
+                                <span class="text-decoration-line-through text-muted">₹{{ product.price }}</span>
+                                <strong class="text-success ms-1">₹{{ product.sale_price }}</strong>
+                            </div>
+                            {% else %}
+                            <strong>₹{{ product.price }}</strong>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if product.stock > 10 %}
+                            <span class="badge bg-success">{{ product.stock }}</span>
+                            {% elif product.stock > 0 %}
+                            <span class="badge bg-warning">{{ product.stock }}</span>
+                            {% else %}
+                            <span class="badge bg-danger">Out of Stock</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if product.is_active %}
+                            <span class="badge bg-success">Active</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'admin_panel:product_detail' product.id %}" class="btn btn-outline-primary" title="View/Edit">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a href="{% url 'admin_panel:product_analytics_detail' product.id %}" class="btn btn-outline-info" title="Analytics">
+                                    <i class="bi bi-graph-up"></i>
+                                </a>
+                                <a href="{% url 'admin_panel:product_delete' product.id %}" class="btn btn-outline-danger" title="Delete">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if products.has_other_pages %}
+        <nav aria-label="Page navigation" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if products.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ products.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}{% if selected_stock %}&stock={{ selected_stock }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}">Previous</a>
+                </li>
+                {% endif %}
+
+                {% for num in products.paginator.page_range %}
+                {% if products.number == num %}
+                <li class="page-item active"><a class="page-link">{{ num }}</a></li>
+                {% elif num > products.number|add:'-3' and num < products.number|add:'3' %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}{% if selected_stock %}&stock={{ selected_stock }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}">{{ num }}</a>
+                </li>
+                {% endif %}
+                {% endfor %}
+
+                {% if products.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ products.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}{% if selected_stock %}&stock={{ selected_stock }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}">Next</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-inbox display-1 text-muted"></i>
+            <p class="mt-3 text-muted">No products found.</p>
+            <a href="{% url 'admin_panel:product_create' %}" class="btn btn-primary">Add Your First Product</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+// Select All checkbox
+document.getElementById('selectAll').addEventListener('change', function() {
+    const checkboxes = document.querySelectorAll('.product-checkbox');
+    checkboxes.forEach(cb => cb.checked = this.checked);
+    updateBulkActionsBar();
+});
+
+// Individual checkboxes
+document.querySelectorAll('.product-checkbox').forEach(checkbox => {
+    checkbox.addEventListener('change', updateBulkActionsBar);
+});
+
+// Update bulk actions bar visibility and count
+function updateBulkActionsBar() {
+    const checkedBoxes = document.querySelectorAll('.product-checkbox:checked');
+    const bulkActionsBar = document.getElementById('bulkActionsBar');
+    const selectedCount = document.getElementById('selectedCount');
+
+    if (checkedBoxes.length > 0) {
+        bulkActionsBar.classList.remove('d-none');
+        selectedCount.textContent = `${checkedBoxes.length} product${checkedBoxes.length > 1 ? 's' : ''} selected`;
+    } else {
+        bulkActionsBar.classList.add('d-none');
+    }
+}
+
+// Bulk action confirmation
+document.getElementById('bulkActionsForm').addEventListener('submit', function(e) {
+    const action = document.getElementById('bulkAction').value;
+    const checkedBoxes = document.querySelectorAll('.product-checkbox:checked');
+
+    if (!action) {
+        e.preventDefault();
+        alert('Please select an action');
+        return;
+    }
+
+    if (action === 'delete') {
+        if (!confirm(`Are you sure you want to permanently delete ${checkedBoxes.length} product(s)? This action cannot be undone.`)) {
+            e.preventDefault();
+        }
+    }
+});
+</script>
+{% endblock %}

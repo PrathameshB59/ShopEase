@@ -11,7 +11,8 @@
                 </a>
             </div>
 
-            <!-- Search -->
+            <!-- Search (Customer Server Only) -->
+            {% if server_type == 'customer' %}
             <div class="navbar-search">
                 <form class="search-form" action="{% url 'products:product_list' %}" method="GET">
                     <input type="search" name="q" class="search-input" placeholder="Search products..."
@@ -25,6 +26,7 @@
                     </button>
                 </form>
             </div>
+            {% endif %}
 
             <!-- Navigation -->
             <ul class="navbar-nav">
@@ -32,7 +34,8 @@
                     <a href="{% url 'home' %}" class="nav-link">Home</a>
                 </li>
 
-                <!-- SHOP DROPDOWN -->
+                <!-- SHOP DROPDOWN (Customer Server Only) -->
+                {% if server_type == 'customer' %}
                 <li class="nav-item" style="position: relative;">
                     <button type="button" class="nav-link shop-toggle" id="shopToggleBtn" onclick="toggleShopDropdown(event)">
                         Shop
@@ -59,11 +62,12 @@
                         {% endfor %}
                     </ul>
                 </li>
+                {% endif %}
 
                 {% if user.is_staff or user.is_superuser %}
-                <!-- Admin Panel Link - Direct URL to admin server on port 8080 -->
+                <!-- Admin Panel Link - Opens admin server in new tab -->
                 <li class="nav-item">
-                    <a href="http://localhost:8080/" class="nav-link admin-link" target="_blank">
+                    <a href="http://127.0.0.1:8080/" class="nav-link admin-link" target="_blank">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
                             <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
                         </svg>
@@ -84,7 +88,59 @@
                     </svg>
                 </a>
 
-                <!-- Cart -->
+                <!-- Currency Selector -->
+                <div style="position: relative;">
+                    <button type="button" class="action-link" onclick="toggleCurrencyDropdown(event)" title="Select Currency">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <circle cx="12" cy="12" r="10"/>
+                            <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="12" fill="currentColor" stroke="none">{{ currency_symbol }}</text>
+                        </svg>
+                    </button>
+                    <div class="currency-dropdown" id="currencyDropdown">
+                        <div style="padding: 0.75rem 1rem; border-bottom: 1px solid #e5e7eb; font-weight: 600; color: #374151;">
+                            Select Currency
+                        </div>
+                        <a href="{% url 'set_currency' %}?set_currency=IN">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="{% if user_country == 'IN' %}text-success{% endif %}">
+                                <polyline points="20 6 9 17 4 12" stroke-width="2"/>
+                            </svg>
+                            INR (₹)
+                        </a>
+                        <a href="{% url 'set_currency' %}?set_currency=US">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="{% if user_country == 'US' %}text-success{% endif %}">
+                                <polyline points="20 6 9 17 4 12" stroke-width="2"/>
+                            </svg>
+                            USD ($)
+                        </a>
+                        <a href="{% url 'set_currency' %}?set_currency=GB">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="{% if user_country == 'GB' %}text-success{% endif %}">
+                                <polyline points="20 6 9 17 4 12" stroke-width="2"/>
+                            </svg>
+                            GBP (£)
+                        </a>
+                        <a href="{% url 'set_currency' %}?set_currency=DE">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="{% if user_country == 'DE' %}text-success{% endif %}">
+                                <polyline points="20 6 9 17 4 12" stroke-width="2"/>
+                            </svg>
+                            EUR (€)
+                        </a>
+                        <a href="{% url 'set_currency' %}?set_currency=JP">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="{% if user_country == 'JP' %}text-success{% endif %}">
+                                <polyline points="20 6 9 17 4 12" stroke-width="2"/>
+                            </svg>
+                            JPY (¥)
+                        </a>
+                        <a href="{% url 'set_currency' %}?set_currency=AU">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="{% if user_country == 'AU' %}text-success{% endif %}">
+                                <polyline points="20 6 9 17 4 12" stroke-width="2"/>
+                            </svg>
+                            AUD (A$)
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Cart (Customer Server Only) -->
+                {% if server_type == 'customer' %}
                 <a href="{% url 'cart:view' %}" class="action-link">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <circle cx="9" cy="21" r="1" />
@@ -93,6 +149,7 @@
                     </svg>
                     <span class="cart-badge" id="cartCount">0</span>
                 </a>
+                {% endif %}
 
                 <!-- User -->
                 {% if user.is_authenticated %}
@@ -128,6 +185,7 @@
                             </svg>
                             Dashboard
                         </a>
+                        {% if server_type == 'customer' %}
                         <a href="{% url 'cart:view' %}">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                 <circle cx="9" cy="21" r="1" />
@@ -136,6 +194,7 @@
                             </svg>
                             My Cart
                         </a>
+                        {% endif %}
                         <hr class="dropdown-divider">
                         <form method="POST" action="{% url 'accounts:logout' %}" style="margin: 0;">
                             {% csrf_token %}
@@ -396,6 +455,55 @@
         border: none;
     }
 
+    /* CURRENCY DROPDOWN */
+    .currency-dropdown {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        margin-top: 0.5rem;
+        min-width: 200px;
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        z-index: 9999;
+        display: none;
+    }
+
+    .currency-dropdown.open {
+        display: block !important;
+        animation: fadeIn 0.2s ease-out;
+    }
+
+    .currency-dropdown a {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem 1rem;
+        color: #374151;
+        text-decoration: none;
+        background: none;
+        border: none;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+
+    .currency-dropdown a:hover {
+        background: #f3f4f6;
+        color: #0f4c5c;
+    }
+
+    .currency-dropdown svg {
+        stroke-width: 2;
+        flex-shrink: 0;
+        opacity: 0.3;
+    }
+
+    .currency-dropdown svg.text-success {
+        opacity: 1;
+        stroke: #10b981;
+    }
+
     /* USER DROPDOWN */
     .user-dropdown {
         position: absolute;
@@ -527,13 +635,36 @@
 
         const dropdown = document.getElementById('userDropdown');
         const shopDropdown = document.getElementById('shopDropdown');
+        const currencyDropdown = document.getElementById('currencyDropdown');
 
-        // Close shop dropdown
+        // Close other dropdowns
         if (shopDropdown) {
             shopDropdown.classList.remove('open');
         }
+        if (currencyDropdown) {
+            currencyDropdown.classList.remove('open');
+        }
 
         // Toggle user dropdown
+        dropdown.classList.toggle('open');
+    }
+
+    function toggleCurrencyDropdown(event) {
+        event.stopPropagation();
+
+        const dropdown = document.getElementById('currencyDropdown');
+        const shopDropdown = document.getElementById('shopDropdown');
+        const userDropdown = document.getElementById('userDropdown');
+
+        // Close other dropdowns
+        if (shopDropdown) {
+            shopDropdown.classList.remove('open');
+        }
+        if (userDropdown) {
+            userDropdown.classList.remove('open');
+        }
+
+        // Toggle currency dropdown
         dropdown.classList.toggle('open');
     }
 
@@ -542,6 +673,7 @@
         const shopDropdown = document.getElementById('shopDropdown');
         const shopToggleBtn = document.getElementById('shopToggleBtn');
         const userDropdown = document.getElementById('userDropdown');
+        const currencyDropdown = document.getElementById('currencyDropdown');
 
         if (shopDropdown && !shopDropdown.contains(event.target)) {
             shopDropdown.classList.remove('open');
@@ -553,6 +685,10 @@
         if (userDropdown && !userDropdown.contains(event.target)) {
             userDropdown.classList.remove('open');
         }
+
+        if (currencyDropdown && !currencyDropdown.contains(event.target)) {
+            currencyDropdown.classList.remove('open');
+        }
     });
 
     // Close on Escape key
@@ -560,7 +696,7 @@
         if (event.key === 'Escape') {
             const shopToggleBtn = document.getElementById('shopToggleBtn');
 
-            document.querySelectorAll('.shop-dropdown, .user-dropdown').forEach(el => {
+            document.querySelectorAll('.shop-dropdown, .user-dropdown, .currency-dropdown').forEach(el => {
                 el.classList.remove('open');
             });
 

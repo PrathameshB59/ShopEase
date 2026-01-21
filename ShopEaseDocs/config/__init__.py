@@ -1,1 +1,0 @@
-# ShopEase Documentation Config Package

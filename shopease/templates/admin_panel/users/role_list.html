@@ -1,0 +1,163 @@
+{% extends 'admin_panel/base_admin.html' %}
+
+{% block title %}Role Management - {{ block.super }}{% endblock %}
+
+{% block page_title %}Role Management{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <p class="text-muted mb-0">Manage predefined and custom roles with granular permissions</p>
+    </div>
+    <a href="{% url 'admin_panel:role_create' %}" class="btn btn-primary">
+        <i class="bi bi-plus-circle me-2"></i>Create Custom Role
+    </a>
+</div>
+
+<div class="row">
+    <!-- Predefined Roles -->
+    <div class="col-lg-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-gear-fill me-2"></i>Predefined Roles</h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    {% for role in predefined_roles %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">{{ role.display }}</h6>
+                            <small class="text-muted">System-defined role</small>
+                        </div>
+                        <div>
+                            {% for r in roles %}
+                                {% if r.role == role.role and not r.is_custom_role %}
+                                <span class="badge bg-primary">{{ r.user_count }} user{{ r.user_count|pluralize }}</span>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div class="alert alert-info mt-3 mb-0">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <strong>Note:</strong> Predefined roles have fixed permission sets and cannot be edited or deleted.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Roles -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-pencil-square me-2"></i>Custom Roles</h5>
+            </div>
+            <div class="card-body">
+                {% if roles %}
+                {% with custom_roles=roles|dictsort:"custom_role_name" %}
+                {% for role in custom_roles %}
+                {% if role.is_custom_role %}
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">
+                                    {{ role.custom_role_name|default:"Custom Role" }}
+                                    <span class="badge bg-success ms-2">Custom</span>
+                                </h6>
+                                <p class="text-muted small mb-2">
+                                    {{ role.user_count }} user{{ role.user_count|pluralize }} assigned
+                                </p>
+                            </div>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'admin_panel:role_edit' role.id %}" class="btn btn-outline-primary" title="Edit">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                {% if role.user_count == 0 %}
+                                <a href="{% url 'admin_panel:role_delete' role.id %}" class="btn btn-outline-danger" title="Delete">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Permission Summary -->
+                        <div class="mt-2">
+                            <small class="text-muted">Permissions:</small>
+                            <div class="d-flex flex-wrap gap-1 mt-1">
+                                {% if role.can_view_orders %}<span class="badge bg-secondary">View Orders</span>{% endif %}
+                                {% if role.can_edit_orders %}<span class="badge bg-secondary">Edit Orders</span>{% endif %}
+                                {% if role.can_process_refunds %}<span class="badge bg-secondary">Refunds</span>{% endif %}
+                                {% if role.can_view_products %}<span class="badge bg-secondary">View Products</span>{% endif %}
+                                {% if role.can_edit_products %}<span class="badge bg-secondary">Edit Products</span>{% endif %}
+                                {% if role.can_manage_featured %}<span class="badge bg-secondary">Featured</span>{% endif %}
+                                {% if role.can_moderate_reviews %}<span class="badge bg-secondary">Reviews</span>{% endif %}
+                                {% if role.can_view_users %}<span class="badge bg-secondary">View Users</span>{% endif %}
+                                {% if role.can_manage_roles %}<span class="badge bg-secondary">Manage Roles</span>{% endif %}
+                                {% if role.can_view_analytics %}<span class="badge bg-secondary">Analytics</span>{% endif %}
+                                {% if role.can_export_data %}<span class="badge bg-secondary">Export</span>{% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                {% endfor %}
+                {% endwith %}
+                {% else %}
+                <div class="text-center py-4 text-muted">
+                    <i class="bi bi-inbox display-4"></i>
+                    <p class="mt-2">No custom roles created yet.</p>
+                    <a href="{% url 'admin_panel:role_create' %}" class="btn btn-primary btn-sm">
+                        <i class="bi bi-plus-circle me-2"></i>Create Your First Custom Role
+                    </a>
+                </div>
+                {% endif %}
+
+                <div class="alert alert-success mt-3 mb-0">
+                    <i class="bi bi-lightbulb me-2"></i>
+                    <strong>Tip:</strong> Create custom roles to match your organization's specific needs with tailored permission sets.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Permission Legend -->
+<div class="card mt-4">
+    <div class="card-header">
+        <h6 class="mb-0"><i class="bi bi-key me-2"></i>Available Permissions</h6>
+    </div>
+    <div class="card-body">
+        <div class="row small">
+            <div class="col-md-4">
+                <h6 class="text-primary">Order Management</h6>
+                <ul>
+                    <li><strong>View Orders:</strong> See order list and details</li>
+                    <li><strong>Edit Orders:</strong> Change order status</li>
+                    <li><strong>Process Refunds:</strong> Approve refunds</li>
+                </ul>
+            </div>
+            <div class="col-md-4">
+                <h6 class="text-primary">Product Management</h6>
+                <ul>
+                    <li><strong>View Products:</strong> See product inventory</li>
+                    <li><strong>Edit Products:</strong> Modify products</li>
+                    <li><strong>Manage Featured:</strong> Select featured items</li>
+                </ul>
+            </div>
+            <div class="col-md-4">
+                <h6 class="text-primary">Other Permissions</h6>
+                <ul>
+                    <li><strong>Moderate Reviews:</strong> Approve/reject reviews</li>
+                    <li><strong>View Users:</strong> Access user list</li>
+                    <li><strong>Manage Roles:</strong> Assign roles</li>
+                    <li><strong>View Analytics:</strong> Access reports</li>
+                    <li><strong>Export Data:</strong> Download CSV/Excel</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

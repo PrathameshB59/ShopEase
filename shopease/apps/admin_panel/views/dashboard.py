@@ -109,3 +109,53 @@ def dashboard_view(request):
     }
 
     return render(request, 'admin_panel/dashboard.html', context)
+
+
+@admin_required
+@admin_required
+def database_status(request):
+    """
+    Display database connection status and statistics.
+    Only accessible to superusers for security reasons.
+    """
+    from apps.admin_panel.utils.database_health import get_db_status, get_db_statistics
+    from apps.admin_panel.decorators import role_required
+
+    # Only superusers can view database status
+    if not request.user.is_superuser:
+        from django.contrib import messages
+        messages.error(request, 'Only superusers can view database status.')
+        return render(request, 'admin_panel/access_denied.html', status=403)
+
+    # Get database status
+    db_status = get_db_status()
+
+    # Get statistics only if connected
+    db_stats = {}
+    if db_status.get('connected'):
+        db_stats = get_db_statistics()
+
+    context = {
+        'db_status': db_status,
+        'db_stats': db_stats,
+    }
+
+    return render(request, 'admin_panel/database_status.html', context)
+
+
+def set_currency(request):
+    """
+    Handle currency selection from navbar dropdown.
+    Stores user's currency preference in session.
+    """
+    from django.http import HttpResponseRedirect
+
+    # Get currency code from query parameter
+    currency_code = request.GET.get('set_currency', 'IN')
+
+    # Store in session
+    request.session['preferred_country'] = currency_code.upper()
+
+    # Redirect to referer or homepage
+    referer = request.META.get('HTTP_REFERER', '/')
+    return HttpResponseRedirect(referer)

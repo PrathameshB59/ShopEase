@@ -1,0 +1,272 @@
+{% extends 'admin_panel/base_admin.html' %}
+
+{% block title %}{{ product.name }} - Product Details - {{ block.super }}{% endblock %}
+
+{% block page_title %}Product Details{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <a href="{% url 'admin_panel:product_list' %}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-2"></i>Back to Products
+        </a>
+    </div>
+    <div class="btn-group">
+        <a href="{% url 'admin_panel:product_analytics_detail' product.id %}" class="btn btn-outline-info btn-sm">
+            <i class="bi bi-graph-up me-2"></i>View Analytics
+        </a>
+        <a href="{% url 'admin_panel:product_delete' product.id %}" class="btn btn-outline-danger btn-sm">
+            <i class="bi bi-trash me-2"></i>Delete
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Product Information -->
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Edit Product</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data" id="productForm">
+                    {% csrf_token %}
+
+                    <!-- Name -->
+                    <div class="mb-3">
+                        <label for="{{ form.name.id_for_label }}" class="form-label">
+                            Product Name <span class="text-danger">*</span>
+                        </label>
+                        {{ form.name }}
+                        {% if form.name.errors %}
+                        <div class="text-danger small mt-1">{{ form.name.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Category -->
+                    <div class="mb-3">
+                        <label for="{{ form.category.id_for_label }}" class="form-label">
+                            Category <span class="text-danger">*</span>
+                        </label>
+                        {{ form.category }}
+                        {% if form.category.errors %}
+                        <div class="text-danger small mt-1">{{ form.category.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Short Description -->
+                    <div class="mb-3">
+                        <label for="{{ form.short_description.id_for_label }}" class="form-label">
+                            Short Description
+                        </label>
+                        {{ form.short_description }}
+                        <small class="text-muted">Brief description for product cards</small>
+                        {% if form.short_description.errors %}
+                        <div class="text-danger small mt-1">{{ form.short_description.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Full Description -->
+                    <div class="mb-3">
+                        <label for="{{ form.description.id_for_label }}" class="form-label">
+                            Full Description
+                        </label>
+                        {{ form.description }}
+                        {% if form.description.errors %}
+                        <div class="text-danger small mt-1">{{ form.description.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Pricing Row -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.price.id_for_label }}" class="form-label">
+                                Regular Price (₹) <span class="text-danger">*</span>
+                            </label>
+                            {{ form.price }}
+                            {% if form.price.errors %}
+                            <div class="text-danger small mt-1">{{ form.price.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.sale_price.id_for_label }}" class="form-label">
+                                Sale Price (₹)
+                            </label>
+                            {{ form.sale_price }}
+                            {% if form.sale_price.errors %}
+                            <div class="text-danger small mt-1">{{ form.sale_price.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Stock -->
+                    <div class="mb-3">
+                        <label for="{{ form.stock.id_for_label }}" class="form-label">
+                            Stock Quantity <span class="text-danger">*</span>
+                        </label>
+                        {{ form.stock }}
+                        {% if form.stock.errors %}
+                        <div class="text-danger small mt-1">{{ form.stock.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Current Image -->
+                    {% if product.image %}
+                    <div class="mb-3">
+                        <label class="form-label">Current Image</label>
+                        <div>
+                            <img src="{{ product.image.url }}" alt="{{ product.name }}" class="img-thumbnail" style="max-width: 200px;">
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Image Upload -->
+                    <div class="mb-3">
+                        <label for="{{ form.image.id_for_label }}" class="form-label">
+                            {% if product.image %}Replace{% else %}Upload{% endif %} Image
+                        </label>
+                        {{ form.image }}
+                        <small class="text-muted d-block">Max file size: 5MB</small>
+                        {% if form.image.errors %}
+                        <div class="text-danger small mt-1">{{ form.image.errors.0 }}</div>
+                        {% endif %}
+
+                        <!-- Image Preview -->
+                        <div id="imagePreview" class="mt-3 d-none">
+                            <p class="small text-muted mb-2">Preview:</p>
+                            <img src="" alt="Preview" class="img-thumbnail" style="max-width: 200px;">
+                        </div>
+                    </div>
+
+                    <!-- Status Toggles -->
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            {{ form.is_active }}
+                            <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                Active (visible in store)
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            {{ form.is_featured }}
+                            <label class="form-check-label" for="{{ form.is_featured.id_for_label }}">
+                                Featured Product
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle me-2"></i>Save Changes
+                        </button>
+                        <a href="{% url 'admin_panel:product_list' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle me-2"></i>Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Summary & Analytics -->
+    <div class="col-lg-4">
+        <!-- Product Info Card -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0">Product Information</h6>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0 small">
+                    <dt class="col-sm-5">SKU:</dt>
+                    <dd class="col-sm-7">{{ product.sku }}</dd>
+
+                    <dt class="col-sm-5">Created:</dt>
+                    <dd class="col-sm-7">{{ product.created_at|date:"M d, Y" }}</dd>
+
+                    <dt class="col-sm-5">Last Updated:</dt>
+                    <dd class="col-sm-7">{{ product.updated_at|date:"M d, Y" }}</dd>
+
+                    <dt class="col-sm-5">Status:</dt>
+                    <dd class="col-sm-7">
+                        {% if product.is_active %}
+                        <span class="badge bg-success">Active</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Inactive</span>
+                        {% endif %}
+                    </dd>
+
+                    <dt class="col-sm-5">Featured:</dt>
+                    <dd class="col-sm-7">
+                        {% if product.is_featured %}
+                        <span class="badge bg-warning text-dark">Yes</span>
+                        {% else %}
+                        <span class="text-muted">No</span>
+                        {% endif %}
+                    </dd>
+                </dl>
+            </div>
+        </div>
+
+        <!-- Quick Analytics Summary -->
+        {% if analytics_summary %}
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Quick Stats (Last 30 Days)</h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-4">
+                        <div class="h4 mb-0 text-primary">{{ analytics_summary.total_views|default:"0" }}</div>
+                        <small class="text-muted">Views</small>
+                    </div>
+                    <div class="col-4">
+                        <div class="h4 mb-0 text-success">{{ analytics_summary.total_purchases|default:"0" }}</div>
+                        <small class="text-muted">Sales</small>
+                    </div>
+                    <div class="col-4">
+                        <div class="h4 mb-0 text-info">₹{{ analytics_summary.total_revenue|default:"0"|floatformat:0 }}</div>
+                        <small class="text-muted">Revenue</small>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <a href="{% url 'admin_panel:product_analytics_detail' product.id %}" class="btn btn-outline-primary btn-sm w-100">
+                        View Full Analytics
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+// Image preview
+document.getElementById('id_image').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    const preview = document.getElementById('imagePreview');
+
+    if (file) {
+        // Check file size (5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            alert('Image file size must be less than 5MB');
+            this.value = '';
+            preview.classList.add('d-none');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            preview.querySelector('img').src = e.target.result;
+            preview.classList.remove('d-none');
+        };
+        reader.readAsDataURL(file);
+    } else {
+        preview.classList.add('d-none');
+    }
+});
+</script>
+{% endblock %}

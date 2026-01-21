@@ -523,3 +523,250 @@ def admin_profile(request):
     }
 
     return render(request, 'admin_panel/users/profile.html', context)
+
+
+# ==========================================
+# SUPERUSER MANAGEMENT
+# ==========================================
+
+@admin_required
+@role_required('SUPER_ADMIN')
+def superuser_list(request):
+    """
+    List all superusers with creation form.
+    Only accessible to existing superusers.
+    """
+    from apps.admin_panel.forms import SuperuserCreationForm
+
+    # Get all superusers
+    superusers = User.objects.filter(is_superuser=True).order_by('username')
+
+    # Handle superuser creation form
+    form = SuperuserCreationForm()
+    if request.method == 'POST':
+        form = SuperuserCreationForm(request.POST)
+        if form.is_valid():
+            # Create user
+            user = User.objects.create_user(
+                username=form.cleaned_data['username'],
+                email=form.cleaned_data['email'],
+                password=form.cleaned_data['password1'],
+                first_name=form.cleaned_data['first_name'],
+                last_name=form.cleaned_data['last_name'],
+                is_staff=True,
+                is_superuser=True
+            )
+
+            # Create AdminRole with SUPER_ADMIN
+            AdminRole.objects.create(
+                user=user,
+                role='SUPER_ADMIN',
+                can_view_orders=True,
+                can_edit_orders=True,
+                can_process_refunds=True,
+                can_view_products=True,
+                can_edit_products=True,
+                can_manage_featured=True,
+                can_moderate_reviews=True,
+                can_view_users=True,
+                can_manage_roles=True,
+                can_view_analytics=True,
+                can_export_data=True
+            )
+
+            # Log activity
+            AdminActivity.objects.create(
+                user=request.user,
+                action='SUPERUSER_CREATED',
+                description=f'Created superuser account: {user.username}',
+                ip_address=request.META.get('REMOTE_ADDR', ''),
+            )
+
+            messages.success(request, f'Superuser "{user.username}" created successfully.')
+            return redirect('admin_panel:superuser_list')
+
+    context = {
+        'superusers': superusers,
+        'form': form,
+        'superuser_count': superusers.count(),
+    }
+
+    return render(request, 'admin_panel/users/superuser_list.html', context)
+
+
+@admin_required
+@role_required('SUPER_ADMIN')
+def remove_superuser(request, user_id):
+    """
+    Remove superuser privileges from a user.
+    Cannot remove self or last superuser.
+    """
+    user = get_object_or_404(User, id=user_id, is_superuser=True)
+
+    # Check: Cannot remove self
+    if user == request.user:
+        messages.error(request, 'You cannot remove your own superuser privileges.')
+        return redirect('admin_panel:superuser_list')
+
+    # Check: At least one superuser must remain
+    superuser_count = User.objects.filter(is_superuser=True).count()
+    if superuser_count <= 1:
+        messages.error(request, 'Cannot remove the last superuser. At least one must remain.')
+        return redirect('admin_panel:superuser_list')
+
+    if request.method == 'POST':
+        # Remove superuser status
+        user.is_superuser = False
+        user.save()
+
+        # Update or remove AdminRole
+        try:
+            admin_role = user.admin_role
+            # Option 1: Remove role entirely
+            admin_role.delete()
+            # Option 2: Change to different role (uncomment if preferred)
+            # admin_role.role = 'CUSTOMER_SERVICE'
+            # admin_role.save()
+        except AdminRole.DoesNotExist:
+            pass
+
+        # Log activity
+        AdminActivity.objects.create(
+            user=request.user,
+            action='SUPERUSER_REMOVED',
+            description=f'Removed superuser privileges from: {user.username}',
+            ip_address=request.META.get('REMOTE_ADDR', ''),
+        )
+
+        messages.success(request, f'Superuser privileges removed from "{user.username}".')
+        return redirect('admin_panel:superuser_list')
+
+    context = {'superuser': user}
+    return render(request, 'admin_panel/users/remove_superuser_confirm.html', context)
+
+
+# ==========================================
+# ROLE MANAGEMENT
+# ==========================================
+
+@permission_required('can_manage_roles')
+def role_list(request):
+    """
+    List all roles (predefined + custom) with user counts.
+    """
+    # Get all roles with user counts
+    roles = AdminRole.objects.values('role', 'is_custom_role', 'custom_role_name').annotate(
+        user_count=Count('id')
+    ).order_by('is_custom_role', 'role')
+
+    # Get predefined roles that haven't been used yet
+    predefined_roles = [
+        {'role': 'CUSTOMER_SERVICE', 'display': 'Customer Service'},
+        {'role': 'INVENTORY_MANAGER', 'display': 'Inventory Manager'},
+        {'role': 'MARKETING_MANAGER', 'display': 'Marketing Manager'},
+        {'role': 'ORDER_MANAGER', 'display': 'Order Manager'},
+        {'role': 'SUPER_ADMIN', 'display': 'Super Admin'},
+    ]
+
+    context = {
+        'roles': roles,
+        'predefined_roles': predefined_roles,
+    }
+
+    return render(request, 'admin_panel/users/role_list.html', context)
+
+
+@permission_required('can_manage_roles')
+def role_create(request):
+    """
+    Create a new custom role with granular permissions.
+    """
+    from apps.admin_panel.forms import CustomRoleForm
+
+    if request.method == 'POST':
+        form = CustomRoleForm(request.POST)
+        if form.is_valid():
+            role = form.save(commit=False)
+            role.is_custom_role = True
+            role.role = ''  # Custom roles don't use predefined role field
+            role.save()
+
+            # Log activity
+            AdminActivity.objects.create(
+                user=request.user,
+                action='ROLE_CREATED',
+                description=f'Created custom role: {role.custom_role_name}',
+                ip_address=request.META.get('REMOTE_ADDR', ''),
+            )
+
+            messages.success(request, f'Custom role "{role.custom_role_name}" created successfully.')
+            return redirect('admin_panel:role_list')
+    else:
+        form = CustomRoleForm()
+
+    context = {'form': form, 'action': 'Create'}
+    return render(request, 'admin_panel/users/role_form.html', context)
+
+
+@permission_required('can_manage_roles')
+def role_edit(request, role_id):
+    """
+    Edit an existing custom role's permissions.
+    Cannot edit predefined roles.
+    """
+    from apps.admin_panel.forms import CustomRoleForm
+
+    role = get_object_or_404(AdminRole, id=role_id, is_custom_role=True)
+
+    if request.method == 'POST':
+        form = CustomRoleForm(request.POST, instance=role)
+        if form.is_valid():
+            form.save()
+
+            # Log activity
+            AdminActivity.objects.create(
+                user=request.user,
+                action='ROLE_UPDATED',
+                description=f'Updated custom role: {role.custom_role_name}',
+                ip_address=request.META.get('REMOTE_ADDR', ''),
+            )
+
+            messages.success(request, f'Role "{role.custom_role_name}" updated successfully.')
+            return redirect('admin_panel:role_list')
+    else:
+        form = CustomRoleForm(instance=role)
+
+    context = {'form': form, 'role': role, 'action': 'Edit'}
+    return render(request, 'admin_panel/users/role_form.html', context)
+
+
+@permission_required('can_manage_roles')
+def role_delete(request, role_id):
+    """
+    Delete a custom role.
+    Cannot delete if users are assigned to it.
+    """
+    role = get_object_or_404(AdminRole, id=role_id, is_custom_role=True)
+
+    # Check if any users have this role
+    if AdminRole.objects.filter(custom_role_name=role.custom_role_name).count() > 1:
+        messages.error(request, f'Cannot delete role "{role.custom_role_name}" - users are still assigned to it.')
+        return redirect('admin_panel:role_list')
+
+    if request.method == 'POST':
+        role_name = role.custom_role_name
+        role.delete()
+
+        # Log activity
+        AdminActivity.objects.create(
+            user=request.user,
+            action='ROLE_DELETED',
+            description=f'Deleted custom role: {role_name}',
+            ip_address=request.META.get('REMOTE_ADDR', ''),
+        )
+
+        messages.success(request, f'Role "{role_name}" deleted successfully.')
+        return redirect('admin_panel:role_list')
+
+    context = {'role': role}
+    return render(request, 'admin_panel/users/role_delete_confirm.html', context)

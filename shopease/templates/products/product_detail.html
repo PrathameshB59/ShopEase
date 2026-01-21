@@ -117,14 +117,14 @@
                 <div class="product-price-section">
                     {% if product.is_on_sale %}
                     <div class="price-row">
-                        <span class="price-current">${{ product.sale_price }}</span>
-                        <span class="price-original">${{ product.price }}</span>
+                        <span class="price-current">{{ currency_symbol }}{{ product.sale_price }}</span>
+                        <span class="price-original">{{ currency_symbol }}{{ product.price }}</span>
                         <span class="price-discount">
-                            Save ${{ product.price|floatformat:2|add:"-"|add:product.sale_price }}
+                            Save {{ currency_symbol }}{{ product.price|floatformat:2|add:"-"|add:product.sale_price }}
                         </span>
                     </div>
                     {% else %}
-                    <span class="price-current">${{ product.price }}</span>
+                    <span class="price-current">{{ currency_symbol }}{{ product.price }}</span>
                     {% endif %}
                 </div>
 
@@ -405,10 +405,10 @@
                             </h3>
                             <div class="related-product-price">
                                 {% if rel_product.is_on_sale %}
-                                <span class="price-sale">${{ rel_product.sale_price }}</span>
-                                <span class="price-original">${{ rel_product.price }}</span>
+                                <span class="price-sale">{{ currency_symbol }}{{ rel_product.sale_price }}</span>
+                                <span class="price-original">{{ currency_symbol }}{{ rel_product.price }}</span>
                                 {% else %}
-                                <span class="price-current">${{ rel_product.price }}</span>
+                                <span class="price-current">{{ currency_symbol }}{{ rel_product.price }}</span>
                                 {% endif %}
                             </div>
                         </div>

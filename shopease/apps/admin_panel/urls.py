@@ -25,6 +25,12 @@ urlpatterns = [
     # Admin Profile
     path('profile/', users.admin_profile, name='admin_profile'),
 
+    # NEW: Database Status
+    path('database-status/', dashboard.database_status, name='database_status'),
+
+    # Currency Selector
+    path('set-currency/', dashboard.set_currency, name='set_currency'),
+
     # Phase 2: Order management
     path('orders/', orders.order_list, name='order_list'),
     path('orders/<uuid:order_id>/', orders.order_detail, name='order_detail'),
@@ -70,6 +76,16 @@ urlpatterns = [
     path('users/<int:user_id>/remove-role/', users.remove_role, name='remove_role'),
     path('users/<int:user_id>/toggle-status/', users.toggle_user_status, name='toggle_user_status'),
     path('activity/', users.activity_log, name='activity_log'),
+
+    # NEW: Superuser Management
+    path('users/superusers/', users.superuser_list, name='superuser_list'),
+    path('users/<int:user_id>/remove-superuser/', users.remove_superuser, name='remove_superuser'),
+
+    # NEW: Role Management
+    path('roles/', users.role_list, name='role_list'),
+    path('roles/create/', users.role_create, name='role_create'),
+    path('roles/<int:role_id>/edit/', users.role_edit, name='role_edit'),
+    path('roles/<int:role_id>/delete/', users.role_delete, name='role_delete'),
 
     # Phase 6: Reports & Analytics
     path('reports/', reports.dashboard_overview, name='reports_dashboard'),

@@ -8,8 +8,9 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('apps.admin_panel.urls', namespace='admin_panel')),
+    path('dashboard/', include('apps.admin_panel.urls', namespace='admin_panel')),
     path('accounts/', include('apps.accounts.urls')),
+    path('', include('apps.core.urls')),  # Smart landing page
 ]
 
 if settings.DEBUG:
