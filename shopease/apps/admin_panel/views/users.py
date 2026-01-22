@@ -20,6 +20,8 @@ from django.contrib.auth.forms import UserCreationForm
 from django.utils import timezone
 from django.db.models import Q, Count
 from django.core.paginator import Paginator
+from django.core.mail import send_mail
+from django.conf import settings
 from datetime import timedelta
 
 from apps.admin_panel.decorators import admin_required, permission_required, role_required
@@ -188,11 +190,11 @@ def assign_role(request, user_id):
         )
 
         # Log activity
-        AdminActivity.log_action(
+        AdminActivity.objects.create(
             user=request.user,
             action='ROLE_ASSIGNED',
             description=f'Assigned role {role} to {user.username}',
-            related_object_id=str(user.id)
+            ip_address=request.META.get('REMOTE_ADDR', ''),
         )
 
         if created:
@@ -249,11 +251,11 @@ def remove_role(request, user_id):
         user.save(update_fields=['is_staff'])
 
         # Log activity
-        AdminActivity.log_action(
+        AdminActivity.objects.create(
             user=request.user,
             action='ROLE_REMOVED',
             description=f'Removed {role_name} role from {user.username}',
-            related_object_id=str(user.id)
+            ip_address=request.META.get('REMOTE_ADDR', '')
         )
 
         messages.success(request, f'Successfully removed admin role from {user.username}.')
@@ -290,11 +292,11 @@ def toggle_user_status(request, user_id):
 
     # Log activity
     action = 'USER_ACTIVATED' if user.is_active else 'USER_DEACTIVATED'
-    AdminActivity.log_action(
+    AdminActivity.objects.create(
         user=request.user,
         action=action,
         description=f'{"Activated" if user.is_active else "Deactivated"} user {user.username}',
-        related_object_id=str(user.id)
+        ip_address=request.META.get('REMOTE_ADDR', '')
     )
 
     status = 'activated' if user.is_active else 'deactivated'
@@ -363,11 +365,11 @@ def create_staff_user(request):
         )
 
         # Log activity
-        AdminActivity.log_action(
+        AdminActivity.objects.create(
             user=request.user,
             action='STAFF_USER_CREATED',
             description=f'Created staff user {username} with role {admin_role.get_role_display()}',
-            related_object_id=str(user.id)
+            ip_address=request.META.get('REMOTE_ADDR', '')
         )
 
         messages.success(request, f'Successfully created staff user {username} with role {admin_role.get_role_display()}.')
@@ -582,6 +584,43 @@ def superuser_list(request):
                 ip_address=request.META.get('REMOTE_ADDR', ''),
             )
 
+            # Send email notification to all superusers
+            try:
+                superuser_emails = User.objects.filter(
+                    is_superuser=True,
+                    email__isnull=False
+                ).exclude(email='').values_list('email', flat=True)
+
+                if superuser_emails:
+                    subject = f'[ShopEase Security Alert] New Superuser Created'
+                    message = f"""
+A new superuser account has been created on ShopEase Admin Panel.
+
+Details:
+- Username: {user.username}
+- Email: {user.email}
+- Full Name: {user.first_name} {user.last_name}
+- Created By: {request.user.username}
+- Created At: {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}
+- IP Address: {request.META.get('REMOTE_ADDR', 'Unknown')}
+
+This is an automated security notification. If you did not authorize this action, please contact your system administrator immediately.
+
+---
+ShopEase Admin Panel
+                    """
+
+                    send_mail(
+                        subject,
+                        message,
+                        settings.DEFAULT_FROM_EMAIL,
+                        superuser_emails,
+                        fail_silently=True,
+                    )
+            except Exception as e:
+                # Don't fail the creation if email fails
+                pass
+
             messages.success(request, f'Superuser "{user.username}" created successfully.')
             return redirect('admin_panel:superuser_list')
 
@@ -637,6 +676,43 @@ def remove_superuser(request, user_id):
             description=f'Removed superuser privileges from: {user.username}',
             ip_address=request.META.get('REMOTE_ADDR', ''),
         )
+
+        # Send email notification to all remaining superusers
+        try:
+            superuser_emails = User.objects.filter(
+                is_superuser=True,
+                email__isnull=False
+            ).exclude(email='').values_list('email', flat=True)
+
+            if superuser_emails:
+                subject = f'[ShopEase Security Alert] Superuser Privileges Removed'
+                message = f"""
+Superuser privileges have been removed from an account on ShopEase Admin Panel.
+
+Details:
+- Username: {user.username}
+- Email: {user.email}
+- Full Name: {user.first_name} {user.last_name}
+- Removed By: {request.user.username}
+- Removed At: {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}
+- IP Address: {request.META.get('REMOTE_ADDR', 'Unknown')}
+
+This is an automated security notification. If you did not authorize this action, please contact your system administrator immediately.
+
+---
+ShopEase Admin Panel
+                """
+
+                send_mail(
+                    subject,
+                    message,
+                    settings.DEFAULT_FROM_EMAIL,
+                    superuser_emails,
+                    fail_silently=True,
+                )
+        except Exception as e:
+            # Don't fail the removal if email fails
+            pass
 
         messages.success(request, f'Superuser privileges removed from "{user.username}".')
         return redirect('admin_panel:superuser_list')

@@ -48,13 +48,12 @@ def admin_permissions(request):
             'can_process_refunds': True,
             'can_view_products': True,
             'can_edit_products': True,
-            'can_manage_inventory': True,
-            'can_moderate_reviews': True,
             'can_manage_featured': True,
+            'can_moderate_reviews': True,
             'can_view_users': True,
-            'can_edit_users': True,
+            'can_manage_roles': True,
             'can_view_analytics': True,
-            'can_view_activity': True,
+            'can_export_data': True,
         }
         context['user_role'] = 'Super Admin'
         return context
@@ -71,13 +70,12 @@ def admin_permissions(request):
                 'can_process_refunds': admin_role.can_process_refunds,
                 'can_view_products': admin_role.can_view_products,
                 'can_edit_products': admin_role.can_edit_products,
-                'can_manage_inventory': admin_role.can_manage_inventory,
-                'can_moderate_reviews': admin_role.can_moderate_reviews,
                 'can_manage_featured': admin_role.can_manage_featured,
+                'can_moderate_reviews': admin_role.can_moderate_reviews,
                 'can_view_users': admin_role.can_view_users,
-                'can_edit_users': admin_role.can_edit_users,
+                'can_manage_roles': admin_role.can_manage_roles,
                 'can_view_analytics': admin_role.can_view_analytics,
-                'can_view_activity': admin_role.can_view_activity,
+                'can_export_data': admin_role.can_export_data,
             }
         except AdminRole.DoesNotExist:
             # Staff without role - minimal permissions
@@ -87,13 +85,12 @@ def admin_permissions(request):
                 'can_process_refunds': False,
                 'can_view_products': False,
                 'can_edit_products': False,
-                'can_manage_inventory': False,
-                'can_moderate_reviews': False,
                 'can_manage_featured': False,
+                'can_moderate_reviews': False,
                 'can_view_users': False,
-                'can_edit_users': False,
+                'can_manage_roles': False,
                 'can_view_analytics': False,
-                'can_view_activity': False,
+                'can_export_data': False,
             }
             context['user_role'] = 'Staff (No Role)'
 

@@ -150,11 +150,11 @@ def approve_review(request, review_id):
 
         # Log admin activity
         from apps.admin_panel.models import AdminActivity
-        AdminActivity.log_action(
+        AdminActivity.objects.create(
             user=request.user,
             action='REVIEW_APPROVED',
             description=f'Approved review #{review.id} for {review.product.name}',
-            related_object_id=str(review.id)
+            ip_address=request.META.get('REMOTE_ADDR', '')
         )
 
         messages.success(request, f'Review for "{review.product.name}" has been approved.')
@@ -183,11 +183,11 @@ def reject_review(request, review_id):
 
         # Log admin activity
         from apps.admin_panel.models import AdminActivity
-        AdminActivity.log_action(
+        AdminActivity.objects.create(
             user=request.user,
             action='REVIEW_REJECTED',
             description=f'Rejected review #{review.id} for {review.product.name}',
-            related_object_id=str(review.id)
+            ip_address=request.META.get('REMOTE_ADDR', '')
         )
 
         messages.success(request, f'Review for "{review.product.name}" has been rejected.')
@@ -216,11 +216,11 @@ def delete_review(request, review_id):
 
     # Log admin activity
     from apps.admin_panel.models import AdminActivity
-    AdminActivity.log_action(
+    AdminActivity.objects.create(
         user=request.user,
         action='REVIEW_DELETED',
         description=f'Deleted review #{review_id_copy} for {product_name}',
-        related_object_id=str(review_id_copy)
+        ip_address=request.META.get('REMOTE_ADDR', '')
     )
 
     messages.success(request, f'Review for "{product_name}" has been permanently deleted.')
@@ -254,7 +254,7 @@ def bulk_approve_reviews(request):
     # Log admin activity
     if updated_count > 0:
         from apps.admin_panel.models import AdminActivity
-        AdminActivity.log_action(
+        AdminActivity.objects.create(
             user=request.user,
             action='REVIEWS_BULK_APPROVED',
             description=f'Bulk approved {updated_count} reviews',
@@ -291,7 +291,7 @@ def bulk_reject_reviews(request):
     # Log admin activity
     if updated_count > 0:
         from apps.admin_panel.models import AdminActivity
-        AdminActivity.log_action(
+        AdminActivity.objects.create(
             user=request.user,
             action='REVIEWS_BULK_REJECTED',
             description=f'Bulk rejected {updated_count} reviews',
@@ -325,7 +325,7 @@ def bulk_delete_reviews(request):
     # Log admin activity
     if deleted_count > 0:
         from apps.admin_panel.models import AdminActivity
-        AdminActivity.log_action(
+        AdminActivity.objects.create(
             user=request.user,
             action='REVIEWS_BULK_DELETED',
             description=f'Bulk deleted {deleted_count} reviews',
