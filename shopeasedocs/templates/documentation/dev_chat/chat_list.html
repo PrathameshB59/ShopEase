@@ -1,0 +1,196 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Developer Chat - ShopEase Documentation{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'documentation/css/dev-chat.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid bg-dark text-white py-4">
+    <div class="container">
+        <h1><i class="bi bi-chat-dots me-2"></i>Developer Chat</h1>
+        <p class="lead mb-0">Technical discussions and support for the development team.</p>
+    </div>
+</div>
+
+<div class="container my-5">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="chat-filters">
+                    <a href="{% url 'documentation:dev_chat_list' %}"
+                       class="filter-btn {% if not request.GET.status %}active{% endif %}">
+                        All Threads
+                    </a>
+                    <a href="?status=OPEN"
+                       class="filter-btn {% if request.GET.status == 'OPEN' %}active{% endif %}">
+                        <i class="bi bi-circle-fill text-success"></i> Open
+                    </a>
+                    <a href="?status=RESOLVED"
+                       class="filter-btn {% if request.GET.status == 'RESOLVED' %}active{% endif %}">
+                        <i class="bi bi-check-circle-fill text-primary"></i> Resolved
+                    </a>
+                    <a href="?status=ARCHIVED"
+                       class="filter-btn {% if request.GET.status == 'ARCHIVED' %}active{% endif %}">
+                        <i class="bi bi-archive-fill text-secondary"></i> Archived
+                    </a>
+                </div>
+                {% if user_permissions.can_participate_dev_chat %}
+                <a href="{% url 'documentation:create_thread' %}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> New Thread
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            {% if threads %}
+            <ul class="thread-list">
+                {% for thread in threads %}
+                <li class="thread-item {{ thread.status|lower }}">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <h5 class="thread-title">
+                                <a href="{% url 'documentation:thread_detail' thread.id %}" class="text-decoration-none">
+                                    {{ thread.title }}
+                                </a>
+                            </h5>
+                            <p class="text-muted mb-2">{{ thread.description|truncatewords:30 }}</p>
+                            <div class="thread-meta">
+                                <span>
+                                    <i class="bi bi-person"></i> {{ thread.created_by.username }}
+                                </span>
+                                <span>
+                                    <i class="bi bi-clock"></i> {{ thread.created_at|timesince }} ago
+                                </span>
+                                <span>
+                                    <i class="bi bi-chat"></i> {{ thread.message_count }} message{{ thread.message_count|pluralize }}
+                                </span>
+                                {% if thread.last_message_at %}
+                                <span>
+                                    <i class="bi bi-reply"></i> Last reply {{ thread.last_message_at|timesince }} ago
+                                </span>
+                                {% endif %}
+                            </div>
+                            {% if thread.tags %}
+                            <div class="thread-tags">
+                                {% for tag in thread.tags|split:"," %}
+                                <span class="badge bg-secondary">{{ tag|trim }}</span>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="ms-3">
+                            <span class="badge bg-{% if thread.status == 'OPEN' %}success{% elif thread.status == 'RESOLVED' %}primary{% else %}secondary{% endif %} p-2">
+                                {{ thread.get_status_display }}
+                            </span>
+                        </div>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+
+            {% if is_paginated %}
+            <nav aria-label="Threads pagination" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
+                            <i class="bi bi-chevron-double-left"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
+                            <i class="bi bi-chevron-left"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">{{ num }}</a>
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
+                            <i class="bi bi-chevron-double-right"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+
+            {% else %}
+            <div class="chat-empty-state">
+                <i class="bi bi-chat-dots"></i>
+                <h5>No Discussion Threads</h5>
+                <p>
+                    {% if request.GET.status %}
+                    No {{ request.GET.status|lower }} threads found.
+                    {% else %}
+                    No discussion threads yet. Start the conversation!
+                    {% endif %}
+                </p>
+                {% if user_permissions.can_participate_dev_chat %}
+                <a href="{% url 'documentation:create_thread' %}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Create First Thread
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card bg-light border-0">
+                <div class="card-body">
+                    <h5 class="mb-3">Developer Chat Guidelines</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6><i class="bi bi-check-circle text-success me-2"></i>Do's</h6>
+                            <ul class="small">
+                                <li>Use descriptive thread titles</li>
+                                <li>Provide context and details</li>
+                                <li>Include code snippets when relevant</li>
+                                <li>Mark threads as resolved when done</li>
+                                <li>Use tags to categorize discussions</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6><i class="bi bi-x-circle text-danger me-2"></i>Don'ts</h6>
+                            <ul class="small">
+                                <li>Don't share sensitive information</li>
+                                <li>Don't create duplicate threads</li>
+                                <li>Don't use offensive language</li>
+                                <li>Don't spam or go off-topic</li>
+                                <li>Don't delete threads with useful info</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'documentation/js/docs.js' %}"></script>
+{% endblock %}

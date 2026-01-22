@@ -1,0 +1,196 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Help Center - ShopEase Documentation{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'documentation/css/docs.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid bg-primary text-white py-4">
+    <div class="container">
+        <h1><i class="bi bi-life-preserver me-2"></i>Help Center</h1>
+        <p class="lead mb-0">Find solutions to common issues and problems.</p>
+    </div>
+</div>
+
+<div class="container my-5">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form method="get" action="{% url 'documentation:doc_search' %}" class="d-flex">
+                        <input type="text" name="query" class="form-control form-control-lg me-2"
+                               placeholder="Search for help articles..."
+                               value="{{ request.GET.query }}" required>
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-search"></i> Search
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <h3 class="mb-3">Browse by Category</h3>
+            <div class="btn-group flex-wrap" role="group">
+                <a href="{% url 'documentation:help_center' %}"
+                   class="btn btn-outline-primary {% if not request.GET.type %}active{% endif %}">
+                    All Issues
+                </a>
+                <a href="?type=ACCOUNT"
+                   class="btn btn-outline-primary {% if request.GET.type == 'ACCOUNT' %}active{% endif %}">
+                    <i class="bi bi-person-circle"></i> Account Issues
+                </a>
+                <a href="?type=ORDER"
+                   class="btn btn-outline-primary {% if request.GET.type == 'ORDER' %}active{% endif %}">
+                    <i class="bi bi-cart"></i> Order Issues
+                </a>
+                <a href="?type=PAYMENT"
+                   class="btn btn-outline-primary {% if request.GET.type == 'PAYMENT' %}active{% endif %}">
+                    <i class="bi bi-credit-card"></i> Payment Issues
+                </a>
+                <a href="?type=PRODUCT"
+                   class="btn btn-outline-primary {% if request.GET.type == 'PRODUCT' %}active{% endif %}">
+                    <i class="bi bi-box"></i> Product Issues
+                </a>
+                <a href="?type=TECHNICAL"
+                   class="btn btn-outline-primary {% if request.GET.type == 'TECHNICAL' %}active{% endif %}">
+                    <i class="bi bi-gear"></i> Technical Issues
+                </a>
+                <a href="?type=OTHER"
+                   class="btn btn-outline-primary {% if request.GET.type == 'OTHER' %}active{% endif %}">
+                    <i class="bi bi-question-circle"></i> Other
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% if help_issues %}
+    <div class="row g-4">
+        {% for issue in help_issues %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card hover-card h-100 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <span class="badge bg-{{ issue.get_issue_type_color }}">
+                            {{ issue.get_issue_type_display }}
+                        </span>
+                        <small class="text-muted">
+                            <i class="bi bi-eye"></i> {{ issue.views_count }}
+                        </small>
+                    </div>
+                    <h5 class="card-title">
+                        <a href="{% url 'documentation:help_detail' issue.slug %}" class="text-decoration-none">
+                            {{ issue.title }}
+                        </a>
+                    </h5>
+                    <p class="card-text text-muted">
+                        {{ issue.problem_description|truncatewords:20 }}
+                    </p>
+                    {% if issue.screenshot %}
+                    <div class="mb-2">
+                        <i class="bi bi-image text-primary"></i>
+                        <small>Includes screenshot</small>
+                    </div>
+                    {% endif %}
+                    <a href="{% url 'documentation:help_detail' issue.slug %}" class="btn btn-sm btn-outline-primary">
+                        View Solution <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+                <div class="card-footer bg-transparent border-top-0">
+                    <small class="text-muted">
+                        <i class="bi bi-clock"></i> Updated {{ issue.updated_at|timesince }} ago
+                    </small>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if is_paginated %}
+    <nav aria-label="Help issues pagination" class="mt-5">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page=1{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}">
+                    <i class="bi bi-chevron-double-left"></i>
+                </a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}">
+                    <i class="bi bi-chevron-left"></i>
+                </a>
+            </li>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ num }}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}">{{ num }}</a>
+            </li>
+            {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}">
+                    <i class="bi bi-chevron-right"></i>
+                </a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}">
+                    <i class="bi bi-chevron-double-right"></i>
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+
+    {% else %}
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle me-2"></i>
+        {% if request.GET.type %}
+        No help articles found for this category.
+        {% else %}
+        No help articles available yet.
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card bg-light border-0">
+                <div class="card-body text-center py-5">
+                    <i class="bi bi-chat-dots display-4 text-primary mb-3"></i>
+                    <h4>Still need help?</h4>
+                    <p class="text-muted mb-3">Can't find what you're looking for? Our team is here to assist you.</p>
+                    <div class="d-flex gap-2 justify-content-center flex-wrap">
+                        <a href="{% url 'documentation:faq_list' %}" class="btn btn-primary">
+                            <i class="bi bi-question-circle"></i> Browse FAQs
+                        </a>
+                        <a href="{% url 'documentation:doc_home' %}" class="btn btn-outline-primary">
+                            <i class="bi bi-book"></i> View Documentation
+                        </a>
+                        {% if user.is_authenticated and user_permissions.can_participate_dev_chat %}
+                        <a href="{% url 'documentation:dev_chat_list' %}" class="btn btn-outline-primary">
+                            <i class="bi bi-chat"></i> Contact Support
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'documentation/js/docs.js' %}"></script>
+{% endblock %}

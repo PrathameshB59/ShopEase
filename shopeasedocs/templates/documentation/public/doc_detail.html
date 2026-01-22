@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ doc.title }} - ShopEase Documentation{% endblock %}
+{% block meta_description %}{{ doc.meta_description|default:doc.content|striptags|truncatewords:30 }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'documentation/css/docs.css' %}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'documentation:doc_home' %}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'documentation:category_docs' doc.category.slug %}">{{ doc.category.name }}</a></li>
+            <li class="breadcrumb-item active">{{ doc.title }}</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <div class="col-lg-9">
+            <article class="documentation-content">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <h1 class="mb-2">{{ doc.title }}</h1>
+                        <div class="text-muted small">
+                            <span class="badge bg-primary me-2">{{ doc.get_audience_display }}</span>
+                            {% if doc.author %}
+                            <i class="bi bi-person"></i> {{ doc.author.username }}
+                            {% endif %}
+                            <i class="bi bi-calendar ms-2"></i> {{ doc.created_at|date:"M d, Y" }}
+                            <i class="bi bi-eye ms-2"></i> {{ doc.views_count }} views
+                        </div>
+                    </div>
+                    {% if doc.is_featured %}
+                    <span class="badge bg-warning text-dark">
+                        <i class="bi bi-star-fill"></i> Featured
+                    </span>
+                    {% endif %}
+                </div>
+
+                <div class="doc-content">
+                    {{ doc.content|safe }}
+                </div>
+
+                <hr class="my-4">
+
+                <div class="doc-feedback">
+                    <h5>Was this helpful?</h5>
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-outline-success helpful-btn" data-type="documentation"
+                                data-id="{{ doc.id }}" data-helpful="true">
+                            <i class="bi bi-hand-thumbs-up"></i> Yes ({{ doc.helpful_count }})
+                        </button>
+                        <button type="button" class="btn btn-outline-danger helpful-btn" data-type="documentation"
+                                data-id="{{ doc.id }}" data-helpful="false">
+                            <i class="bi bi-hand-thumbs-down"></i> No ({{ doc.not_helpful_count }})
+                        </button>
+                    </div>
+                </div>
+
+                {% if related_docs %}
+                <div class="mt-5">
+                    <h4>Related Documentation</h4>
+                    <div class="row g-3">
+                        {% for related in related_docs %}
+                        <div class="col-md-6">
+                            <div class="card shadow-sm hover-card">
+                                <div class="card-body">
+                                    <h6 class="card-title">{{ related.title }}</h6>
+                                    <p class="card-text small text-muted">{{ related.content|striptags|truncatewords:15 }}</p>
+                                    <a href="{% url 'documentation:doc_detail' related.slug %}" class="stretched-link"></a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </article>
+        </div>
+
+        <div class="col-lg-3">
+            <div class="sticky-top" style="top: 1rem;">
+                <div class="card shadow-sm mb-3">
+                    <div class="card-header bg-primary text-white">
+                        <i class="bi bi-list"></i> On This Page
+                    </div>
+                    <div class="card-body">
+                        <div id="toc"></div>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm">
+                    <div class="card-header">
+                        <i class="bi bi-info-circle"></i> Article Info
+                    </div>
+                    <div class="card-body small">
+                        <p><strong>Category:</strong><br>{{ doc.category.name }}</p>
+                        <p><strong>Last Updated:</strong><br>{{ doc.updated_at|date:"M d, Y" }}</p>
+                        {% if doc.keywords %}
+                        <p><strong>Keywords:</strong><br>
+                            {% for keyword in doc.keywords.split:',' %}
+                            <span class="badge bg-secondary">{{ keyword.strip }}</span>
+                            {% endfor %}
+                        </p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+<script src="{% static 'documentation/js/docs.js' %}"></script>
+<script>
+    // Generate table of contents
+    document.addEventListener('DOMContentLoaded', function() {
+        const content = document.querySelector('.doc-content');
+        const toc = document.getElementById('toc');
+        const headings = content.querySelectorAll('h2, h3');
+
+        if (headings.length > 0) {
+            const ul = document.createElement('ul');
+            ul.className = 'list-unstyled';
+
+            headings.forEach((heading, index) => {
+                const id = 'heading-' + index;
+                heading.id = id;
+
+                const li = document.createElement('li');
+                li.className = heading.tagName === 'H3' ? 'ms-3' : '';
+
+                const a = document.createElement('a');
+                a.href = '#' + id;
+                a.textContent = heading.textContent;
+                a.className = 'text-decoration-none';
+
+                li.appendChild(a);
+                ul.appendChild(li);
+            });
+
+            toc.appendChild(ul);
+        } else {
+            toc.innerHTML = '<p class="text-muted small">No headings found</p>';
+        }
+    });
+</script>
+{% endblock %}

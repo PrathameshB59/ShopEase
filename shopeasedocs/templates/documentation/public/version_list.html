@@ -1,0 +1,262 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Version History - ShopEase Documentation{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'documentation/css/docs.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid bg-primary text-white py-4">
+    <div class="container">
+        <h1><i class="bi bi-layers me-2"></i>Version History</h1>
+        <p class="lead mb-0">Track all releases, updates, and improvements to ShopEase.</p>
+    </div>
+</div>
+
+<div class="container my-5">
+    {% if current_version %}
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card shadow-lg border-primary">
+                <div class="card-header bg-primary text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">
+                            <i class="bi bi-star-fill me-2"></i>Current Version: {{ current_version.version_number }}
+                        </h4>
+                        <span class="badge bg-light text-primary">Latest</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Release Date:</strong> {{ current_version.release_date|date:"F d, Y" }}</p>
+                            <p><strong>Version Type:</strong>
+                                <span class="badge bg-{{ current_version.get_version_type_color }}">
+                                    {{ current_version.get_version_type_display }}
+                                </span>
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Status:</strong>
+                                <span class="badge bg-success">Active</span>
+                            </p>
+                            {% if current_version.is_stable %}
+                            <p><strong>Stability:</strong> <span class="badge bg-success">Stable</span></p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="release-notes-preview">
+                        {{ current_version.release_notes|truncatewords:50|safe }}
+                    </div>
+                    <a href="{% url 'documentation:version_detail' current_version.version_number %}"
+                       class="btn btn-primary mt-3">
+                        View Full Release Notes <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h3>All Versions</h3>
+                <div class="btn-group" role="group">
+                    <a href="{% url 'documentation:version_list' %}"
+                       class="btn btn-sm btn-outline-primary {% if not request.GET.type %}active{% endif %}">
+                        All
+                    </a>
+                    <a href="?type=MAJOR"
+                       class="btn btn-sm btn-outline-primary {% if request.GET.type == 'MAJOR' %}active{% endif %}">
+                        Major
+                    </a>
+                    <a href="?type=MINOR"
+                       class="btn btn-sm btn-outline-primary {% if request.GET.type == 'MINOR' %}active{% endif %}">
+                        Minor
+                    </a>
+                    <a href="?type=PATCH"
+                       class="btn btn-sm btn-outline-primary {% if request.GET.type == 'PATCH' %}active{% endif %}">
+                        Patch
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if versions %}
+    <div class="version-timeline">
+        {% for version in versions %}
+        <div class="version-item {% if version.id == current_version.id %}current{% endif %}">
+            <div class="version-marker"></div>
+            <div class="card hover-card shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <h5 class="mb-2">
+                                <i class="bi bi-tag me-2"></i>Version {{ version.version_number }}
+                                {% if version.id == current_version.id %}
+                                <span class="badge bg-primary ms-2">Current</span>
+                                {% endif %}
+                            </h5>
+                            <p class="text-muted mb-0">
+                                <i class="bi bi-calendar"></i> Released {{ version.release_date|date:"F d, Y" }}
+                                <span class="ms-3">
+                                    <i class="bi bi-clock"></i> {{ version.release_date|timesince }} ago
+                                </span>
+                            </p>
+                        </div>
+                        <span class="badge bg-{{ version.get_version_type_color }}">
+                            {{ version.get_version_type_display }}
+                        </span>
+                    </div>
+
+                    <div class="version-summary mb-3">
+                        {{ version.release_notes|truncatewords:30|safe }}
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        {% if version.features %}
+                        <div class="col-md-4">
+                            <div class="text-center p-3 bg-light rounded">
+                                <i class="bi bi-plus-circle text-success display-6"></i>
+                                <p class="mb-0 mt-2 small text-muted">
+                                    {{ version.features|split:','|length }} New Feature{{ version.features|split:','|length|pluralize }}
+                                </p>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {% if version.fixes %}
+                        <div class="col-md-4">
+                            <div class="text-center p-3 bg-light rounded">
+                                <i class="bi bi-bug text-danger display-6"></i>
+                                <p class="mb-0 mt-2 small text-muted">
+                                    {{ version.fixes|split:','|length }} Bug Fix{{ version.fixes|split:','|length|pluralize:"es" }}
+                                </p>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {% if version.improvements %}
+                        <div class="col-md-4">
+                            <div class="text-center p-3 bg-light rounded">
+                                <i class="bi bi-arrow-up-circle text-info display-6"></i>
+                                <p class="mb-0 mt-2 small text-muted">
+                                    {{ version.improvements|split:','|length }} Improvement{{ version.improvements|split:','|length|pluralize }}
+                                </p>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <a href="{% url 'documentation:version_detail' version.version_number %}"
+                       class="btn btn-sm btn-outline-primary">
+                        View Details <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if is_paginated %}
+    <nav aria-label="Versions pagination" class="mt-5">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page=1{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}">
+                    <i class="bi bi-chevron-double-left"></i>
+                </a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}">
+                    <i class="bi bi-chevron-left"></i>
+                </a>
+            </li>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ num }}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}">{{ num }}</a>
+            </li>
+            {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}">
+                    <i class="bi bi-chevron-right"></i>
+                </a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}">
+                    <i class="bi bi-chevron-double-right"></i>
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+
+    {% else %}
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle me-2"></i>
+        No version information available yet.
+    </div>
+    {% endif %}
+
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card bg-light border-0">
+                <div class="card-body">
+                    <h5 class="mb-3">Version Numbering Explained</h5>
+                    <p class="text-muted">ShopEase follows Semantic Versioning (SemVer) - MAJOR.MINOR.PATCH</p>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="card border-danger">
+                                <div class="card-body">
+                                    <h6 class="text-danger">
+                                        <i class="bi bi-exclamation-circle"></i> MAJOR
+                                    </h6>
+                                    <p class="small mb-0">Incompatible API changes or major new features</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card border-warning">
+                                <div class="card-body">
+                                    <h6 class="text-warning">
+                                        <i class="bi bi-plus-circle"></i> MINOR
+                                    </h6>
+                                    <p class="small mb-0">New features added in a backward-compatible manner</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card border-info">
+                                <div class="card-body">
+                                    <h6 class="text-info">
+                                        <i class="bi bi-wrench"></i> PATCH
+                                    </h6>
+                                    <p class="small mb-0">Backward-compatible bug fixes and minor improvements</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'documentation/js/docs.js' %}"></script>
+{% endblock %}

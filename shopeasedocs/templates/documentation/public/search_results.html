@@ -1,0 +1,267 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Search Results - ShopEase Documentation{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'documentation/css/docs.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid bg-primary text-white py-4">
+    <div class="container">
+        <h1><i class="bi bi-search me-2"></i>Search Results</h1>
+        {% if query %}
+        <p class="lead mb-0">Showing results for: <strong>"{{ query }}"</strong></p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="container my-5">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form method="get" action="{% url 'documentation:doc_search' %}" class="d-flex">
+                        <input type="text" name="query" class="form-control form-control-lg me-2"
+                               placeholder="Search documentation, FAQs, help articles..."
+                               value="{{ query }}" required autofocus>
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-search"></i> Search
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if query %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h4>
+                    Found {{ total_results }} result{{ total_results|pluralize }}
+                </h4>
+                <div class="btn-group" role="group">
+                    <a href="?query={{ query }}&filter=all"
+                       class="btn btn-sm btn-outline-primary {% if not filter or filter == 'all' %}active{% endif %}">
+                        All
+                    </a>
+                    <a href="?query={{ query }}&filter=docs"
+                       class="btn btn-sm btn-outline-primary {% if filter == 'docs' %}active{% endif %}">
+                        Docs ({{ docs_count }})
+                    </a>
+                    <a href="?query={{ query }}&filter=faqs"
+                       class="btn btn-sm btn-outline-primary {% if filter == 'faqs' %}active{% endif %}">
+                        FAQs ({{ faqs_count }})
+                    </a>
+                    <a href="?query={{ query }}&filter=help"
+                       class="btn btn-sm btn-outline-primary {% if filter == 'help' %}active{% endif %}">
+                        Help ({{ help_count }})
+                    </a>
+                    {% if user.is_superuser %}
+                    <a href="?query={{ query }}&filter=code"
+                       class="btn btn-sm btn-outline-primary {% if filter == 'code' %}active{% endif %}">
+                        Code ({{ code_count }})
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if results %}
+    <div class="row g-4">
+        {% for result in results %}
+        <div class="col-12">
+            <div class="card hover-card shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <span class="badge bg-{{ result.type_color }}">
+                            <i class="bi {{ result.type_icon }}"></i> {{ result.type_label }}
+                        </span>
+                        <small class="text-muted">
+                            <i class="bi bi-eye"></i> {{ result.views_count|default:0 }} views
+                        </small>
+                    </div>
+                    <h5 class="card-title">
+                        <a href="{{ result.url }}" class="text-decoration-none search-result-title">
+                            {{ result.title|safe }}
+                        </a>
+                    </h5>
+                    {% if result.category %}
+                    <p class="text-muted small mb-2">
+                        <i class="bi bi-folder"></i> {{ result.category }}
+                    </p>
+                    {% endif %}
+                    <p class="card-text search-result-excerpt">
+                        {{ result.excerpt|safe }}
+                    </p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted">
+                            <i class="bi bi-clock"></i> Updated {{ result.updated_at|timesince }} ago
+                        </small>
+                        <a href="{{ result.url }}" class="btn btn-sm btn-outline-primary">
+                            View <i class="bi bi-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if is_paginated %}
+    <nav aria-label="Search results pagination" class="mt-5">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?query={{ query }}&filter={{ filter }}&page=1">
+                    <i class="bi bi-chevron-double-left"></i>
+                </a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?query={{ query }}&filter={{ filter }}&page={{ page_obj.previous_page_number }}">
+                    <i class="bi bi-chevron-left"></i>
+                </a>
+            </li>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+            <li class="page-item">
+                <a class="page-link" href="?query={{ query }}&filter={{ filter }}&page={{ num }}">{{ num }}</a>
+            </li>
+            {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?query={{ query }}&filter={{ filter }}&page={{ page_obj.next_page_number }}">
+                    <i class="bi bi-chevron-right"></i>
+                </a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?query={{ query }}&filter={{ filter }}&page={{ page_obj.paginator.num_pages }}">
+                    <i class="bi bi-chevron-double-right"></i>
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+
+    {% else %}
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle me-2"></i>
+        No results found for "{{ query }}"{% if filter and filter != 'all' %} in {{ filter }}{% endif %}.
+        <br><br>
+        <strong>Suggestions:</strong>
+        <ul class="mb-0">
+            <li>Try different keywords</li>
+            <li>Check your spelling</li>
+            <li>Use more general terms</li>
+            <li>Try removing filters</li>
+        </ul>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="alert alert-warning">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        Please enter a search query to find documentation, FAQs, and help articles.
+    </div>
+    {% endif %}
+
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card bg-light border-0">
+                <div class="card-body">
+                    <h5 class="mb-3">Popular Searches</h5>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a href="?query=account" class="badge bg-secondary text-decoration-none p-2">account</a>
+                        <a href="?query=order" class="badge bg-secondary text-decoration-none p-2">order</a>
+                        <a href="?query=payment" class="badge bg-secondary text-decoration-none p-2">payment</a>
+                        <a href="?query=shipping" class="badge bg-secondary text-decoration-none p-2">shipping</a>
+                        <a href="?query=return" class="badge bg-secondary text-decoration-none p-2">return</a>
+                        <a href="?query=refund" class="badge bg-secondary text-decoration-none p-2">refund</a>
+                        <a href="?query=product" class="badge bg-secondary text-decoration-none p-2">product</a>
+                        <a href="?query=password" class="badge bg-secondary text-decoration-none p-2">password</a>
+                        <a href="?query=coupon" class="badge bg-secondary text-decoration-none p-2">coupon</a>
+                        <a href="?query=tracking" class="badge bg-secondary text-decoration-none p-2">tracking</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-4">
+            <div class="card border-0 bg-light">
+                <div class="card-body text-center">
+                    <i class="bi bi-book display-5 text-primary mb-3"></i>
+                    <h6>Browse Documentation</h6>
+                    <p class="text-muted small">Comprehensive guides and tutorials</p>
+                    <a href="{% url 'documentation:doc_home' %}" class="btn btn-sm btn-outline-primary">
+                        Go to Docs
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 bg-light">
+                <div class="card-body text-center">
+                    <i class="bi bi-question-circle display-5 text-primary mb-3"></i>
+                    <h6>Browse FAQs</h6>
+                    <p class="text-muted small">Quick answers to common questions</p>
+                    <a href="{% url 'documentation:faq_list' %}" class="btn btn-sm btn-outline-primary">
+                        Go to FAQs
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 bg-light">
+                <div class="card-body text-center">
+                    <i class="bi bi-life-preserver display-5 text-primary mb-3"></i>
+                    <h6>Help Center</h6>
+                    <p class="text-muted small">Solutions to common issues</p>
+                    <a href="{% url 'documentation:help_center' %}" class="btn btn-sm btn-outline-primary">
+                        Get Help
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'documentation/js/docs.js' %}"></script>
+<script>
+    // Highlight search terms in results
+    document.addEventListener('DOMContentLoaded', function() {
+        const query = '{{ query|escapejs }}';
+        if (query) {
+            highlightSearchTerms(query);
+        }
+    });
+
+    function highlightSearchTerms(query) {
+        const terms = query.toLowerCase().split(' ').filter(term => term.length > 2);
+        const titles = document.querySelectorAll('.search-result-title');
+        const excerpts = document.querySelectorAll('.search-result-excerpt');
+
+        [...titles, ...excerpts].forEach(element => {
+            let html = element.innerHTML;
+            terms.forEach(term => {
+                const regex = new RegExp(`(${term})`, 'gi');
+                html = html.replace(regex, '<mark>$1</mark>');
+            });
+            element.innerHTML = html;
+        });
+    }
+</script>
+{% endblock %}

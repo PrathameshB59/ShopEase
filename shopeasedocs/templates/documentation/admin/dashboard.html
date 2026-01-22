@@ -1,0 +1,228 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Admin Dashboard - ShopEase Documentation{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'documentation/css/admin-docs.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid bg-dark text-white py-4">
+    <div class="container">
+        <h1><i class="bi bi-speedometer2 me-2"></i>Documentation Admin Dashboard</h1>
+        <p class="lead mb-0">Manage documentation, FAQs, and help articles.</p>
+    </div>
+</div>
+
+<div class="container my-4">
+    <div class="row g-4">
+        <div class="col-md-3">
+            <div class="card text-center shadow-sm">
+                <div class="card-body">
+                    <i class="bi bi-file-text display-4 text-primary"></i>
+                    <h3 class="mt-3">{{ stats.total_docs }}</h3>
+                    <p class="text-muted mb-0">Total Docs</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center shadow-sm">
+                <div class="card-body">
+                    <i class="bi bi-check-circle display-4 text-success"></i>
+                    <h3 class="mt-3">{{ stats.published_docs }}</h3>
+                    <p class="text-muted mb-0">Published</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center shadow-sm">
+                <div class="card-body">
+                    <i class="bi bi-pencil display-4 text-warning"></i>
+                    <h3 class="mt-3">{{ stats.draft_docs }}</h3>
+                    <p class="text-muted mb-0">Drafts</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center shadow-sm">
+                <div class="card-body">
+                    <i class="bi bi-eye display-4 text-info"></i>
+                    <h3 class="mt-3">{{ stats.total_views }}</h3>
+                    <p class="text-muted mb-0">Total Views</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mt-2">
+        <div class="col-md-3">
+            <div class="card text-center shadow-sm">
+                <div class="card-body">
+                    <i class="bi bi-question-circle display-4 text-secondary"></i>
+                    <h3 class="mt-3">{{ stats.total_faqs }}</h3>
+                    <p class="text-muted mb-0">FAQs</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center shadow-sm">
+                <div class="card-body">
+                    <i class="bi bi-life-preserver display-4 text-danger"></i>
+                    <h3 class="mt-3">{{ stats.total_help }}</h3>
+                    <p class="text-muted mb-0">Help Articles</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Quick Actions</h5>
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'documentation:create_doc' %}" class="btn btn-primary">
+                            <i class="bi bi-plus-circle"></i> Create New Documentation
+                        </a>
+                        <a href="{% url 'documentation:create_faq' %}" class="btn btn-outline-primary">
+                            <i class="bi bi-plus-circle"></i> Create New FAQ
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mt-2">
+        <div class="col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <i class="bi bi-clock-history"></i> Recent Documentation
+                </div>
+                <div class="list-group list-group-flush">
+                    {% for doc in recent_docs %}
+                    <a href="{% url 'documentation:edit_doc' doc.id %}"
+                       class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ doc.title|truncatewords:5 }}</h6>
+                            <small>{{ doc.created_at|date:"M d" }}</small>
+                        </div>
+                        <small class="text-muted">{{ doc.category.name }}</small>
+                        {% if not doc.is_published %}
+                        <span class="badge bg-warning text-dark ms-2">Draft</span>
+                        {% endif %}
+                    </a>
+                    {% empty %}
+                    <div class="list-group-item">
+                        <small class="text-muted">No documentation yet</small>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <i class="bi bi-eye-fill"></i> Most Viewed
+                </div>
+                <div class="list-group list-group-flush">
+                    {% for doc in most_viewed %}
+                    <a href="{% url 'documentation:doc_detail' doc.slug %}" target="_blank"
+                       class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ doc.title|truncatewords:5 }}</h6>
+                            <span class="badge bg-success">{{ doc.views_count }}</span>
+                        </div>
+                        <small class="text-muted">{{ doc.category.name }}</small>
+                    </a>
+                    {% empty %}
+                    <div class="list-group-item">
+                        <small class="text-muted">No data available</small>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-warning text-dark">
+                    <i class="bi bi-hand-thumbs-up-fill"></i> Most Helpful
+                </div>
+                <div class="list-group list-group-flush">
+                    {% for doc in most_helpful %}
+                    <a href="{% url 'documentation:doc_detail' doc.slug %}" target="_blank"
+                       class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ doc.title|truncatewords:5 }}</h6>
+                            <span class="badge bg-warning text-dark">{{ doc.helpful_count }}</span>
+                        </div>
+                        <small class="text-muted">{{ doc.category.name }}</small>
+                    </a>
+                    {% empty %}
+                    <div class="list-group-item">
+                        <small class="text-muted">No data available</small>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <i class="bi bi-list"></i> Management Links
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <a href="{% url 'documentation:manage_docs' %}" class="btn btn-outline-primary w-100 mb-2">
+                                <i class="bi bi-file-text"></i> Manage Docs
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{% url 'documentation:manage_categories' %}" class="btn btn-outline-secondary w-100 mb-2">
+                                <i class="bi bi-folder"></i> Manage Categories
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{% url 'documentation:manage_faqs' %}" class="btn btn-outline-info w-100 mb-2">
+                                <i class="bi bi-question-circle"></i> Manage FAQs
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{% url 'documentation:manage_help_issues' %}" class="btn btn-outline-success w-100 mb-2">
+                                <i class="bi bi-life-preserver"></i> Manage Help
+                            </a>
+                        </div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-md-3">
+                            <a href="{% url 'documentation:manage_versions' %}" class="btn btn-outline-warning w-100 mb-2">
+                                <i class="bi bi-layers"></i> Manage Versions
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{% url 'documentation:dev_chat_list' %}" class="btn btn-outline-danger w-100 mb-2">
+                                <i class="bi bi-chat-dots"></i> Dev Chat
+                            </a>
+                        </div>
+                        {% if user.is_superuser %}
+                        <div class="col-md-3">
+                            <a href="{% url 'documentation:code_index' %}" class="btn btn-outline-dark w-100 mb-2">
+                                <i class="bi bi-code-slash"></i> Code Docs
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'documentation/js/docs.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,303 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if doc %}Edit{% else %}Create{% endif %} Documentation - ShopEase Admin{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'documentation/css/admin-docs.css' %}">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid bg-dark text-white py-4">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb bg-transparent text-white mb-2">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'documentation:doc_home' %}" class="text-white">Home</a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="{% url 'documentation:admin_dashboard' %}" class="text-white">Admin</a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="{% url 'documentation:manage_docs' %}" class="text-white">Manage Docs</a>
+                </li>
+                <li class="breadcrumb-item active text-white" aria-current="page">
+                    {% if doc %}Edit{% else %}Create{% endif %}
+                </li>
+            </ol>
+        </nav>
+        <h1>
+            <i class="bi bi-{% if doc %}pencil{% else %}plus-circle{% endif %} me-2"></i>
+            {% if doc %}Edit Documentation{% else %}Create Documentation{% endif %}
+        </h1>
+    </div>
+</div>
+
+<div class="container my-5">
+    <div class="row">
+        <div class="col-lg-9">
+            <div class="card shadow-sm">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-file-text me-2"></i>Documentation Details
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" class="admin-form">
+                        {% csrf_token %}
+
+                        {% if form.errors %}
+                        <div class="alert alert-danger alert-dismissible fade show">
+                            <strong>Please correct the following errors:</strong>
+                            <ul class="mb-0">
+                                {% for field in form %}
+                                    {% for error in field.errors %}
+                                        <li>{{ field.label }}: {{ error }}</li>
+                                    {% endfor %}
+                                {% endfor %}
+                            </ul>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                        {% endif %}
+
+                        <div class="mb-3">
+                            <label for="{{ form.title.id_for_label }}" class="form-label">
+                                Title <span class="text-danger">*</span>
+                            </label>
+                            {{ form.title }}
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.slug.id_for_label }}" class="form-label">
+                                    Slug <span class="text-danger">*</span>
+                                </label>
+                                {{ form.slug }}
+                                <small class="form-text text-muted">
+                                    URL-friendly version (auto-generated if left blank)
+                                </small>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.category.id_for_label }}" class="form-label">
+                                    Category <span class="text-danger">*</span>
+                                </label>
+                                {{ form.category }}
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.audience.id_for_label }}" class="form-label">
+                                    Audience <span class="text-danger">*</span>
+                                </label>
+                                {{ form.audience }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Publishing</label>
+                                <div class="form-check">
+                                    {{ form.is_published }}
+                                    <label class="form-check-label" for="{{ form.is_published.id_for_label }}">
+                                        Publish immediately
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    {{ form.is_featured }}
+                                    <label class="form-check-label" for="{{ form.is_featured.id_for_label }}">
+                                        Mark as featured
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.meta_description.id_for_label }}" class="form-label">
+                                Meta Description
+                            </label>
+                            {{ form.meta_description }}
+                            <small class="form-text text-muted">
+                                Brief summary for search engines and previews (160 characters max)
+                            </small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Editor Type</label>
+                            <div class="editor-switcher">
+                                <div class="btn-group" role="group">
+                                    <input type="radio" class="btn-check" name="editor_type" id="editor_markdown" value="markdown" checked>
+                                    <label class="btn btn-outline-primary" for="editor_markdown">
+                                        <i class="bi bi-markdown"></i> Markdown
+                                    </label>
+                                    <input type="radio" class="btn-check" name="editor_type" id="editor_rich" value="rich">
+                                    <label class="btn btn-outline-primary" for="editor_rich">
+                                        <i class="bi bi-pencil-square"></i> Rich Text
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.content.id_for_label }}" class="form-label">
+                                Content <span class="text-danger">*</span>
+                            </label>
+                            {{ form.content }}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.keywords.id_for_label }}" class="form-label">
+                                Keywords
+                            </label>
+                            {{ form.keywords }}
+                            <small class="form-text text-muted">
+                                Comma-separated keywords for search (e.g., "orders, shipping, tracking")
+                            </small>
+                        </div>
+
+                        <hr>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" name="action" value="save" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i>
+                                {% if doc %}Save Changes{% else %}Create Documentation{% endif %}
+                            </button>
+                            <button type="submit" name="action" value="save_and_continue" class="btn btn-outline-primary">
+                                <i class="bi bi-plus-circle"></i> Save & Add Another
+                            </button>
+                            <a href="{% url 'documentation:manage_docs' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle"></i> Cancel
+                            </a>
+                            {% if doc %}
+                            <button type="button" class="btn btn-outline-danger ms-auto"
+                                    data-bs-toggle="modal" data-bs-target="#deleteModal">
+                                <i class="bi bi-trash"></i> Delete
+                            </button>
+                            {% endif %}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3">
+            <div class="card shadow-sm mb-3 sticky-top" style="top: 1rem;">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0"><i class="bi bi-lightbulb me-2"></i>Tips</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="small mb-0">
+                        <li class="mb-2">Use clear, descriptive titles</li>
+                        <li class="mb-2">Choose the right category</li>
+                        <li class="mb-2">Set appropriate audience level</li>
+                        <li class="mb-2">Add keywords for better search</li>
+                        <li class="mb-2">Use Markdown for formatting</li>
+                        <li>Preview before publishing</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card shadow-sm bg-light border-0">
+                <div class="card-body">
+                    <h6 class="mb-3">Markdown Quick Reference</h6>
+                    <div class="small">
+                        <p class="mb-1"><code># Heading 1</code></p>
+                        <p class="mb-1"><code>## Heading 2</code></p>
+                        <p class="mb-1"><code>**bold text**</code></p>
+                        <p class="mb-1"><code>*italic text*</code></p>
+                        <p class="mb-1"><code>[Link](url)</code></p>
+                        <p class="mb-1"><code>`code`</code></p>
+                        <p class="mb-0"><code>```python\ncode block\n```</code></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Modal -->
+    {% if doc %}
+    <div class="modal fade" id="deleteModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">Confirm Deletion</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Delete this documentation article?</p>
+                    <p class="text-muted mb-0"><strong>{{ doc.title }}</strong></p>
+                    <p class="text-danger small mt-2">This action cannot be undone.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <form method="post" action="{% url 'documentation:delete_doc' doc.id %}" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">Delete</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.js"></script>
+<script>
+    // Auto-generate slug from title
+    const titleInput = document.getElementById('{{ form.title.id_for_label }}');
+    const slugInput = document.getElementById('{{ form.slug.id_for_label }}');
+
+    if (titleInput && slugInput && !slugInput.value) {
+        titleInput.addEventListener('blur', function() {
+            if (!slugInput.value) {
+                slugInput.value = this.value
+                    .toLowerCase()
+                    .replace(/[^\w\s-]/g, '')
+                    .replace(/\s+/g, '-')
+                    .replace(/-+/g, '-')
+                    .trim();
+            }
+        });
+    }
+
+    // Initialize SimpleMDE for markdown editor
+    let markdownEditor = null;
+    const contentTextarea = document.getElementById('{{ form.content.id_for_label }}');
+
+    function initMarkdownEditor() {
+        if (!markdownEditor && contentTextarea) {
+            markdownEditor = new SimpleMDE({
+                element: contentTextarea,
+                spellChecker: false,
+                toolbar: ["bold", "italic", "heading", "|", "quote", "unordered-list", "ordered-list", "|",
+                          "link", "image", "code", "table", "|", "preview", "side-by-side", "fullscreen", "|",
+                          "guide"],
+                status: ["lines", "words", "cursor"],
+                autosave: {
+                    enabled: true,
+                    uniqueId: "doc_content_{{ doc.id|default:'new' }}",
+                    delay: 10000,
+                }
+            });
+        }
+    }
+
+    // Editor switcher
+    const editorButtons = document.querySelectorAll('input[name="editor_type"]');
+    editorButtons.forEach(button => {
+        button.addEventListener('change', function() {
+            if (this.value === 'markdown') {
+                initMarkdownEditor();
+            } else {
+                if (markdownEditor) {
+                    markdownEditor.toTextArea();
+                    markdownEditor = null;
+                }
+            }
+        });
+    });
+
+    // Initialize with markdown editor by default
+    initMarkdownEditor();
+</script>
+{% endblock %}

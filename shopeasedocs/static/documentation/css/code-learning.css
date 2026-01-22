@@ -1,0 +1,614 @@
+/* ============================================
+   ShopEase Documentation - Code Learning Styles
+   Interactive Visual Code Learning System
+   ============================================ */
+
+/* Learning Overview Section */
+.learning-overview {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    margin-bottom: 2rem;
+}
+
+.learning-overview .card-body {
+    padding: 2rem;
+}
+
+.learning-overview h4 {
+    color: white;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.learning-overview ul {
+    color: rgba(255, 255, 255, 0.95);
+    font-size: 1.05rem;
+}
+
+.complexity-indicators {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+}
+
+.complexity-indicators .badge {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+/* Main Interactive Code Learning Container */
+.code-learning-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+/* Code Panel (Left Side) */
+.code-panel {
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.code-header {
+    background: #2d3748;
+    color: white;
+    padding: 1rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.code-header h5 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.code-controls {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.code-controls button {
+    padding: 0.4rem 0.8rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.code-controls button:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+.code-controls button:active {
+    transform: scale(0.95);
+}
+
+/* Interactive Code Lines */
+.interactive-code {
+    background: #f8f9fa;
+    padding: 1rem;
+    max-height: 600px;
+    overflow-y: auto;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+.interactive-code::-webkit-scrollbar {
+    width: 8px;
+}
+
+.interactive-code::-webkit-scrollbar-track {
+    background: #e9ecef;
+}
+
+.interactive-code::-webkit-scrollbar-thumb {
+    background: #6c757d;
+    border-radius: 4px;
+}
+
+.code-line {
+    position: relative;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    border-left: 4px solid transparent;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.code-line:hover {
+    background: rgba(102, 126, 234, 0.1);
+    border-left-color: #667eea;
+}
+
+.code-line.active {
+    background: rgba(102, 126, 234, 0.2);
+    border-left-color: #667eea;
+    box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+}
+
+.code-line.related {
+    background: rgba(255, 193, 7, 0.1);
+    border-left-color: #ffc107;
+}
+
+.line-number {
+    display: inline-block;
+    min-width: 40px;
+    text-align: right;
+    color: #6c757d;
+    font-weight: 500;
+    user-select: none;
+    font-size: 0.9rem;
+}
+
+.code-line.active .line-number {
+    color: #667eea;
+    font-weight: 700;
+}
+
+.line-code {
+    flex: 1;
+    white-space: pre;
+    font-size: 0.95rem;
+    color: #2d3748;
+}
+
+.line-annotation {
+    color: #667eea;
+    font-size: 0.9rem;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.code-line:hover .line-annotation {
+    opacity: 1;
+}
+
+.line-annotation:hover {
+    color: #764ba2;
+}
+
+/* Execution Order Indicator */
+.code-line::after {
+    content: attr(data-execution-order);
+    position: absolute;
+    right: -30px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #28a745;
+    color: white;
+    font-size: 0.7rem;
+    padding: 0.2rem 0.4rem;
+    border-radius: 10px;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.code-line[data-execution-order]:hover::after {
+    opacity: 0.8;
+}
+
+/* Explanation Panel (Right Side) */
+.explanation-panel {
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem;
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.explanation-panel::-webkit-scrollbar {
+    width: 6px;
+}
+
+.explanation-panel::-webkit-scrollbar-thumb {
+    background: #667eea;
+    border-radius: 3px;
+}
+
+.placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #6c757d;
+    text-align: center;
+}
+
+.placeholder i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.placeholder p {
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+/* Line Explanation Content */
+.line-explanation-content {
+    animation: slideIn 0.3s ease-in-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.explanation-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.explanation-header h5 {
+    margin: 0;
+    color: #2d3748;
+    font-weight: 600;
+}
+
+.explanation-text {
+    font-size: 1.05rem;
+    line-height: 1.7;
+    color: #495057;
+}
+
+/* Concepts Section */
+.concepts-section h6 {
+    color: #667eea;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.concepts-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.concepts-tags .badge {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.85rem;
+}
+
+/* Variables Section */
+.variables-section h6 {
+    color: #28a745;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.variables-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.variable-tag {
+    background: #e7f3e7;
+    color: #155724;
+    padding: 0.3rem 0.6rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+/* Related Lines Section */
+.related-lines-section h6 {
+    color: #ffc107;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.related-lines-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+/* Variable State Tracker */
+.variable-tracker,
+.execution-stack {
+    background: #f8f9fa;
+    border-radius: 6px;
+    padding: 1rem;
+    margin-top: 1.5rem;
+}
+
+.variable-tracker h6,
+.execution-stack h6 {
+    color: #495057;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    font-size: 0.95rem;
+}
+
+.variable-tracker table {
+    font-size: 0.9rem;
+}
+
+.variable-tracker table th {
+    background: #e9ecef;
+    font-weight: 600;
+}
+
+.stack-items {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.stack-item {
+    padding: 0.5rem;
+    background: white;
+    border-left: 3px solid #667eea;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    border-radius: 4px;
+}
+
+/* Execution Flow Section */
+.execution-flow-section {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+.execution-flow-section h5 {
+    color: #2d3748;
+    margin-bottom: 1.5rem;
+    font-weight: 600;
+}
+
+#flowchart-container {
+    background: #f8f9fa;
+    border-radius: 6px;
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+    min-height: 300px;
+}
+
+.flow-steps {
+    font-size: 1.05rem;
+    line-height: 1.8;
+}
+
+/* Visual Diagram Section */
+.visual-diagram-section {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+.visual-diagram-section h5 {
+    color: #2d3748;
+    margin-bottom: 1.5rem;
+    font-weight: 600;
+}
+
+.visual-diagram-section img {
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Related Concepts */
+.related-concepts {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+.related-concepts h5 {
+    color: #2d3748;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.related-concepts ul {
+    font-size: 1.05rem;
+    line-height: 1.8;
+}
+
+/* Common Mistakes */
+.common-mistakes {
+    margin-bottom: 2rem;
+    border-left: 4px solid #ffc107;
+}
+
+.common-mistakes h5 {
+    color: #856404;
+    font-weight: 600;
+}
+
+/* Practice Exercises */
+.practice-exercises {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+    margin-bottom: 2rem;
+    border-top: 4px solid #28a745;
+}
+
+.practice-exercises h5 {
+    color: #155724;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.practice-exercises ol {
+    font-size: 1.05rem;
+    line-height: 1.8;
+}
+
+/* Interactive Demo */
+.interactive-demo {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 8px;
+    padding: 2rem;
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.interactive-demo h5 {
+    color: white;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.interactive-demo .btn {
+    background: white;
+    color: #667eea;
+    border: none;
+    padding: 0.75rem 2rem;
+    font-weight: 600;
+    transition: transform 0.2s;
+}
+
+.interactive-demo .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Learning Progress Bar */
+.learning-progress {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.learning-progress h6 {
+    color: #495057;
+    margin-bottom: 1rem;
+}
+
+.progress-bar {
+    height: 25px;
+    border-radius: 12px;
+    font-weight: 600;
+}
+
+/* Bookmark Button */
+.bookmark-controls {
+    position: fixed;
+    top: 100px;
+    right: 2rem;
+    z-index: 100;
+}
+
+.bookmark-controls .btn {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Notes Section */
+.notes-section {
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    border-radius: 6px;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+.notes-section textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+/* Responsive Design */
+@media (max-width: 992px) {
+    .code-learning-container {
+        grid-template-columns: 1fr;
+    }
+
+    .code-panel,
+    .explanation-panel {
+        max-height: none;
+    }
+
+    .bookmark-controls {
+        position: static;
+        margin-bottom: 1rem;
+    }
+}
+
+/* Animation for Step-Through */
+.code-line.executing {
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        background: rgba(102, 126, 234, 0.2);
+    }
+    50% {
+        background: rgba(102, 126, 234, 0.4);
+    }
+}
+
+/* Tooltips Enhancement */
+.tooltip-inner {
+    max-width: 300px;
+    text-align: left;
+    font-size: 0.9rem;
+}
+
+/* Mermaid Flowchart Enhancements */
+.mermaid {
+    display: flex;
+    justify-content: center;
+}
+
+.mermaid svg {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Print Styles */
+@media print {
+    .code-controls,
+    .bookmark-controls,
+    .interactive-demo {
+        display: none;
+    }
+
+    .code-learning-container {
+        grid-template-columns: 1fr;
+    }
+
+    .code-line:hover {
+        background: none;
+    }
+}

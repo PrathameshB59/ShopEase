@@ -41,6 +41,7 @@ class AdminRole(models.Model):
         ('MARKETING_MANAGER', 'Marketing Manager'),
         ('ORDER_MANAGER', 'Order Manager'),
         ('SUPER_ADMIN', 'Super Admin'),
+        ('DEVELOPER', 'Developer'),
     ]
 
     user = models.OneToOneField(
@@ -129,6 +130,32 @@ class AdminRole(models.Model):
         help_text="Can export data to CSV/Excel"
     )
 
+    # Documentation Management Permissions
+    can_view_documentation = models.BooleanField(
+        default=False,
+        help_text="Can view documentation admin panel"
+    )
+    can_edit_documentation = models.BooleanField(
+        default=False,
+        help_text="Can create/edit documentation"
+    )
+    can_manage_faqs = models.BooleanField(
+        default=False,
+        help_text="Can manage FAQ entries"
+    )
+    can_access_code_docs = models.BooleanField(
+        default=False,
+        help_text="Can view code-level explanations (superuser only)"
+    )
+    can_participate_dev_chat = models.BooleanField(
+        default=False,
+        help_text="Can participate in developer discussions"
+    )
+    can_manage_versions = models.BooleanField(
+        default=False,
+        help_text="Can manage app versions and release notes"
+    )
+
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -198,6 +225,21 @@ class AdminRole(models.Model):
                 'can_manage_roles': True,
                 'can_view_analytics': True,
                 'can_export_data': True,
+                'can_view_documentation': True,
+                'can_edit_documentation': True,
+                'can_manage_faqs': True,
+                'can_access_code_docs': True,
+                'can_participate_dev_chat': True,
+                'can_manage_versions': True,
+            },
+            'DEVELOPER': {
+                'can_view_documentation': True,
+                'can_edit_documentation': True,
+                'can_manage_faqs': True,
+                'can_participate_dev_chat': True,
+                'can_view_analytics': True,
+                'can_view_products': True,
+                'can_view_orders': True,
             },
         }
 

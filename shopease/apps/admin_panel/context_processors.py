@@ -76,6 +76,12 @@ def admin_permissions(request):
                 'can_manage_roles': admin_role.can_manage_roles,
                 'can_view_analytics': admin_role.can_view_analytics,
                 'can_export_data': admin_role.can_export_data,
+                'can_view_documentation': admin_role.can_view_documentation,
+                'can_edit_documentation': admin_role.can_edit_documentation,
+                'can_manage_faqs': admin_role.can_manage_faqs,
+                'can_access_code_docs': admin_role.can_access_code_docs,
+                'can_participate_dev_chat': admin_role.can_participate_dev_chat,
+                'can_manage_versions': admin_role.can_manage_versions,
             }
         except AdminRole.DoesNotExist:
             # Staff without role - minimal permissions
@@ -91,6 +97,12 @@ def admin_permissions(request):
                 'can_manage_roles': False,
                 'can_view_analytics': False,
                 'can_export_data': False,
+                'can_view_documentation': False,
+                'can_edit_documentation': False,
+                'can_manage_faqs': False,
+                'can_access_code_docs': False,
+                'can_participate_dev_chat': False,
+                'can_manage_versions': False,
             }
             context['user_role'] = 'Staff (No Role)'
 

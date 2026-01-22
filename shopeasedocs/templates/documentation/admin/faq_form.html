@@ -1,0 +1,198 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if faq %}Edit{% else %}Create{% endif %} FAQ - ShopEase Admin{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'documentation/css/admin-docs.css' %}">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tinymce@5/skins/ui/oxide/skin.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid bg-dark text-white py-4">
+    <div class="container">
+        <h1>
+            <i class="bi bi-{% if faq %}pencil{% else %}plus-circle{% endif %} me-2"></i>
+            {% if faq %}Edit FAQ{% else %}Create FAQ{% endif %}
+        </h1>
+    </div>
+</div>
+
+<div class="container my-5">
+    <div class="row">
+        <div class="col-lg-9">
+            <div class="card shadow-sm">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">FAQ Details</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" class="admin-form">
+                        {% csrf_token %}
+
+                        {% if form.errors %}
+                        <div class="alert alert-danger alert-dismissible fade show">
+                            <strong>Please correct the following errors:</strong>
+                            <ul class="mb-0">
+                                {% for field in form %}
+                                    {% for error in field.errors %}
+                                        <li>{{ field.label }}: {{ error }}</li>
+                                    {% endfor %}
+                                {% endfor %}
+                            </ul>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                        {% endif %}
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.category.id_for_label }}" class="form-label">
+                                    Category <span class="text-danger">*</span>
+                                </label>
+                                {{ form.category }}
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="{{ form.audience.id_for_label }}" class="form-label">
+                                    Audience <span class="text-danger">*</span>
+                                </label>
+                                {{ form.audience }}
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="{{ form.order.id_for_label }}" class="form-label">
+                                    Display Order
+                                </label>
+                                {{ form.order }}
+                                <small class="form-text text-muted">Lower numbers appear first</small>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.question.id_for_label }}" class="form-label">
+                                Question <span class="text-danger">*</span>
+                            </label>
+                            {{ form.question }}
+                            <small class="form-text text-muted">
+                                Clear, concise question that users might ask
+                            </small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.answer.id_for_label }}" class="form-label">
+                                Answer <span class="text-danger">*</span>
+                            </label>
+                            {{ form.answer }}
+                            <small class="form-text text-muted">
+                                Detailed answer with examples if needed
+                            </small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.keywords.id_for_label }}" class="form-label">
+                                Keywords
+                            </label>
+                            {{ form.keywords }}
+                            <small class="form-text text-muted">
+                                Comma-separated keywords for search (e.g., "password, login, reset")
+                            </small>
+                        </div>
+
+                        <hr>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" name="action" value="save" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i>
+                                {% if faq %}Save Changes{% else %}Create FAQ{% endif %}
+                            </button>
+                            <button type="submit" name="action" value="save_and_continue" class="btn btn-outline-primary">
+                                <i class="bi bi-plus-circle"></i> Save & Add Another
+                            </button>
+                            <a href="{% url 'documentation:manage_faqs' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle"></i> Cancel
+                            </a>
+                            {% if faq %}
+                            <button type="button" class="btn btn-outline-danger ms-auto"
+                                    data-bs-toggle="modal" data-bs-target="#deleteModal">
+                                <i class="bi bi-trash"></i> Delete
+                            </button>
+                            {% endif %}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3">
+            <div class="card shadow-sm mb-3 sticky-top" style="top: 1rem;">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0"><i class="bi bi-lightbulb me-2"></i>Tips</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="small mb-0">
+                        <li class="mb-2">Ask questions from user's perspective</li>
+                        <li class="mb-2">Keep answers concise but complete</li>
+                        <li class="mb-2">Use bullet points for clarity</li>
+                        <li class="mb-2">Add examples when helpful</li>
+                        <li class="mb-2">Include links to related docs</li>
+                        <li>Set appropriate display order</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card shadow-sm bg-light border-0">
+                <div class="card-body">
+                    <h6 class="mb-3">Common Question Types</h6>
+                    <div class="small">
+                        <p class="mb-2"><strong>How to...?</strong><br>Step-by-step instructions</p>
+                        <p class="mb-2"><strong>What is...?</strong><br>Definitions and concepts</p>
+                        <p class="mb-2"><strong>Why...?</strong><br>Explanations of reasons</p>
+                        <p class="mb-0"><strong>When...?</strong><br>Timing and conditions</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Modal -->
+    {% if faq %}
+    <div class="modal fade" id="deleteModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">Confirm Deletion</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Delete this FAQ?</p>
+                    <p class="text-muted mb-0"><strong>{{ faq.question }}</strong></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <form method="post" action="{% url 'documentation:delete_faq' faq.id %}" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">Delete</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/5/tinymce.min.js"></script>
+<script>
+    // Initialize TinyMCE for answer field
+    tinymce.init({
+        selector: '#{{ form.answer.id_for_label }}',
+        height: 300,
+        menubar: false,
+        plugins: [
+            'advlist autolink lists link charmap print preview anchor',
+            'searchreplace visualblocks code fullscreen',
+            'insertdatetime table paste code help wordcount'
+        ],
+        toolbar: 'undo redo | formatselect | bold italic | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link | help',
+        content_style: 'body { font-family: Arial, sans-serif; font-size: 14px }'
+    });
+</script>
+{% endblock %}

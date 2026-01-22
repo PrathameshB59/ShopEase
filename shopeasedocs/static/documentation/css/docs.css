@@ -1,0 +1,428 @@
+/* ============================================
+   ShopEase Documentation - Public Styles
+   ============================================ */
+
+/* General Styles */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+}
+
+/* Hover Card Effect */
+.hover-card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.hover-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Documentation Content Styles */
+.documentation-content {
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.doc-content {
+    font-size: 1.05rem;
+    line-height: 1.8;
+}
+
+.doc-content h1,
+.doc-content h2,
+.doc-content h3,
+.doc-content h4 {
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.doc-content h2 {
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.doc-content h3 {
+    color: #495057;
+}
+
+.doc-content p {
+    margin-bottom: 1rem;
+}
+
+.doc-content ul,
+.doc-content ol {
+    margin-bottom: 1rem;
+    padding-left: 2rem;
+}
+
+.doc-content li {
+    margin-bottom: 0.5rem;
+}
+
+.doc-content a {
+    color: #0d6efd;
+    text-decoration: none;
+}
+
+.doc-content a:hover {
+    text-decoration: underline;
+}
+
+.doc-content code {
+    background-color: #f8f9fa;
+    padding: 0.2rem 0.4rem;
+    border-radius: 3px;
+    font-size: 0.9em;
+    color: #d63384;
+}
+
+.doc-content pre {
+    background-color: #f8f9fa;
+    padding: 1rem;
+    border-radius: 5px;
+    overflow-x: auto;
+    border-left: 4px solid #0d6efd;
+}
+
+.doc-content pre code {
+    background-color: transparent;
+    padding: 0;
+    color: inherit;
+}
+
+.doc-content blockquote {
+    border-left: 4px solid #0d6efd;
+    padding-left: 1rem;
+    margin-left: 0;
+    color: #6c757d;
+    font-style: italic;
+}
+
+.doc-content img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 5px;
+    margin: 1rem 0;
+}
+
+.doc-content table {
+    width: 100%;
+    margin-bottom: 1rem;
+    border-collapse: collapse;
+}
+
+.doc-content table th,
+.doc-content table td {
+    padding: 0.75rem;
+    border: 1px solid #dee2e6;
+}
+
+.doc-content table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+}
+
+/* Table of Contents */
+#toc ul {
+    padding-left: 0;
+}
+
+#toc li {
+    margin-bottom: 0.5rem;
+}
+
+#toc a {
+    color: #495057;
+    transition: color 0.2s;
+}
+
+#toc a:hover {
+    color: #0d6efd;
+}
+
+/* Feedback Buttons */
+.doc-feedback {
+    background-color: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.doc-feedback h5 {
+    margin-bottom: 1rem;
+}
+
+.helpful-btn {
+    transition: all 0.2s ease-in-out;
+}
+
+.helpful-btn:hover {
+    transform: scale(1.05);
+}
+
+.helpful-btn:active {
+    transform: scale(0.95);
+}
+
+/* Search Bar */
+.search-bar-large input {
+    font-size: 1.1rem;
+    padding: 0.75rem 1rem;
+}
+
+/* Category Cards */
+.category-card {
+    border-left: 4px solid #0d6efd;
+}
+
+.category-card:hover {
+    border-left-color: #0a58ca;
+}
+
+/* Badge Styles */
+.badge {
+    font-weight: 500;
+    padding: 0.35em 0.65em;
+}
+
+/* Breadcrumb Styles */
+.breadcrumb {
+    background-color: transparent;
+    padding: 0.5rem 0;
+}
+
+/* FAQ Accordion */
+.accordion-button:not(.collapsed) {
+    background-color: #e7f1ff;
+    color: #084298;
+}
+
+.accordion-button:focus {
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* Sticky Sidebar */
+.sticky-top {
+    position: sticky;
+}
+
+/* Alert Styles */
+.alert {
+    border-left: 4px solid;
+    border-radius: 0.25rem;
+}
+
+.alert-info {
+    border-left-color: #0dcaf0;
+}
+
+.alert-success {
+    border-left-color: #198754;
+}
+
+.alert-warning {
+    border-left-color: #ffc107;
+}
+
+.alert-danger {
+    border-left-color: #dc3545;
+}
+
+/* Card Enhancements */
+.card {
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.card-header {
+    font-weight: 600;
+    border-bottom: 2px solid rgba(0, 0, 0, 0.125);
+}
+
+/* Footer Adjustments */
+footer a {
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+footer a:hover {
+    color: #adb5bd !important;
+}
+
+/* Loading Spinner */
+.spinner-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+}
+
+/* Copy Code Button */
+.code-block-wrapper {
+    position: relative;
+}
+
+.copy-code-btn {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.8rem;
+}
+
+/* Search Results */
+.search-result-item {
+    border-left: 3px solid #0d6efd;
+    transition: border-color 0.2s;
+}
+
+.search-result-item:hover {
+    border-left-color: #0a58ca;
+    background-color: #f8f9fa;
+}
+
+/* Version Timeline */
+.version-timeline {
+    position: relative;
+    padding-left: 2rem;
+}
+
+.version-timeline::before {
+    content: '';
+    position: absolute;
+    left: 0.5rem;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background-color: #dee2e6;
+}
+
+.version-item {
+    position: relative;
+    margin-bottom: 2rem;
+}
+
+.version-item::before {
+    content: '';
+    position: absolute;
+    left: -1.8rem;
+    top: 0.3rem;
+    width: 12px;
+    height: 12px;
+    background-color: #0d6efd;
+    border-radius: 50%;
+    border: 2px solid white;
+    box-shadow: 0 0 0 2px #0d6efd;
+}
+
+.version-item.current::before {
+    background-color: #198754;
+    box-shadow: 0 0 0 2px #198754;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .documentation-content {
+        padding: 1rem;
+    }
+
+    .doc-content {
+        font-size: 1rem;
+    }
+
+    .doc-content h1 {
+        font-size: 1.75rem;
+    }
+
+    .doc-content h2 {
+        font-size: 1.5rem;
+    }
+
+    .sticky-top {
+        position: relative !important;
+    }
+}
+
+/* Print Styles */
+@media print {
+    .navbar,
+    footer,
+    .doc-feedback,
+    .sticky-top,
+    .btn {
+        display: none !important;
+    }
+
+    .documentation-content {
+        box-shadow: none;
+    }
+}
+
+/* Syntax Highlighting Enhancements */
+pre[class*="language-"] {
+    margin: 1.5rem 0;
+    border-radius: 5px;
+}
+
+code[class*="language-"] {
+    font-size: 0.9rem;
+}
+
+/* Help Center Cards */
+.help-card {
+    border-left: 4px solid;
+    transition: all 0.3s ease;
+}
+
+.help-card.account {
+    border-left-color: #0d6efd;
+}
+
+.help-card.order {
+    border-left-color: #198754;
+}
+
+.help-card.payment {
+    border-left-color: #ffc107;
+}
+
+.help-card.product {
+    border-left-color: #dc3545;
+}
+
+.help-card.technical {
+    border-left-color: #6c757d;
+}
+
+.help-card.other {
+    border-left-color: #0dcaf0;
+}
+
+/* Image Gallery */
+.screenshot-gallery img {
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.screenshot-gallery img:hover {
+    transform: scale(1.05);
+}
+
+/* Toast Notifications */
+.toast {
+    min-width: 250px;
+}
+
+.toast-success {
+    background-color: #d1e7dd;
+    color: #0f5132;
+}
+
+.toast-error {
+    background-color: #f8d7da;
+    color: #842029;
+}

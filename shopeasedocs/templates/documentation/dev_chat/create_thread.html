@@ -1,0 +1,252 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if thread %}Edit{% else %}Create{% endif %} Thread - Developer Chat - ShopEase Documentation{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'documentation/css/dev-chat.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid bg-dark text-white py-4">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb bg-transparent text-white mb-2">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'documentation:doc_home' %}" class="text-white">Home</a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="{% url 'documentation:dev_chat_list' %}" class="text-white">Developer Chat</a>
+                </li>
+                <li class="breadcrumb-item active text-white" aria-current="page">
+                    {% if thread %}Edit Thread{% else %}New Thread{% endif %}
+                </li>
+            </ol>
+        </nav>
+        <h1>
+            <i class="bi bi-{% if thread %}pencil{% else %}plus-circle{% endif %} me-2"></i>
+            {% if thread %}Edit Discussion Thread{% else %}Create New Thread{% endif %}
+        </h1>
+        <p class="lead mb-0">Start a technical discussion with the development team.</p>
+    </div>
+</div>
+
+<div class="container my-5">
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-chat-dots me-2"></i>Thread Details
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+
+                        {% if form.errors %}
+                        <div class="alert alert-danger alert-dismissible fade show">
+                            <strong>Please correct the following errors:</strong>
+                            <ul class="mb-0">
+                                {% for field in form %}
+                                    {% for error in field.errors %}
+                                        <li>{{ field.label }}: {{ error }}</li>
+                                    {% endfor %}
+                                {% endfor %}
+                            </ul>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                        {% endif %}
+
+                        <div class="mb-3">
+                            <label for="{{ form.title.id_for_label }}" class="form-label">
+                                Thread Title <span class="text-danger">*</span>
+                            </label>
+                            {{ form.title }}
+                            <small class="form-text text-muted">
+                                Choose a clear, descriptive title that summarizes the discussion topic
+                            </small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.description.id_for_label }}" class="form-label">
+                                Description <span class="text-danger">*</span>
+                            </label>
+                            {{ form.description }}
+                            <small class="form-text text-muted">
+                                Provide context, details, and any relevant information about this discussion
+                            </small>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.status.id_for_label }}" class="form-label">
+                                    Status
+                                </label>
+                                {{ form.status }}
+                                <small class="form-text text-muted">
+                                    Current status of this thread
+                                </small>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.tags.id_for_label }}" class="form-label">
+                                    Tags
+                                </label>
+                                {{ form.tags }}
+                                <small class="form-text text-muted">
+                                    Comma-separated tags (e.g., "bug, authentication, urgent")
+                                </small>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i>
+                                {% if thread %}Save Changes{% else %}Create Thread{% endif %}
+                            </button>
+                            <a href="{% url 'documentation:dev_chat_list' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle"></i> Cancel
+                            </a>
+                            {% if thread and user == thread.created_by or user.is_superuser %}
+                            <button type="button" class="btn btn-outline-danger ms-auto"
+                                    data-bs-toggle="modal" data-bs-target="#deleteModal">
+                                <i class="bi bi-trash"></i> Delete Thread
+                            </button>
+                            {% endif %}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow-sm mb-3">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0"><i class="bi bi-lightbulb me-2"></i>Tips for Good Threads</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="small mb-0">
+                        <li class="mb-2">
+                            <strong>Be Specific:</strong> Use clear, descriptive titles
+                        </li>
+                        <li class="mb-2">
+                            <strong>Provide Context:</strong> Include relevant background information
+                        </li>
+                        <li class="mb-2">
+                            <strong>Add Code:</strong> Include code snippets when relevant
+                        </li>
+                        <li class="mb-2">
+                            <strong>Use Tags:</strong> Help others find related discussions
+                        </li>
+                        <li class="mb-2">
+                            <strong>Stay On Topic:</strong> Keep discussions focused
+                        </li>
+                        <li>
+                            <strong>Mark Resolved:</strong> Update status when issue is fixed
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-3 bg-light border-0">
+                <div class="card-body">
+                    <h6 class="mb-3">Common Tags</h6>
+                    <div class="d-flex flex-wrap gap-2">
+                        <span class="badge bg-secondary tag-suggestion" onclick="addTag('bug')">bug</span>
+                        <span class="badge bg-secondary tag-suggestion" onclick="addTag('feature')">feature</span>
+                        <span class="badge bg-secondary tag-suggestion" onclick="addTag('question')">question</span>
+                        <span class="badge bg-secondary tag-suggestion" onclick="addTag('help-wanted')">help-wanted</span>
+                        <span class="badge bg-secondary tag-suggestion" onclick="addTag('urgent')">urgent</span>
+                        <span class="badge bg-secondary tag-suggestion" onclick="addTag('documentation')">documentation</span>
+                        <span class="badge bg-secondary tag-suggestion" onclick="addTag('performance')">performance</span>
+                        <span class="badge bg-secondary tag-suggestion" onclick="addTag('security')">security</span>
+                        <span class="badge bg-secondary tag-suggestion" onclick="addTag('deployment')">deployment</span>
+                        <span class="badge bg-secondary tag-suggestion" onclick="addTag('testing')">testing</span>
+                    </div>
+                    <small class="text-muted d-block mt-2">Click to add a tag</small>
+                </div>
+            </div>
+
+            <div class="card shadow-sm bg-warning bg-opacity-10 border-warning">
+                <div class="card-body">
+                    <h6 class="text-warning">
+                        <i class="bi bi-exclamation-triangle"></i> Remember
+                    </h6>
+                    <p class="small mb-0">
+                        Avoid sharing sensitive information such as passwords, API keys, or personal data in public threads.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    {% if thread and user == thread.created_by or user.is_superuser %}
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="deleteModalLabel">
+                        <i class="bi bi-exclamation-triangle me-2"></i>Confirm Deletion
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete this thread?</p>
+                    <p class="text-muted mb-0"><strong>{{ thread.title }}</strong></p>
+                    <p class="text-danger small mt-2">
+                        This will delete the thread and all {{ thread.message_count }} message{{ thread.message_count|pluralize }}.
+                        This action cannot be undone.
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <form method="post" action="{% url 'documentation:delete_thread' thread.id %}" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-trash"></i> Delete Thread
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Tag suggestion click handler
+    function addTag(tag) {
+        const tagsInput = document.getElementById('{{ form.tags.id_for_label }}');
+        const currentTags = tagsInput.value.trim();
+
+        if (currentTags) {
+            const tagsArray = currentTags.split(',').map(t => t.trim());
+            if (!tagsArray.includes(tag)) {
+                tagsInput.value = currentTags + ', ' + tag;
+            }
+        } else {
+            tagsInput.value = tag;
+        }
+
+        tagsInput.focus();
+    }
+
+    // Visual feedback for tag suggestions
+    document.querySelectorAll('.tag-suggestion').forEach(badge => {
+        badge.style.cursor = 'pointer';
+        badge.addEventListener('mouseenter', function() {
+            this.classList.remove('bg-secondary');
+            this.classList.add('bg-primary');
+        });
+        badge.addEventListener('mouseleave', function() {
+            this.classList.remove('bg-primary');
+            this.classList.add('bg-secondary');
+        });
+    });
+</script>
+{% endblock %}

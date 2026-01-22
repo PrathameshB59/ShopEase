@@ -1,0 +1,479 @@
+/* ============================================
+   ShopEase Documentation - Admin Styles
+   ============================================ */
+
+/* Admin Dashboard */
+.admin-stat-card {
+    border-left: 4px solid;
+    transition: all 0.3s ease;
+}
+
+.admin-stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+.admin-stat-card.primary {
+    border-left-color: #0d6efd;
+}
+
+.admin-stat-card.success {
+    border-left-color: #198754;
+}
+
+.admin-stat-card.warning {
+    border-left-color: #ffc107;
+}
+
+.admin-stat-card.info {
+    border-left-color: #0dcaf0;
+}
+
+.admin-stat-card.danger {
+    border-left-color: #dc3545;
+}
+
+/* Admin Forms */
+.admin-form {
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.admin-form label {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #495057;
+}
+
+.admin-form .form-control,
+.admin-form .form-select {
+    border: 1px solid #ced4da;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.admin-form .form-control:focus,
+.admin-form .form-select:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+.admin-form .form-text {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+.admin-form .invalid-feedback {
+    display: block;
+    margin-top: 0.25rem;
+}
+
+/* Editor Toggle */
+.editor-toggle {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    padding: 1rem;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+}
+
+.editor-toggle .form-check {
+    margin: 0;
+}
+
+/* Table Enhancements */
+.admin-table {
+    background: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.admin-table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    color: #495057;
+    border-bottom: 2px solid #dee2e6;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.admin-table td {
+    vertical-align: middle;
+}
+
+.admin-table tr:hover {
+    background-color: #f8f9fa;
+}
+
+.admin-table .action-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.admin-table .action-buttons .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+/* Status Badges */
+.status-badge {
+    display: inline-block;
+    padding: 0.35em 0.65em;
+    font-size: 0.875em;
+    font-weight: 500;
+    border-radius: 0.25rem;
+}
+
+.status-badge.published {
+    background-color: #d1e7dd;
+    color: #0f5132;
+}
+
+.status-badge.draft {
+    background-color: #fff3cd;
+    color: #664d03;
+}
+
+.status-badge.archived {
+    background-color: #e2e3e5;
+    color: #41464b;
+}
+
+/* Filter Sidebar */
+.filter-sidebar {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.filter-sidebar h5 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.filter-sidebar .form-label {
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+/* Pagination */
+.admin-pagination {
+    display: flex;
+    justify-content: center;
+    margin-top: 2rem;
+}
+
+.admin-pagination .pagination {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Quick Actions */
+.quick-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.quick-action-btn {
+    flex: 1;
+    min-width: 200px;
+    padding: 1rem;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    background: white;
+    transition: all 0.3s ease;
+}
+
+.quick-action-btn:hover {
+    border-color: #0d6efd;
+    background-color: #f8f9fa;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.quick-action-btn i {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+/* Content Preview */
+.content-preview {
+    max-height: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    position: relative;
+}
+
+.content-preview::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 100%;
+    height: 30px;
+    background: linear-gradient(transparent, white);
+}
+
+/* Modal Enhancements */
+.modal-header {
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.modal-footer {
+    background-color: #f8f9fa;
+    border-top: 2px solid #dee2e6;
+}
+
+/* Loading State */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.loading-spinner {
+    width: 3rem;
+    height: 3rem;
+    border: 0.3rem solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Drag and Drop Area */
+.drag-drop-area {
+    border: 2px dashed #ced4da;
+    border-radius: 8px;
+    padding: 2rem;
+    text-align: center;
+    background-color: #f8f9fa;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.drag-drop-area:hover,
+.drag-drop-area.drag-over {
+    border-color: #0d6efd;
+    background-color: #e7f1ff;
+}
+
+.drag-drop-area i {
+    font-size: 3rem;
+    color: #6c757d;
+    margin-bottom: 1rem;
+}
+
+/* File Upload List */
+.file-upload-list {
+    list-style: none;
+    padding: 0;
+    margin-top: 1rem;
+}
+
+.file-upload-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+    margin-bottom: 0.5rem;
+}
+
+.file-upload-item .file-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.file-upload-item .remove-file {
+    color: #dc3545;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.file-upload-item .remove-file:hover {
+    color: #c82333;
+}
+
+/* Analytics Dashboard */
+.analytics-card {
+    height: 100%;
+}
+
+.analytics-chart {
+    min-height: 300px;
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.stat-change {
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.stat-change.positive {
+    color: #198754;
+}
+
+.stat-change.negative {
+    color: #dc3545;
+}
+
+/* Breadcrumb Admin */
+.admin-breadcrumb {
+    background-color: transparent;
+    padding: 1rem 0;
+    margin-bottom: 1rem;
+}
+
+.admin-breadcrumb .breadcrumb-item + .breadcrumb-item::before {
+    content: '›';
+    font-size: 1.2rem;
+}
+
+/* Button Groups */
+.admin-btn-group {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.admin-btn-group .btn {
+    white-space: nowrap;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .admin-form {
+        padding: 1rem;
+    }
+
+    .quick-action-btn {
+        min-width: 100%;
+    }
+
+    .admin-table {
+        font-size: 0.875rem;
+    }
+
+    .admin-table .action-buttons {
+        flex-direction: column;
+    }
+
+    .filter-sidebar {
+        margin-bottom: 1rem;
+    }
+}
+
+/* Dark Mode Support (Optional) */
+@media (prefers-color-scheme: dark) {
+    .admin-form,
+    .admin-table,
+    .filter-sidebar {
+        background-color: #212529;
+        color: #f8f9fa;
+    }
+
+    .admin-form label,
+    .filter-sidebar h5 {
+        color: #f8f9fa;
+    }
+
+    .admin-table th {
+        background-color: #343a40;
+        color: #f8f9fa;
+    }
+
+    .admin-table tr:hover {
+        background-color: #343a40;
+    }
+}
+
+/* Success Animation */
+@keyframes successPulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+}
+
+.success-animation {
+    animation: successPulse 0.5s ease-in-out;
+}
+
+/* Sortable Table Headers */
+.sortable-header {
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+    padding-right: 1.5rem;
+}
+
+.sortable-header::after {
+    content: '⇅';
+    position: absolute;
+    right: 0.5rem;
+    opacity: 0.3;
+}
+
+.sortable-header.asc::after {
+    content: '↑';
+    opacity: 1;
+}
+
+.sortable-header.desc::after {
+    content: '↓';
+    opacity: 1;
+}
+
+/* Highlight Row */
+.highlight-row {
+    background-color: #fff3cd !important;
+    animation: highlightFade 2s ease-out;
+}
+
+@keyframes highlightFade {
+    from {
+        background-color: #fff3cd;
+    }
+    to {
+        background-color: transparent;
+    }
+}

@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}FAQs - ShopEase Documentation{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'documentation/css/docs.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid bg-primary text-white py-4">
+    <div class="container">
+        <h1><i class="bi bi-question-circle me-2"></i>Frequently Asked Questions</h1>
+        <p class="lead mb-0">Find quick answers to common questions about ShopEase.</p>
+    </div>
+</div>
+
+<div class="container my-5">
+    <div class="row">
+        <div class="col-lg-3 mb-4">
+            <div class="card shadow-sm sticky-top" style="top: 1rem;">
+                <div class="card-header bg-dark text-white">
+                    <i class="bi bi-funnel"></i> Filter by Category
+                </div>
+                <div class="list-group list-group-flush">
+                    <a href="{% url 'documentation:faq_list' %}" class="list-group-item list-group-item-action">
+                        All Categories
+                    </a>
+                    {% for category in categories %}
+                    <a href="{% url 'documentation:faq_by_category' category.slug %}"
+                       class="list-group-item list-group-item-action">
+                        {{ category.name }}
+                        <span class="badge bg-primary float-end">{{ category.faqs.count }}</span>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-9">
+            {% if faqs %}
+            <div class="accordion" id="faqAccordion">
+                {% regroup faqs by category as faqs_by_category %}
+                {% for category_group in faqs_by_category %}
+                <h3 class="mt-4 mb-3">
+                    {% if category_group.grouper.icon %}
+                    <i class="bi {{ category_group.grouper.icon }} text-primary me-2"></i>
+                    {% endif %}
+                    {{ category_group.grouper.name }}
+                </h3>
+                {% for faq in category_group.list %}
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button"
+                                data-bs-toggle="collapse" data-bs-target="#faq{{ faq.id }}">
+                            {{ faq.question }}
+                            <span class="badge bg-secondary ms-auto me-2">{{ faq.get_audience_display }}</span>
+                        </button>
+                    </h2>
+                    <div id="faq{{ faq.id }}" class="accordion-collapse collapse"
+                         data-bs-parent="#faqAccordion">
+                        <div class="accordion-body">
+                            {{ faq.answer|safe }}
+                            <hr>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">
+                                    <i class="bi bi-eye"></i> {{ faq.views_count }} views
+                                </small>
+                                <div class="btn-group btn-group-sm">
+                                    <button class="btn btn-outline-success helpful-btn" data-type="faq"
+                                            data-id="{{ faq.id }}" data-helpful="true">
+                                        <i class="bi bi-hand-thumbs-up"></i> {{ faq.helpful_count }}
+                                    </button>
+                                    <button class="btn btn-outline-danger helpful-btn" data-type="faq"
+                                            data-id="{{ faq.id }}" data-helpful="false">
+                                        <i class="bi bi-hand-thumbs-down"></i> {{ faq.not_helpful_count }}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>No FAQs available yet.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'documentation/js/docs.js' %}"></script>
+{% endblock %}

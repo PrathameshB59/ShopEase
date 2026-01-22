@@ -1,0 +1,256 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Code Explanations - ShopEase Documentation{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'documentation/css/docs.css' %}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid bg-dark text-white py-4">
+    <div class="container">
+        <h1><i class="bi bi-code-slash me-2"></i>Code Explanations</h1>
+        <p class="lead mb-0">
+            <i class="bi bi-shield-lock"></i> Superuser Only - Technical documentation of ShopEase codebase
+        </p>
+    </div>
+</div>
+
+<div class="container my-5">
+    {% if not user.is_superuser %}
+    <div class="alert alert-danger">
+        <h4 class="alert-heading"><i class="bi bi-exclamation-triangle me-2"></i>Access Denied</h4>
+        <p>Code explanations are only accessible to superusers.</p>
+        <hr>
+        <p class="mb-0">
+            <a href="{% url 'documentation:doc_home' %}" class="alert-link">Return to Documentation Home</a>
+        </p>
+    </div>
+    {% else %}
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-6">
+                            <input type="text" name="search" class="form-control"
+                                   placeholder="Search code explanations..."
+                                   value="{{ request.GET.search }}">
+                        </div>
+                        <div class="col-md-3">
+                            <select name="module" class="form-select">
+                                <option value="">All Modules</option>
+                                {% for module in modules %}
+                                <option value="{{ module }}" {% if request.GET.module == module %}selected{% endif %}>
+                                    {{ module }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select name="complexity" class="form-select">
+                                <option value="">All Complexity</option>
+                                <option value="BASIC" {% if request.GET.complexity == 'BASIC' %}selected{% endif %}>Basic</option>
+                                <option value="INTERMEDIATE" {% if request.GET.complexity == 'INTERMEDIATE' %}selected{% endif %}>Intermediate</option>
+                                <option value="ADVANCED" {% if request.GET.complexity == 'ADVANCED' %}selected{% endif %}>Advanced</option>
+                                <option value="EXPERT" {% if request.GET.complexity == 'EXPERT' %}selected{% endif %}>Expert</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-search"></i> Search
+                            </button>
+                            <a href="{% url 'documentation:code_index' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle"></i> Clear
+                            </a>
+                            {% if user_permissions.can_edit_documentation %}
+                            <a href="{% url 'documentation:create_code_explanation' %}" class="btn btn-success float-end">
+                                <i class="bi bi-plus-circle"></i> Add Code Explanation
+                            </a>
+                            {% endif %}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h4>
+                    {% if request.GET.search or request.GET.module or request.GET.complexity %}
+                    Search Results <span class="badge bg-secondary">{{ total_count }}</span>
+                    {% else %}
+                    All Code Explanations <span class="badge bg-secondary">{{ total_count }}</span>
+                    {% endif %}
+                </h4>
+                <div class="btn-group btn-group-sm" role="group">
+                    <a href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}{% if request.GET.module %}module={{ request.GET.module }}&{% endif %}{% if request.GET.complexity %}complexity={{ request.GET.complexity }}&{% endif %}view=list"
+                       class="btn btn-outline-primary {% if request.GET.view == 'list' or not request.GET.view %}active{% endif %}">
+                        <i class="bi bi-list-ul"></i> List
+                    </a>
+                    <a href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}{% if request.GET.module %}module={{ request.GET.module }}&{% endif %}{% if request.GET.complexity %}complexity={{ request.GET.complexity }}&{% endif %}view=module"
+                       class="btn btn-outline-primary {% if request.GET.view == 'module' %}active{% endif %}">
+                        <i class="bi bi-folder"></i> By Module
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if code_explanations %}
+
+    {% if request.GET.view == 'module' %}
+    <!-- Grouped by Module View -->
+    {% regroup code_explanations by module as module_groups %}
+    {% for module_group in module_groups %}
+    <div class="mb-5">
+        <h4 class="mb-3">
+            <i class="bi bi-folder2-open text-primary me-2"></i>{{ module_group.grouper }}
+            <span class="badge bg-primary">{{ module_group.list|length }}</span>
+        </h4>
+        <div class="row g-3">
+            {% for code in module_group.list %}
+            <div class="col-md-6">
+                <div class="card hover-card h-100 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="card-title mb-0">
+                                <a href="{% url 'documentation:code_detail' code.slug %}" class="text-decoration-none">
+                                    {{ code.title }}
+                                </a>
+                            </h5>
+                            <span class="badge bg-{{ code.get_complexity_color }}">
+                                {{ code.get_complexity_display }}
+                            </span>
+                        </div>
+                        <p class="text-muted small mb-2">
+                            <i class="bi bi-file-code"></i> {{ code.file_path }}
+                        </p>
+                        <p class="card-text">{{ code.explanation|striptags|truncatewords:20 }}</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">
+                                <i class="bi bi-clock"></i> {{ code.updated_at|timesince }} ago
+                            </small>
+                            <a href="{% url 'documentation:code_detail' code.slug %}" class="btn btn-sm btn-outline-primary">
+                                View Code <i class="bi bi-arrow-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+
+    {% else %}
+    <!-- List View -->
+    <div class="row g-4">
+        {% for code in code_explanations %}
+        <div class="col-12">
+            <div class="card hover-card shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <h5 class="card-title mb-1">
+                                <a href="{% url 'documentation:code_detail' code.slug %}" class="text-decoration-none">
+                                    {{ code.title }}
+                                </a>
+                            </h5>
+                            <p class="text-muted small mb-0">
+                                <i class="bi bi-folder"></i> {{ code.module }} &nbsp;|&nbsp;
+                                <i class="bi bi-file-code"></i> {{ code.file_path }}
+                            </p>
+                        </div>
+                        <span class="badge bg-{{ code.get_complexity_color }}">
+                            {{ code.get_complexity_display }}
+                        </span>
+                    </div>
+                    <p class="card-text">{{ code.explanation|striptags|truncatewords:30 }}</p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted">
+                            <i class="bi bi-clock"></i> Updated {{ code.updated_at|timesince }} ago
+                        </small>
+                        <div>
+                            <a href="{% url 'documentation:code_detail' code.slug %}" class="btn btn-sm btn-outline-primary">
+                                View Details <i class="bi bi-arrow-right"></i>
+                            </a>
+                            {% if user_permissions.can_edit_documentation %}
+                            <a href="{% url 'documentation:edit_code_explanation' code.id %}" class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-pencil"></i> Edit
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if is_paginated %}
+    <nav aria-label="Code explanations pagination" class="mt-5">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.module %}&module={{ request.GET.module }}{% endif %}{% if request.GET.complexity %}&complexity={{ request.GET.complexity }}{% endif %}{% if request.GET.view %}&view={{ request.GET.view }}{% endif %}">
+                    <i class="bi bi-chevron-double-left"></i>
+                </a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.module %}&module={{ request.GET.module }}{% endif %}{% if request.GET.complexity %}&complexity={{ request.GET.complexity }}{% endif %}{% if request.GET.view %}&view={{ request.GET.view }}{% endif %}">
+                    <i class="bi bi-chevron-left"></i>
+                </a>
+            </li>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ num }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.module %}&module={{ request.GET.module }}{% endif %}{% if request.GET.complexity %}&complexity={{ request.GET.complexity }}{% endif %}{% if request.GET.view %}&view={{ request.GET.view }}{% endif %}">{{ num }}</a>
+            </li>
+            {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.module %}&module={{ request.GET.module }}{% endif %}{% if request.GET.complexity %}&complexity={{ request.GET.complexity }}{% endif %}{% if request.GET.view %}&view={{ request.GET.view }}{% endif %}">
+                    <i class="bi bi-chevron-right"></i>
+                </a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.module %}&module={{ request.GET.module }}{% endif %}{% if request.GET.complexity %}&complexity={{ request.GET.complexity }}{% endif %}{% if request.GET.view %}&view={{ request.GET.view }}{% endif %}">
+                    <i class="bi bi-chevron-double-right"></i>
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+
+    {% else %}
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle me-2"></i>
+        {% if request.GET.search or request.GET.module or request.GET.complexity %}
+        No code explanations found matching your filters.
+        {% else %}
+        No code explanations available yet.
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'documentation/js/docs.js' %}"></script>
+{% endblock %}

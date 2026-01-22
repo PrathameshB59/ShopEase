@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}ShopEase Documentation - Home{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'documentation/css/docs.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid bg-primary text-white py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h1 class="display-4 mb-3">ShopEase Documentation</h1>
+                <p class="lead">Find answers, guides, and resources to help you get the most out of ShopEase.</p>
+            </div>
+            <div class="col-lg-4">
+                <form method="get" action="{% url 'documentation:doc_search' %}" class="mt-3 mt-lg-0">
+                    <div class="input-group input-group-lg">
+                        <input type="text" name="query" class="form-control" placeholder="Search documentation...">
+                        <button class="btn btn-light" type="submit">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container my-5">
+    <h2 class="mb-4">Browse by Category</h2>
+    <div class="row g-4">
+        {% for category in categories %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 shadow-sm hover-card">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        {% if category.icon %}
+                        <i class="bi {{ category.icon }} text-primary me-2"></i>
+                        {% else %}
+                        <i class="bi bi-folder text-primary me-2"></i>
+                        {% endif %}
+                        {{ category.name }}
+                    </h5>
+                    <p class="card-text text-muted">{{ category.description|truncatewords:20 }}</p>
+                    <a href="{% url 'documentation:category_docs' category.slug %}" class="btn btn-sm btn-outline-primary">
+                        View Docs <i class="bi bi-arrow-right"></i>
+                    </a>
+                    {% if category.subcategories.all %}
+                    <div class="mt-3">
+                        <small class="text-muted">Subcategories:</small>
+                        <ul class="list-unstyled ms-3">
+                            {% for subcat in category.subcategories.all|slice:":3" %}
+                            <li><small><a href="{% url 'documentation:category_docs' subcat.slug %}">{{ subcat.name }}</a></small></li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>No documentation categories available yet.
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% if featured_docs %}
+<div class="container my-5">
+    <h2 class="mb-4">Featured Documentation</h2>
+    <div class="row g-4">
+        {% for doc in featured_docs %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 shadow-sm hover-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <span class="badge bg-primary">{{ doc.get_audience_display }}</span>
+                        <span class="badge bg-warning text-dark">
+                            <i class="bi bi-star-fill"></i> Featured
+                        </span>
+                    </div>
+                    <h5 class="card-title">{{ doc.title }}</h5>
+                    <p class="card-text text-muted">{{ doc.content|striptags|truncatewords:15 }}</p>
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <a href="{% url 'documentation:doc_detail' doc.slug %}" class="btn btn-sm btn-primary">Read More</a>
+                        <small class="text-muted">
+                            <i class="bi bi-eye"></i> {{ doc.views_count }}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<div class="container my-5">
+    <h2 class="mb-4">Recent Documentation</h2>
+    <div class="row g-4">
+        {% for doc in recent_docs %}
+        <div class="col-md-6 col-lg-3">
+            <div class="card h-100 shadow-sm hover-card">
+                <div class="card-body">
+                    <span class="badge bg-secondary mb-2">{{ doc.category.name }}</span>
+                    <h6 class="card-title">{{ doc.title }}</h6>
+                    <p class="card-text small text-muted">{{ doc.content|striptags|truncatewords:10 }}</p>
+                    <a href="{% url 'documentation:doc_detail' doc.slug %}" class="stretched-link"></a>
+                </div>
+                <div class="card-footer bg-transparent small text-muted">
+                    <i class="bi bi-eye"></i> {{ doc.views_count }} views
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>No documentation available yet.
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% if popular_faqs %}
+<div class="bg-light py-5">
+    <div class="container">
+        <h2 class="mb-4">Popular FAQs</h2>
+        <div class="accordion" id="faqAccordion">
+            {% for faq in popular_faqs %}
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button {% if not forloop.first %}collapsed{% endif %}" type="button"
+                            data-bs-toggle="collapse" data-bs-target="#faq{{ faq.id }}">
+                        {{ faq.question }}
+                    </button>
+                </h2>
+                <div id="faq{{ faq.id }}" class="accordion-collapse collapse {% if forloop.first %}show{% endif %}"
+                     data-bs-parent="#faqAccordion">
+                    <div class="accordion-body">
+                        {{ faq.answer|safe }}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="text-center mt-4">
+            <a href="{% url 'documentation:faq_list' %}" class="btn btn-primary">
+                View All FAQs <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="container my-5">
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card text-center shadow-sm hover-card">
+                <div class="card-body">
+                    <i class="bi bi-question-circle display-3 text-primary mb-3"></i>
+                    <h5 class="card-title">FAQs</h5>
+                    <p class="card-text">Find quick answers to common questions.</p>
+                    <a href="{% url 'documentation:faq_list' %}" class="btn btn-outline-primary">Browse FAQs</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center shadow-sm hover-card">
+                <div class="card-body">
+                    <i class="bi bi-life-preserver display-3 text-success mb-3"></i>
+                    <h5 class="card-title">Help Center</h5>
+                    <p class="card-text">Solutions for common issues and problems.</p>
+                    <a href="{% url 'documentation:help_center' %}" class="btn btn-outline-success">Get Help</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center shadow-sm hover-card">
+                <div class="card-body">
+                    <i class="bi bi-layers display-3 text-info mb-3"></i>
+                    <h5 class="card-title">Version History</h5>
+                    <p class="card-text">View release notes and version history.</p>
+                    <a href="{% url 'documentation:version_list' %}" class="btn btn-outline-info">View Versions</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'documentation/js/docs.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,224 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ category.name }} - Documentation - ShopEase{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'documentation/css/docs.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid bg-primary text-white py-4">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb bg-transparent text-white mb-2">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'documentation:doc_home' %}" class="text-white">Home</a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="{% url 'documentation:doc_home' %}" class="text-white">Documentation</a>
+                </li>
+                <li class="breadcrumb-item active text-white" aria-current="page">{{ category.name }}</li>
+            </ol>
+        </nav>
+        <h1>
+            {% if category.icon %}<i class="bi {{ category.icon }} me-2"></i>{% endif %}
+            {{ category.name }}
+        </h1>
+        {% if category.description %}
+        <p class="lead mb-0">{{ category.description }}</p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="container my-5">
+    <div class="row">
+        <div class="col-lg-3 mb-4">
+            <div class="card shadow-sm sticky-top" style="top: 1rem;">
+                <div class="card-header bg-dark text-white">
+                    <i class="bi bi-funnel"></i> Categories
+                </div>
+                <div class="list-group list-group-flush">
+                    <a href="{% url 'documentation:doc_home' %}" class="list-group-item list-group-item-action">
+                        All Categories
+                    </a>
+                    {% for cat in all_categories %}
+                    <a href="{% url 'documentation:category_docs' cat.slug %}"
+                       class="list-group-item list-group-item-action {% if cat.id == category.id %}active{% endif %}">
+                        {% if cat.icon %}<i class="bi {{ cat.icon }} me-2"></i>{% endif %}
+                        {{ cat.name }}
+                        <span class="badge bg-primary float-end">{{ cat.docs_count }}</span>
+                    </a>
+                    {% if cat.children.exists %}
+                    {% for child in cat.children.all %}
+                    <a href="{% url 'documentation:category_docs' child.slug %}"
+                       class="list-group-item list-group-item-action ps-4 {% if child.id == category.id %}active{% endif %}">
+                        {% if child.icon %}<i class="bi {{ child.icon }} me-2"></i>{% endif %}
+                        {{ child.name }}
+                        <span class="badge bg-secondary float-end">{{ child.docs_count }}</span>
+                    </a>
+                    {% endfor %}
+                    {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-9">
+            {% if category.parent %}
+            <div class="alert alert-info mb-4">
+                <i class="bi bi-info-circle me-2"></i>
+                This is a subcategory of
+                <a href="{% url 'documentation:category_docs' category.parent.slug %}" class="alert-link">
+                    {{ category.parent.name }}
+                </a>
+            </div>
+            {% endif %}
+
+            {% if subcategories %}
+            <div class="mb-4">
+                <h4 class="mb-3">Subcategories</h4>
+                <div class="row g-3">
+                    {% for subcat in subcategories %}
+                    <div class="col-md-6">
+                        <div class="card hover-card h-100 shadow-sm">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    {% if subcat.icon %}<i class="bi {{ subcat.icon }} me-2 text-primary"></i>{% endif %}
+                                    <a href="{% url 'documentation:category_docs' subcat.slug %}" class="text-decoration-none">
+                                        {{ subcat.name }}
+                                    </a>
+                                </h5>
+                                {% if subcat.description %}
+                                <p class="card-text text-muted">{{ subcat.description|truncatewords:20 }}</p>
+                                {% endif %}
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted">{{ subcat.docs_count }} article{{ subcat.docs_count|pluralize }}</small>
+                                    <a href="{% url 'documentation:category_docs' subcat.slug %}" class="btn btn-sm btn-outline-primary">
+                                        Browse <i class="bi bi-arrow-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <hr class="my-4">
+            </div>
+            {% endif %}
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4>
+                    {% if subcategories %}Articles in this Category{% else %}All Articles{% endif %}
+                    <span class="badge bg-secondary">{{ docs.count }}</span>
+                </h4>
+                <div class="btn-group btn-group-sm" role="group">
+                    <a href="?sort=title" class="btn btn-outline-primary {% if request.GET.sort == 'title' %}active{% endif %}">
+                        <i class="bi bi-sort-alpha-down"></i> Title
+                    </a>
+                    <a href="?sort=date" class="btn btn-outline-primary {% if request.GET.sort == 'date' or not request.GET.sort %}active{% endif %}">
+                        <i class="bi bi-calendar"></i> Date
+                    </a>
+                    <a href="?sort=views" class="btn btn-outline-primary {% if request.GET.sort == 'views' %}active{% endif %}">
+                        <i class="bi bi-eye"></i> Views
+                    </a>
+                </div>
+            </div>
+
+            {% if docs %}
+            <div class="row g-4">
+                {% for doc in docs %}
+                <div class="col-12">
+                    <div class="card hover-card shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h5 class="card-title mb-0">
+                                    <a href="{% url 'documentation:doc_detail' doc.slug %}" class="text-decoration-none">
+                                        {{ doc.title }}
+                                    </a>
+                                </h5>
+                                <span class="badge bg-secondary">{{ doc.get_audience_display }}</span>
+                            </div>
+                            {% if doc.meta_description %}
+                            <p class="card-text text-muted">{{ doc.meta_description|truncatewords:30 }}</p>
+                            {% else %}
+                            <p class="card-text text-muted">{{ doc.content|striptags|truncatewords:30 }}</p>
+                            {% endif %}
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex gap-3">
+                                    <small class="text-muted">
+                                        <i class="bi bi-eye"></i> {{ doc.views_count }} views
+                                    </small>
+                                    <small class="text-muted">
+                                        <i class="bi bi-hand-thumbs-up"></i> {{ doc.helpful_count }}
+                                    </small>
+                                    <small class="text-muted">
+                                        <i class="bi bi-clock"></i> Updated {{ doc.updated_at|timesince }} ago
+                                    </small>
+                                </div>
+                                <a href="{% url 'documentation:doc_detail' doc.slug %}" class="btn btn-sm btn-outline-primary">
+                                    Read More <i class="bi bi-arrow-right"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            {% if is_paginated %}
+            <nav aria-label="Documentation pagination" class="mt-5">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}">
+                            <i class="bi bi-chevron-double-left"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}">
+                            <i class="bi bi-chevron-left"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}">{{ num }}</a>
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}">
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}">
+                            <i class="bi bi-chevron-double-right"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+
+            {% else %}
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>
+                No documentation articles available in this category yet.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'documentation/js/docs.js' %}"></script>
+{% endblock %}

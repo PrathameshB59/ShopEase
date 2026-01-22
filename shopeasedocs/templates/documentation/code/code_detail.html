@@ -1,0 +1,306 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ code.title }} - Code Explanations - ShopEase Documentation{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'documentation/css/docs.css' %}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid bg-dark text-white py-4">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb bg-transparent text-white mb-2">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'documentation:doc_home' %}" class="text-white">Home</a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="{% url 'documentation:code_index' %}" class="text-white">Code Explanations</a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="{% url 'documentation:code_index' %}?module={{ code.module }}" class="text-white">
+                        {{ code.module }}
+                    </a>
+                </li>
+                <li class="breadcrumb-item active text-white" aria-current="page">{{ code.title }}</li>
+            </ol>
+        </nav>
+        <h1><i class="bi bi-code-slash me-2"></i>{{ code.title }}</h1>
+        <div class="d-flex gap-3 mt-3 flex-wrap">
+            <span class="badge bg-light text-dark">
+                <i class="bi bi-folder"></i> {{ code.module }}
+            </span>
+            <span class="badge bg-{{ code.get_complexity_color }}">
+                {{ code.get_complexity_display }}
+            </span>
+            <span class="text-white-50">
+                <i class="bi bi-clock"></i> Updated {{ code.updated_at|timesince }} ago
+            </span>
+        </div>
+    </div>
+</div>
+
+<div class="container my-5">
+    {% if not user.is_superuser %}
+    <div class="alert alert-danger">
+        <h4 class="alert-heading"><i class="bi bi-exclamation-triangle me-2"></i>Access Denied</h4>
+        <p>Code explanations are only accessible to superusers.</p>
+        <hr>
+        <p class="mb-0">
+            <a href="{% url 'documentation:doc_home' %}" class="alert-link">Return to Documentation Home</a>
+        </p>
+    </div>
+    {% else %}
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-file-code me-2"></i>{{ code.file_path }}</h5>
+                    <button class="btn btn-sm btn-light copy-code-btn" data-target="code-snippet">
+                        <i class="bi bi-clipboard"></i> Copy Code
+                    </button>
+                </div>
+                <div class="card-body p-0">
+                    <pre class="line-numbers mb-0"><code id="code-snippet" class="language-python">{{ code.code_snippet }}</code></pre>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-chat-text me-2"></i>Explanation</h5>
+                </div>
+                <div class="card-body">
+                    <div class="doc-content">
+                        {{ code.explanation|safe }}
+                    </div>
+                </div>
+            </div>
+
+            {% if code.use_cases %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="bi bi-lightbulb me-2"></i>Use Cases</h5>
+                </div>
+                <div class="card-body">
+                    <div class="doc-content">
+                        {{ code.use_cases|safe }}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if code.best_practices %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="bi bi-check2-square me-2"></i>Best Practices</h5>
+                </div>
+                <div class="card-body">
+                    <div class="doc-content">
+                        {{ code.best_practices|safe }}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if code.common_pitfalls %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0"><i class="bi bi-exclamation-triangle me-2"></i>Common Pitfalls</h5>
+                </div>
+                <div class="card-body">
+                    <div class="doc-content">
+                        {{ code.common_pitfalls|safe }}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if related_code %}
+            <div class="card shadow-sm">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0"><i class="bi bi-link-45deg me-2"></i>Related Code</h5>
+                </div>
+                <div class="list-group list-group-flush">
+                    {% for related in related_code %}
+                    <a href="{% url 'documentation:code_detail' related.slug %}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ related.title }}</h6>
+                            <span class="badge bg-{{ related.get_complexity_color }}">
+                                {{ related.get_complexity_display }}
+                            </span>
+                        </div>
+                        <small class="text-muted">{{ related.module }} - {{ related.file_path }}</small>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow-sm mb-4 sticky-top" style="top: 1rem;">
+                <div class="card-header bg-dark text-white">
+                    <h6 class="mb-0"><i class="bi bi-info-circle me-2"></i>Code Information</h6>
+                </div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-5">Module:</dt>
+                        <dd class="col-sm-7">
+                            <a href="{% url 'documentation:code_index' %}?module={{ code.module }}"
+                               class="text-decoration-none">
+                                {{ code.module }}
+                            </a>
+                        </dd>
+
+                        <dt class="col-sm-5">File Path:</dt>
+                        <dd class="col-sm-7">
+                            <small class="text-muted">{{ code.file_path }}</small>
+                        </dd>
+
+                        <dt class="col-sm-5">Complexity:</dt>
+                        <dd class="col-sm-7">
+                            <span class="badge bg-{{ code.get_complexity_color }}">
+                                {{ code.get_complexity_display }}
+                            </span>
+                        </dd>
+
+                        <dt class="col-sm-5">Author:</dt>
+                        <dd class="col-sm-7">{{ code.author.username|default:"System" }}</dd>
+
+                        <dt class="col-sm-5">Created:</dt>
+                        <dd class="col-sm-7">{{ code.created_at|date:"M d, Y" }}</dd>
+
+                        <dt class="col-sm-5">Last Updated:</dt>
+                        <dd class="col-sm-7">{{ code.updated_at|date:"M d, Y" }}</dd>
+                    </dl>
+                </div>
+                {% if user_permissions.can_edit_documentation %}
+                <div class="card-footer bg-transparent">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'documentation:edit_code_explanation' code.id %}"
+                           class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-pencil"></i> Edit
+                        </a>
+                        <button type="button" class="btn btn-sm btn-outline-danger"
+                                data-bs-toggle="modal" data-bs-target="#deleteModal">
+                            <i class="bi bi-trash"></i> Delete
+                        </button>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="card shadow-sm mb-4 bg-light border-0">
+                <div class="card-body">
+                    <h6 class="mb-3">Quick Actions</h6>
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-sm btn-outline-primary copy-code-btn" data-target="code-snippet">
+                            <i class="bi bi-clipboard"></i> Copy Code
+                        </button>
+                        <a href="{{ code.file_path }}" class="btn btn-sm btn-outline-primary" target="_blank">
+                            <i class="bi bi-file-code"></i> View Full File
+                        </a>
+                        <a href="{% url 'documentation:code_index' %}?module={{ code.module }}"
+                           class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-folder"></i> Browse Module
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm bg-warning bg-opacity-10 border-warning">
+                <div class="card-body">
+                    <h6 class="text-warning">
+                        <i class="bi bi-shield-lock"></i> Superuser Only
+                    </h6>
+                    <p class="small mb-0">
+                        This code explanation is only visible to users with superuser privileges.
+                        Regular users and administrators cannot access this content.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    {% if user_permissions.can_edit_documentation %}
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="deleteModalLabel">
+                        <i class="bi bi-exclamation-triangle me-2"></i>Confirm Deletion
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete this code explanation?</p>
+                    <p class="text-muted mb-0"><strong>{{ code.title }}</strong></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <form method="post" action="{% url 'documentation:delete_code_explanation' code.id %}" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-trash"></i> Delete
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-django.min.js"></script>
+<script src="{% static 'documentation/js/docs.js' %}"></script>
+<script>
+    // Initialize syntax highlighting
+    if (typeof Prism !== 'undefined') {
+        Prism.highlightAll();
+    }
+
+    // Copy code functionality
+    document.querySelectorAll('.copy-code-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const targetId = this.dataset.target;
+            const codeElement = document.getElementById(targetId);
+            const code = codeElement.textContent;
+
+            navigator.clipboard.writeText(code).then(() => {
+                const originalHTML = this.innerHTML;
+                this.innerHTML = '<i class="bi bi-check"></i> Copied!';
+                this.classList.add('btn-success');
+                this.classList.remove('btn-light', 'btn-outline-primary');
+
+                setTimeout(() => {
+                    this.innerHTML = originalHTML;
+                    this.classList.remove('btn-success');
+                    if (this.classList.contains('copy-code-btn')) {
+                        if (this.parentElement.classList.contains('card-header')) {
+                            this.classList.add('btn-light');
+                        } else {
+                            this.classList.add('btn-outline-primary');
+                        }
+                    }
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy code:', err);
+                showToast('Failed to copy code', 'error');
+            });
+        });
+    });
+</script>
+{% endblock %}

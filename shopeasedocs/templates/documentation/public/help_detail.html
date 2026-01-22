@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ issue.title }} - Help Center - ShopEase Documentation{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'documentation/css/docs.css' %}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid bg-primary text-white py-4">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb bg-transparent text-white mb-2">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'documentation:doc_home' %}" class="text-white">Home</a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="{% url 'documentation:help_center' %}" class="text-white">Help Center</a>
+                </li>
+                <li class="breadcrumb-item active text-white" aria-current="page">{{ issue.title }}</li>
+            </ol>
+        </nav>
+        <h1>{{ issue.title }}</h1>
+        <div class="d-flex gap-3 mt-3 flex-wrap">
+            <span class="badge bg-light text-dark">
+                <i class="bi bi-tag"></i> {{ issue.get_issue_type_display }}
+            </span>
+            <span class="text-white-50">
+                <i class="bi bi-eye"></i> {{ issue.views_count }} views
+            </span>
+            <span class="text-white-50">
+                <i class="bi bi-clock"></i> Updated {{ issue.updated_at|timesince }} ago
+            </span>
+        </div>
+    </div>
+</div>
+
+<div class="container my-5">
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0"><i class="bi bi-exclamation-triangle me-2"></i>Problem Description</h5>
+                </div>
+                <div class="card-body">
+                    <div class="help-content">
+                        {{ issue.problem_description|safe }}
+                    </div>
+                </div>
+            </div>
+
+            {% if issue.screenshot %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="bi bi-image me-2"></i>Screenshot</h5>
+                </div>
+                <div class="card-body">
+                    <img src="{{ issue.screenshot.url }}" alt="{{ issue.title }}" class="img-fluid rounded">
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="bi bi-check-circle me-2"></i>Solution Steps</h5>
+                </div>
+                <div class="card-body">
+                    <div class="help-content">
+                        {{ issue.solution_steps|safe }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="mb-3">Was this helpful?</h5>
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-outline-success helpful-btn"
+                                data-type="dailyissuehelp" data-id="{{ issue.id }}" data-helpful="true">
+                            <i class="bi bi-hand-thumbs-up"></i> Yes ({{ issue.helpful_count }})
+                        </button>
+                        <button type="button" class="btn btn-outline-danger helpful-btn"
+                                data-type="dailyissuehelp" data-id="{{ issue.id }}" data-helpful="false">
+                            <i class="bi bi-hand-thumbs-down"></i> No ({{ issue.not_helpful_count }})
+                        </button>
+                    </div>
+                    <p class="text-muted mt-3 mb-0">
+                        <small>Your feedback helps us improve our help articles.</small>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-dark text-white">
+                    <h6 class="mb-0"><i class="bi bi-info-circle me-2"></i>Article Info</h6>
+                </div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-5">Category:</dt>
+                        <dd class="col-sm-7">
+                            <span class="badge bg-{{ issue.get_issue_type_color }}">
+                                {{ issue.get_issue_type_display }}
+                            </span>
+                        </dd>
+
+                        <dt class="col-sm-5">Created:</dt>
+                        <dd class="col-sm-7">{{ issue.created_at|date:"M d, Y" }}</dd>
+
+                        <dt class="col-sm-5">Last Updated:</dt>
+                        <dd class="col-sm-7">{{ issue.updated_at|date:"M d, Y" }}</dd>
+
+                        <dt class="col-sm-5">Views:</dt>
+                        <dd class="col-sm-7">{{ issue.views_count }}</dd>
+
+                        <dt class="col-sm-5">Helpful:</dt>
+                        <dd class="col-sm-7">{{ issue.helpful_count }} / {{ issue.total_feedback_count }}</dd>
+                    </dl>
+                </div>
+            </div>
+
+            {% if related_issues %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-dark text-white">
+                    <h6 class="mb-0"><i class="bi bi-link-45deg me-2"></i>Related Issues</h6>
+                </div>
+                <div class="list-group list-group-flush">
+                    {% for related in related_issues %}
+                    <a href="{% url 'documentation:help_detail' related.slug %}"
+                       class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ related.title|truncatewords:8 }}</h6>
+                            <small class="text-muted">
+                                <i class="bi bi-eye"></i> {{ related.views_count }}
+                            </small>
+                        </div>
+                        <small class="text-muted">{{ related.get_issue_type_display }}</small>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="card shadow-sm bg-light border-0">
+                <div class="card-body text-center">
+                    <i class="bi bi-chat-dots display-5 text-primary mb-3"></i>
+                    <h6>Still need help?</h6>
+                    <p class="text-muted small mb-3">Browse more help articles or check our FAQs.</p>
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'documentation:help_center' %}?type={{ issue.issue_type }}"
+                           class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-arrow-left"></i> More {{ issue.get_issue_type_display }} Articles
+                        </a>
+                        <a href="{% url 'documentation:faq_list' %}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-question-circle"></i> Browse FAQs
+                        </a>
+                        <a href="{% url 'documentation:doc_home' %}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-book"></i> Documentation
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+<script src="{% static 'documentation/js/docs.js' %}"></script>
+<script>
+    // Initialize syntax highlighting
+    if (typeof Prism !== 'undefined') {
+        Prism.highlightAll();
+    }
+</script>
+{% endblock %}

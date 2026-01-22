@@ -1,0 +1,325 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if code %}Edit{% else %}Create{% endif %} Code Explanation - ShopEase Documentation{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'documentation/css/admin-docs.css' %}">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid bg-dark text-white py-4">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb bg-transparent text-white mb-2">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'documentation:doc_home' %}" class="text-white">Home</a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="{% url 'documentation:code_index' %}" class="text-white">Code Explanations</a>
+                </li>
+                <li class="breadcrumb-item active text-white" aria-current="page">
+                    {% if code %}Edit{% else %}Create{% endif %}
+                </li>
+            </ol>
+        </nav>
+        <h1>
+            <i class="bi bi-{% if code %}pencil{% else %}plus-circle{% endif %} me-2"></i>
+            {% if code %}Edit Code Explanation{% else %}Create Code Explanation{% endif %}
+        </h1>
+        <p class="lead mb-0">
+            <i class="bi bi-shield-lock"></i> Superuser Only
+        </p>
+    </div>
+</div>
+
+<div class="container my-5">
+    {% if not user.is_superuser %}
+    <div class="alert alert-danger">
+        <h4 class="alert-heading"><i class="bi bi-exclamation-triangle me-2"></i>Access Denied</h4>
+        <p>Only superusers can create or edit code explanations.</p>
+        <hr>
+        <p class="mb-0">
+            <a href="{% url 'documentation:doc_home' %}" class="alert-link">Return to Documentation Home</a>
+        </p>
+    </div>
+    {% else %}
+
+    <div class="row">
+        <div class="col-lg-9">
+            <div class="card shadow-sm">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-file-code me-2"></i>
+                        Code Explanation Details
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" class="admin-form">
+                        {% csrf_token %}
+
+                        {% if form.errors %}
+                        <div class="alert alert-danger alert-dismissible fade show">
+                            <strong>Please correct the following errors:</strong>
+                            <ul class="mb-0">
+                                {% for field in form %}
+                                    {% for error in field.errors %}
+                                        <li>{{ field.label }}: {{ error }}</li>
+                                    {% endfor %}
+                                {% endfor %}
+                            </ul>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                        {% endif %}
+
+                        <div class="row">
+                            <div class="col-md-8 mb-3">
+                                <label for="{{ form.title.id_for_label }}" class="form-label">
+                                    Title <span class="text-danger">*</span>
+                                </label>
+                                {{ form.title }}
+                                <small class="form-text text-muted">
+                                    Clear, descriptive title for this code explanation
+                                </small>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.complexity.id_for_label }}" class="form-label">
+                                    Complexity Level <span class="text-danger">*</span>
+                                </label>
+                                {{ form.complexity }}
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.module.id_for_label }}" class="form-label">
+                                    Module <span class="text-danger">*</span>
+                                </label>
+                                {{ form.module }}
+                                <small class="form-text text-muted">
+                                    Django app or module name (e.g., "admin_panel", "products")
+                                </small>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.file_path.id_for_label }}" class="form-label">
+                                    File Path <span class="text-danger">*</span>
+                                </label>
+                                {{ form.file_path }}
+                                <small class="form-text text-muted">
+                                    Relative path to the file (e.g., "apps/admin_panel/views.py")
+                                </small>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.slug.id_for_label }}" class="form-label">
+                                Slug <span class="text-danger">*</span>
+                            </label>
+                            {{ form.slug }}
+                            <small class="form-text text-muted">
+                                URL-friendly version of the title (auto-generated if left blank)
+                            </small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.code_snippet.id_for_label }}" class="form-label">
+                                Code Snippet <span class="text-danger">*</span>
+                            </label>
+                            {{ form.code_snippet }}
+                            <small class="form-text text-muted">
+                                The actual code being explained
+                            </small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.explanation.id_for_label }}" class="form-label">
+                                Explanation <span class="text-danger">*</span>
+                            </label>
+                            {{ form.explanation }}
+                            <small class="form-text text-muted">
+                                Detailed explanation of what the code does and how it works
+                            </small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.use_cases.id_for_label }}" class="form-label">
+                                Use Cases
+                            </label>
+                            {{ form.use_cases }}
+                            <small class="form-text text-muted">
+                                When and where to use this code pattern
+                            </small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.best_practices.id_for_label }}" class="form-label">
+                                Best Practices
+                            </label>
+                            {{ form.best_practices }}
+                            <small class="form-text text-muted">
+                                Recommended practices when using this code
+                            </small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.common_pitfalls.id_for_label }}" class="form-label">
+                                Common Pitfalls
+                            </label>
+                            {{ form.common_pitfalls }}
+                            <small class="form-text text-muted">
+                                Common mistakes to avoid
+                            </small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.keywords.id_for_label }}" class="form-label">
+                                Keywords
+                            </label>
+                            {{ form.keywords }}
+                            <small class="form-text text-muted">
+                                Comma-separated keywords for search (e.g., "authentication, decorator, middleware")
+                            </small>
+                        </div>
+
+                        <hr>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" name="action" value="save" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> {% if code %}Save Changes{% else %}Create Code Explanation{% endif %}
+                            </button>
+                            <button type="submit" name="action" value="save_and_continue" class="btn btn-outline-primary">
+                                <i class="bi bi-plus-circle"></i> Save & Add Another
+                            </button>
+                            <a href="{% url 'documentation:code_index' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle"></i> Cancel
+                            </a>
+                            {% if code %}
+                            <button type="button" class="btn btn-outline-danger ms-auto"
+                                    data-bs-toggle="modal" data-bs-target="#deleteModal">
+                                <i class="bi bi-trash"></i> Delete
+                            </button>
+                            {% endif %}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3">
+            <div class="card shadow-sm mb-3 sticky-top" style="top: 1rem;">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0"><i class="bi bi-lightbulb me-2"></i>Tips</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="small mb-0">
+                        <li class="mb-2">Use Markdown formatting for better readability</li>
+                        <li class="mb-2">Include code comments for clarity</li>
+                        <li class="mb-2">Link to related documentation</li>
+                        <li class="mb-2">Keep explanations concise but thorough</li>
+                        <li class="mb-2">Add real-world examples</li>
+                        <li>Use appropriate complexity level</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card shadow-sm bg-warning bg-opacity-10 border-warning">
+                <div class="card-body">
+                    <h6 class="text-warning">
+                        <i class="bi bi-shield-lock"></i> Superuser Only
+                    </h6>
+                    <p class="small mb-0">
+                        This code explanation will only be visible to users with superuser privileges.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    {% if code %}
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="deleteModalLabel">
+                        <i class="bi bi-exclamation-triangle me-2"></i>Confirm Deletion
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete this code explanation?</p>
+                    <p class="text-muted mb-0"><strong>{{ code.title }}</strong></p>
+                    <p class="text-danger small mt-2">This action cannot be undone.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <form method="post" action="{% url 'documentation:delete_code_explanation' code.id %}" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-trash"></i> Delete
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.js"></script>
+<script>
+    // Auto-generate slug from title
+    const titleInput = document.getElementById('{{ form.title.id_for_label }}');
+    const slugInput = document.getElementById('{{ form.slug.id_for_label }}');
+
+    if (titleInput && slugInput && !slugInput.value) {
+        titleInput.addEventListener('blur', function() {
+            if (!slugInput.value) {
+                slugInput.value = this.value
+                    .toLowerCase()
+                    .replace(/[^\w\s-]/g, '')
+                    .replace(/\s+/g, '-')
+                    .replace(/-+/g, '-')
+                    .trim();
+            }
+        });
+    }
+
+    // Initialize SimpleMDE for markdown fields
+    if (document.getElementById('{{ form.explanation.id_for_label }}')) {
+        new SimpleMDE({
+            element: document.getElementById('{{ form.explanation.id_for_label }}'),
+            spellChecker: false,
+            toolbar: ["bold", "italic", "heading", "|", "quote", "unordered-list", "ordered-list", "|",
+                      "link", "image", "code", "table", "|", "preview", "side-by-side", "fullscreen", "|",
+                      "guide"]
+        });
+    }
+
+    if (document.getElementById('{{ form.use_cases.id_for_label }}')) {
+        new SimpleMDE({
+            element: document.getElementById('{{ form.use_cases.id_for_label }}'),
+            spellChecker: false
+        });
+    }
+
+    if (document.getElementById('{{ form.best_practices.id_for_label }}')) {
+        new SimpleMDE({
+            element: document.getElementById('{{ form.best_practices.id_for_label }}'),
+            spellChecker: false
+        });
+    }
+
+    if (document.getElementById('{{ form.common_pitfalls.id_for_label }}')) {
+        new SimpleMDE({
+            element: document.getElementById('{{ form.common_pitfalls.id_for_label }}'),
+            spellChecker: false
+        });
+    }
+</script>
+{% endblock %}
