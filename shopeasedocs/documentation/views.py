@@ -10,7 +10,8 @@ from django.db import transaction
 
 from .models import (
     DocCategory, Documentation, CodeExplanation, FAQ,
-    DeveloperDiscussion, DeveloperMessage, AppVersion, DailyIssueHelp
+    DeveloperDiscussion, DeveloperMessage, AppVersion, DailyIssueHelp,
+    HelpScreenshot, CodeLearningProgress
 )
 from .forms import (
     DocCategoryForm, DocumentationForm, CodeExplanationForm, FAQForm,
@@ -103,8 +104,8 @@ def doc_home(request):
 
     # Popular FAQs
     popular_faqs = FAQ.objects.filter(
-        is_active=True
-    ).order_by('-views_count')[:5]
+        status='published'
+    ).order_by('-view_count')[:5]
 
     context = {
         'categories': categories,
@@ -189,7 +190,7 @@ def faq_list(request):
     ).order_by('order', 'name')
 
     # Filter FAQs by audience
-    faqs_query = FAQ.objects.filter(is_active=True)
+    faqs_query = FAQ.objects.filter(status='published')
 
     if request.user.is_authenticated:
         if request.user.is_superuser:
@@ -216,7 +217,7 @@ def faq_by_category(request, category_slug):
 
     faqs = FAQ.objects.filter(
         category=category,
-        is_active=True
+        status='published'
     ).order_by('order')
 
     context = {
@@ -230,7 +231,7 @@ def help_center(request):
     """Help center with daily issue help articles"""
     issue_type = request.GET.get('type', '')
 
-    help_query = DailyIssueHelp.objects.filter(is_active=True)
+    help_query = DailyIssueHelp.objects.filter(status='published')
 
     if issue_type:
         help_query = help_query.filter(issue_type=issue_type)
@@ -263,7 +264,7 @@ def help_center(request):
 
 def help_detail(request, help_id):
     """Individual help article detail"""
-    help_article = get_object_or_404(DailyIssueHelp, pk=help_id, is_active=True)
+    help_article = get_object_or_404(DailyIssueHelp, pk=help_id, status='published')
 
     # Check audience
     if help_article.audience == 'ADMIN' and not (
@@ -281,7 +282,7 @@ def help_detail(request, help_id):
     # Related articles
     related_articles = DailyIssueHelp.objects.filter(
         issue_type=help_article.issue_type,
-        is_active=True
+        status='published'
     ).exclude(pk=help_article.pk).order_by('-views_count')[:4]
 
     context = {
@@ -333,7 +334,7 @@ def doc_search(request):
             # Search FAQs
             faqs = FAQ.objects.filter(
                 Q(question__icontains=query) | Q(answer__icontains=query),
-                is_active=True
+                status='published'
             ).select_related('category')
 
             # Search Help Articles
@@ -341,7 +342,7 @@ def doc_search(request):
                 Q(title__icontains=query) |
                 Q(problem_description__icontains=query) |
                 Q(solution_steps__icontains=query),
-                is_active=True
+                status='published'
             )
 
             results = {
@@ -425,8 +426,8 @@ def doc_admin_dashboard(request):
         'total_docs': Documentation.objects.count(),
         'published_docs': Documentation.objects.filter(is_published=True).count(),
         'draft_docs': Documentation.objects.filter(is_published=False).count(),
-        'total_faqs': FAQ.objects.filter(is_active=True).count(),
-        'total_help': DailyIssueHelp.objects.filter(is_active=True).count(),
+        'total_faqs': FAQ.objects.filter(status='published').count(),
+        'total_help': DailyIssueHelp.objects.filter(status='published').count(),
         'total_views': Documentation.objects.aggregate(total=Count('views_count'))['total'] or 0,
     }
 

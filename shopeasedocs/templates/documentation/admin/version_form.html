@@ -1,0 +1,473 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if version %}Edit{% else %}Create{% endif %} Version - ShopEase Docs{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'documentation/css/admin-docs.css' %}">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.css">
+<link rel="stylesheet" href="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-lg-9">
+            <!-- Page Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2>
+                        <i class="bi bi-tags me-2"></i>
+                        {% if version %}Edit Version{% else %}Create Version{% endif %}
+                    </h2>
+                    <p class="text-muted mb-0">Document a new release of ShopEase</p>
+                </div>
+                <a href="{% url 'documentation:manage_versions' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-2"></i>Back to List
+                </a>
+            </div>
+
+            <!-- Form -->
+            <form method="post" class="admin-form">
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {{ form.non_field_errors }}
+                </div>
+                {% endif %}
+
+                <!-- Version Number -->
+                <div class="mb-3">
+                    <label for="{{ form.version_number.id_for_label }}" class="form-label">
+                        Version Number <span class="text-danger">*</span>
+                    </label>
+                    {{ form.version_number }}
+                    {% if form.version_number.errors %}
+                    <div class="text-danger small mt-1">{{ form.version_number.errors }}</div>
+                    {% endif %}
+                    <small class="form-text text-muted">
+                        Use semantic versioning format (e.g., 1.0.0, 2.1.3)
+                    </small>
+                </div>
+
+                <!-- Slug -->
+                <div class="mb-3">
+                    <label for="{{ form.slug.id_for_label }}" class="form-label">
+                        Slug <span class="text-danger">*</span>
+                    </label>
+                    {{ form.slug }}
+                    {% if form.slug.errors %}
+                    <div class="text-danger small mt-1">{{ form.slug.errors }}</div>
+                    {% endif %}
+                    <small class="form-text text-muted">
+                        URL-friendly version (auto-generated from version number)
+                    </small>
+                </div>
+
+                <div class="row">
+                    <!-- Version Type -->
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.version_type.id_for_label }}" class="form-label">
+                            Version Type <span class="text-danger">*</span>
+                        </label>
+                        {{ form.version_type }}
+                        {% if form.version_type.errors %}
+                        <div class="text-danger small mt-1">{{ form.version_type.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Release Date -->
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.release_date.id_for_label }}" class="form-label">
+                            Release Date <span class="text-danger">*</span>
+                        </label>
+                        {{ form.release_date }}
+                        {% if form.release_date.errors %}
+                        <div class="text-danger small mt-1">{{ form.release_date.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Editor Type Toggle -->
+                <div class="mb-3">
+                    <label class="form-label">
+                        Release Notes <span class="text-danger">*</span>
+                    </label>
+                    <div class="btn-group editor-toggle mb-2" role="group">
+                        <input type="radio" class="btn-check" name="editorType" id="markdownEditor" value="markdown" checked>
+                        <label class="btn btn-outline-primary" for="markdownEditor">
+                            <i class="bi bi-markdown me-1"></i>Markdown
+                        </label>
+                        <input type="radio" class="btn-check" name="editorType" id="richEditor" value="rich">
+                        <label class="btn btn-outline-primary" for="richEditor">
+                            <i class="bi bi-text-paragraph me-1"></i>Rich Text
+                        </label>
+                    </div>
+                    {{ form.release_notes }}
+                    {% if form.release_notes.errors %}
+                    <div class="text-danger small mt-1">{{ form.release_notes.errors }}</div>
+                    {% endif %}
+                    <small class="form-text text-muted">
+                        Comprehensive overview of changes in this release
+                    </small>
+                </div>
+
+                <!-- New Features -->
+                <div class="mb-3">
+                    <label for="{{ form.new_features.id_for_label }}" class="form-label">
+                        New Features
+                    </label>
+                    {{ form.new_features }}
+                    {% if form.new_features.errors %}
+                    <div class="text-danger small mt-1">{{ form.new_features.errors }}</div>
+                    {% endif %}
+                    <small class="form-text text-muted">
+                        List new features added in this version (one per line)
+                    </small>
+                </div>
+
+                <!-- Bug Fixes -->
+                <div class="mb-3">
+                    <label for="{{ form.bug_fixes.id_for_label }}" class="form-label">
+                        Bug Fixes
+                    </label>
+                    {{ form.bug_fixes }}
+                    {% if form.bug_fixes.errors %}
+                    <div class="text-danger small mt-1">{{ form.bug_fixes.errors }}</div>
+                    {% endif %}
+                    <small class="form-text text-muted">
+                        List bugs fixed in this version (one per line)
+                    </small>
+                </div>
+
+                <!-- Improvements -->
+                <div class="mb-3">
+                    <label for="{{ form.improvements.id_for_label }}" class="form-label">
+                        Improvements
+                    </label>
+                    {{ form.improvements }}
+                    {% if form.improvements.errors %}
+                    <div class="text-danger small mt-1">{{ form.improvements.errors }}</div>
+                    {% endif %}
+                    <small class="form-text text-muted">
+                        List improvements and enhancements (one per line)
+                    </small>
+                </div>
+
+                <!-- Breaking Changes -->
+                <div class="mb-3">
+                    <label for="{{ form.breaking_changes.id_for_label }}" class="form-label">
+                        Breaking Changes
+                    </label>
+                    {{ form.breaking_changes }}
+                    {% if form.breaking_changes.errors %}
+                    <div class="text-danger small mt-1">{{ form.breaking_changes.errors }}</div>
+                    {% endif %}
+                    <small class="form-text text-muted">
+                        List any breaking changes that require attention (one per line)
+                    </small>
+                </div>
+
+                <!-- Migration Guide -->
+                <div class="mb-3">
+                    <label for="{{ form.migration_guide.id_for_label }}" class="form-label">
+                        Migration Guide
+                    </label>
+                    {{ form.migration_guide }}
+                    {% if form.migration_guide.errors %}
+                    <div class="text-danger small mt-1">{{ form.migration_guide.errors }}</div>
+                    {% endif %}
+                    <small class="form-text text-muted">
+                        Instructions for migrating from previous versions
+                    </small>
+                </div>
+
+                <!-- Is Current Version -->
+                <div class="mb-3">
+                    <div class="form-check">
+                        {{ form.is_current_version }}
+                        <label class="form-check-label" for="{{ form.is_current_version.id_for_label }}">
+                            Mark as current version
+                        </label>
+                    </div>
+                    {% if form.is_current_version.errors %}
+                    <div class="text-danger small mt-1">{{ form.is_current_version.errors }}</div>
+                    {% endif %}
+                    <small class="form-text text-muted">
+                        Only one version can be marked as current. This will automatically unmark other versions.
+                    </small>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
+                    <div>
+                        {% if version %}
+                        <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                            <i class="bi bi-trash me-2"></i>Delete Version
+                        </button>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <a href="{% url 'documentation:manage_versions' %}" class="btn btn-secondary me-2">
+                            Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle me-2"></i>
+                            {% if version %}Update{% else %}Create{% endif %} Version
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Sidebar Tips -->
+        <div class="col-lg-3">
+            <div class="card sticky-top" style="top: 20px;">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="bi bi-lightbulb me-2"></i>Version Tips</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="small mb-0 ps-3">
+                        <li class="mb-2">Use semantic versioning (MAJOR.MINOR.PATCH)</li>
+                        <li class="mb-2">Major: Breaking changes (1.0.0 → 2.0.0)</li>
+                        <li class="mb-2">Minor: New features (1.0.0 → 1.1.0)</li>
+                        <li class="mb-2">Patch: Bug fixes (1.0.0 → 1.0.1)</li>
+                        <li class="mb-2">Include clear migration instructions</li>
+                        <li class="mb-2">Highlight breaking changes prominently</li>
+                        <li class="mb-0">Link to related documentation</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="bi bi-list-check me-2"></i>Release Checklist</h6>
+                </div>
+                <div class="card-body">
+                    <div class="form-check small mb-2">
+                        <input class="form-check-input" type="checkbox" id="check1">
+                        <label class="form-check-label" for="check1">
+                            All tests passing
+                        </label>
+                    </div>
+                    <div class="form-check small mb-2">
+                        <input class="form-check-input" type="checkbox" id="check2">
+                        <label class="form-check-label" for="check2">
+                            Documentation updated
+                        </label>
+                    </div>
+                    <div class="form-check small mb-2">
+                        <input class="form-check-input" type="checkbox" id="check3">
+                        <label class="form-check-label" for="check3">
+                            Migration guide written
+                        </label>
+                    </div>
+                    <div class="form-check small mb-2">
+                        <input class="form-check-input" type="checkbox" id="check4">
+                        <label class="form-check-label" for="check4">
+                            Breaking changes listed
+                        </label>
+                    </div>
+                    <div class="form-check small mb-0">
+                        <input class="form-check-input" type="checkbox" id="check5">
+                        <label class="form-check-label" for="check5">
+                            Team notified
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            {% if version %}
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="bi bi-graph-up me-2"></i>Version Stats</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-2">
+                        <strong>Status:</strong>
+                        {% if version.is_current_version %}
+                            <span class="badge bg-success">Current</span>
+                        {% else %}
+                            <span class="badge bg-secondary">Previous</span>
+                        {% endif %}
+                    </div>
+                    <div class="mb-2">
+                        <strong>Views:</strong> {{ version.view_count }}
+                    </div>
+                    <div class="mb-2">
+                        <strong>Created:</strong><br>
+                        <small>{{ version.created_at|date:"M d, Y g:i A" }}</small>
+                    </div>
+                    <div class="mb-0">
+                        <strong>Last Updated:</strong><br>
+                        <small>{{ version.updated_at|date:"M d, Y g:i A" }}</small>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+{% if version %}
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this version?</p>
+                <p class="mb-0"><strong>Version {{ version.version_number }}</strong></p>
+                {% if version.is_current_version %}
+                <p class="text-danger small mt-2">
+                    <i class="bi bi-exclamation-triangle me-1"></i>
+                    This is the current version. Deleting it will remove the current version indicator.
+                </p>
+                {% endif %}
+                <p class="text-danger small">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="post" action="{% url 'documentation:version_delete' version.slug %}" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Delete Version</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.js"></script>
+<script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get form elements
+        const versionInput = document.getElementById('{{ form.version_number.id_for_label }}');
+        const slugInput = document.getElementById('{{ form.slug.id_for_label }}');
+        const contentTextarea = document.getElementById('{{ form.release_notes.id_for_label }}');
+
+        // Auto-generate slug from version number
+        versionInput.addEventListener('blur', function() {
+            if (!slugInput.value) {
+                slugInput.value = 'v-' + this.value
+                    .toLowerCase()
+                    .replace(/[^\w\s.-]/g, '')
+                    .replace(/\s+/g, '-')
+                    .replace(/\.+/g, '-')
+                    .replace(/-+/g, '-')
+                    .trim();
+            }
+        });
+
+        // Editor variables
+        let simpleMDE = null;
+        let tinyMCEInitialized = false;
+
+        // Initialize SimpleMDE (Markdown editor) by default
+        simpleMDE = new SimpleMDE({
+            element: contentTextarea,
+            spellChecker: false,
+            placeholder: "## What's New\n\nDescribe the major changes in this release...\n\n## Breaking Changes\n\nList any breaking changes...\n\n## Migration\n\nProvide migration steps...",
+            toolbar: ["bold", "italic", "heading", "|", "quote", "unordered-list", "ordered-list", "|",
+                     "link", "image", "table", "|", "preview", "side-by-side", "fullscreen", "|", "guide"],
+            status: ["lines", "words", "cursor"],
+        });
+
+        // Editor toggle functionality
+        const markdownBtn = document.getElementById('markdownEditor');
+        const richBtn = document.getElementById('richEditor');
+
+        markdownBtn.addEventListener('change', function() {
+            if (this.checked) {
+                // Switch to Markdown
+                if (tinyMCEInitialized) {
+                    const content = tinymce.get('{{ form.release_notes.id_for_label }}').getContent();
+                    tinymce.get('{{ form.release_notes.id_for_label }}').remove();
+                    tinyMCEInitialized = false;
+                    contentTextarea.value = content;
+                }
+
+                simpleMDE = new SimpleMDE({
+                    element: contentTextarea,
+                    spellChecker: false,
+                    placeholder: "Write release notes...",
+                    toolbar: ["bold", "italic", "heading", "|", "quote", "unordered-list", "ordered-list", "|",
+                             "link", "image", "table", "|", "preview", "side-by-side", "fullscreen", "|", "guide"],
+                    status: ["lines", "words", "cursor"],
+                });
+            }
+        });
+
+        richBtn.addEventListener('change', function() {
+            if (this.checked) {
+                // Switch to TinyMCE
+                if (simpleMDE) {
+                    const content = simpleMDE.value();
+                    simpleMDE.toTextArea();
+                    simpleMDE = null;
+                    contentTextarea.value = content;
+                }
+
+                tinymce.init({
+                    selector: '#{{ form.release_notes.id_for_label }}',
+                    height: 500,
+                    menubar: false,
+                    plugins: [
+                        'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+                        'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+                        'insertdatetime', 'media', 'table', 'help', 'wordcount'
+                    ],
+                    toolbar: 'undo redo | formatselect | bold italic underline | ' +
+                            'alignleft aligncenter alignright alignjustify | ' +
+                            'bullist numlist outdent indent | link image table | ' +
+                            'removeformat | help',
+                    content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 14px; }'
+                });
+                tinyMCEInitialized = true;
+            }
+        });
+
+        // Add form classes to Django form widgets
+        document.querySelectorAll('input[type="text"], input[type="email"], input[type="number"], input[type="date"], select, textarea').forEach(function(element) {
+            if (!element.classList.contains('form-control') && !element.classList.contains('form-select') && !element.classList.contains('form-check-input')) {
+                if (element.tagName === 'SELECT') {
+                    element.classList.add('form-select');
+                } else if (element.type === 'checkbox') {
+                    element.classList.add('form-check-input');
+                } else {
+                    element.classList.add('form-control');
+                }
+            }
+        });
+
+        // Version type help text
+        const versionTypeSelect = document.getElementById('{{ form.version_type.id_for_label }}');
+        versionTypeSelect.addEventListener('change', function() {
+            const helpText = {
+                'major': 'Incompatible API changes or major new features',
+                'minor': 'New features added in a backwards-compatible manner',
+                'patch': 'Bug fixes and minor improvements'
+            };
+
+            const existingHelp = versionTypeSelect.parentElement.querySelector('.dynamic-help');
+            if (existingHelp) {
+                existingHelp.remove();
+            }
+
+            if (this.value && helpText[this.value]) {
+                const helpDiv = document.createElement('small');
+                helpDiv.className = 'form-text text-info dynamic-help';
+                helpDiv.textContent = helpText[this.value];
+                versionTypeSelect.parentElement.appendChild(helpDiv);
+            }
+        });
+    });
+</script>
+{% endblock %}

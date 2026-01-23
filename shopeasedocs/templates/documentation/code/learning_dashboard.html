@@ -1,0 +1,433 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Learning Dashboard - ShopEase Docs{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'documentation/css/docs.css' %}">
+<link rel="stylesheet" href="{% static 'documentation/css/code-learning.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Dashboard Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2><i class="bi bi-graph-up me-2"></i>Learning Dashboard</h2>
+                    <p class="text-muted mb-0">Track your progress in mastering the ShopEase codebase</p>
+                </div>
+                <a href="{% url 'documentation:code_index' %}" class="btn btn-primary">
+                    <i class="bi bi-code-slash me-2"></i>Browse Code Explanations
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overall Progress Stats -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center learning-stat-card">
+                <div class="card-body">
+                    <div class="stat-icon text-primary">
+                        <i class="bi bi-book-half"></i>
+                    </div>
+                    <h3 class="mb-0">{{ total_explanations }}</h3>
+                    <p class="text-muted mb-0">Total Code Lessons</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center learning-stat-card">
+                <div class="card-body">
+                    <div class="stat-icon text-success">
+                        <i class="bi bi-check-circle-fill"></i>
+                    </div>
+                    <h3 class="mb-0">{{ completed_count }}</h3>
+                    <p class="text-muted mb-0">Completed</p>
+                    <small class="text-success">{{ completion_percentage }}%</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center learning-stat-card">
+                <div class="card-body">
+                    <div class="stat-icon text-warning">
+                        <i class="bi bi-clock-history"></i>
+                    </div>
+                    <h3 class="mb-0">{{ in_progress_count }}</h3>
+                    <p class="text-muted mb-0">In Progress</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center learning-stat-card">
+                <div class="card-body">
+                    <div class="stat-icon text-info">
+                        <i class="bi bi-hourglass-split"></i>
+                    </div>
+                    <h3 class="mb-0">{{ total_time_hours }}h {{ total_time_minutes }}m</h3>
+                    <p class="text-muted mb-0">Total Learning Time</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overall Progress Bar -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="mb-3">Overall Progress</h5>
+                    <div class="progress" style="height: 30px;">
+                        <div class="progress-bar bg-success"
+                             role="progressbar"
+                             style="width: {{ completion_percentage }}%"
+                             aria-valuenow="{{ completion_percentage }}"
+                             aria-valuemin="0"
+                             aria-valuemax="100">
+                            {{ completion_percentage }}%
+                        </div>
+                    </div>
+                    <div class="mt-2 d-flex justify-content-between">
+                        <small class="text-muted">{{ completed_count }} of {{ total_explanations }} lessons completed</small>
+                        <small class="text-muted">{{ not_started_count }} not started</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress by Module -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-folder me-2"></i>Progress by Module</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Module</th>
+                                    <th>Lessons</th>
+                                    <th>Completed</th>
+                                    <th>Progress</th>
+                                    <th>Avg. Time</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for module_stat in module_stats %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ module_stat.module }}</strong>
+                                    </td>
+                                    <td>{{ module_stat.total }}</td>
+                                    <td>
+                                        <span class="badge bg-success">{{ module_stat.completed }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="progress" style="width: 200px;">
+                                            <div class="progress-bar"
+                                                 style="width: {{ module_stat.percentage }}%">
+                                                {{ module_stat.percentage }}%
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>{{ module_stat.avg_time }} min</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Continue Learning Section -->
+    {% if in_progress_items %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-play-circle me-2"></i>Continue Learning</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for item in in_progress_items %}
+                        <div class="col-md-6 mb-3">
+                            <div class="card learning-card">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <h6 class="card-title mb-0">
+                                            {{ item.code_explanation.title }}
+                                        </h6>
+                                        <span class="badge bg-warning">In Progress</span>
+                                    </div>
+                                    <p class="card-text small text-muted">
+                                        {{ item.code_explanation.description|truncatewords:15 }}
+                                    </p>
+                                    <div class="mb-3">
+                                        <div class="progress" style="height: 8px;">
+                                            <div class="progress-bar bg-warning"
+                                                 style="width: {{ item.progress_percentage }}%"></div>
+                                        </div>
+                                        <small class="text-muted">{{ item.progress_percentage }}% complete</small>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <small class="text-muted">
+                                            <i class="bi bi-clock me-1"></i>{{ item.time_spent }} min spent
+                                        </small>
+                                        <a href="{% url 'documentation:code_learning_detail' item.code_explanation.slug %}"
+                                           class="btn btn-sm btn-primary">
+                                            Continue <i class="bi bi-arrow-right ms-1"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Recently Completed -->
+    {% if recently_completed %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-check-circle me-2"></i>Recently Completed</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for item in recently_completed %}
+                        <div class="col-md-4 mb-3">
+                            <div class="card learning-card completed">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <h6 class="card-title mb-0">
+                                            {{ item.code_explanation.title }}
+                                        </h6>
+                                        <i class="bi bi-check-circle-fill text-success"></i>
+                                    </div>
+                                    <p class="card-text small text-muted mb-2">
+                                        {{ item.code_explanation.description|truncatewords:10 }}
+                                    </p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <small class="text-muted">
+                                            <i class="bi bi-calendar me-1"></i>{{ item.completed_at|date:"M d, Y" }}
+                                        </small>
+                                        <a href="{% url 'documentation:code_learning_detail' item.code_explanation.slug %}"
+                                           class="btn btn-sm btn-outline-secondary">
+                                            Review
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Recommended Next Lessons -->
+    {% if recommended_lessons %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-star me-2"></i>Recommended Next</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for lesson in recommended_lessons %}
+                        <div class="col-md-4 mb-3">
+                            <div class="card learning-card recommended">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <h6 class="card-title mb-0">{{ lesson.title }}</h6>
+                                        <span class="badge bg-info">
+                                            {{ lesson.get_complexity_display }}
+                                        </span>
+                                    </div>
+                                    <p class="card-text small text-muted mb-2">
+                                        {{ lesson.description|truncatewords:15 }}
+                                    </p>
+                                    <div class="mb-2">
+                                        <span class="badge bg-light text-dark">
+                                            <i class="bi bi-folder me-1"></i>{{ lesson.module }}
+                                        </span>
+                                        <span class="badge bg-light text-dark ms-1">
+                                            <i class="bi bi-clock me-1"></i>~{{ lesson.estimated_learning_time }} min
+                                        </span>
+                                    </div>
+                                    <a href="{% url 'documentation:code_learning_detail' lesson.slug %}"
+                                       class="btn btn-sm btn-primary w-100">
+                                        Start Learning <i class="bi bi-arrow-right ms-1"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- All Lessons by Complexity -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-list-ul me-2"></i>All Lessons</h5>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <input type="radio" class="btn-check" name="complexityFilter" id="filterAll" value="all" checked>
+                        <label class="btn btn-outline-primary" for="filterAll">All</label>
+
+                        <input type="radio" class="btn-check" name="complexityFilter" id="filterBeginner" value="beginner">
+                        <label class="btn btn-outline-success" for="filterBeginner">Beginner</label>
+
+                        <input type="radio" class="btn-check" name="complexityFilter" id="filterIntermediate" value="intermediate">
+                        <label class="btn btn-outline-warning" for="filterIntermediate">Intermediate</label>
+
+                        <input type="radio" class="btn-check" name="complexityFilter" id="filterAdvanced" value="advanced">
+                        <label class="btn btn-outline-danger" for="filterAdvanced">Advanced</label>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="allLessonsTable">
+                            <thead>
+                                <tr>
+                                    <th>Lesson</th>
+                                    <th>Module</th>
+                                    <th>Complexity</th>
+                                    <th>Status</th>
+                                    <th>Time Spent</th>
+                                    <th>Last Accessed</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for progress in all_progress %}
+                                <tr data-complexity="{{ progress.code_explanation.complexity }}">
+                                    <td>
+                                        <strong>{{ progress.code_explanation.title }}</strong>
+                                        <br>
+                                        <small class="text-muted">{{ progress.code_explanation.description|truncatewords:8 }}</small>
+                                    </td>
+                                    <td>{{ progress.code_explanation.module }}</td>
+                                    <td>
+                                        {% if progress.code_explanation.complexity == 'beginner' %}
+                                            <span class="badge bg-success">Beginner</span>
+                                        {% elif progress.code_explanation.complexity == 'intermediate' %}
+                                            <span class="badge bg-warning">Intermediate</span>
+                                        {% elif progress.code_explanation.complexity == 'advanced' %}
+                                            <span class="badge bg-danger">Advanced</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if progress.completed %}
+                                            <span class="badge bg-success">
+                                                <i class="bi bi-check-circle me-1"></i>Completed
+                                            </span>
+                                        {% elif progress.progress_percentage > 0 %}
+                                            <span class="badge bg-warning">
+                                                <i class="bi bi-clock me-1"></i>In Progress
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Not Started</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ progress.time_spent }} min</td>
+                                    <td>
+                                        {% if progress.last_accessed %}
+                                            {{ progress.last_accessed|date:"M d, Y" }}
+                                        {% else %}
+                                            Never
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'documentation:code_learning_detail' progress.code_explanation.slug %}"
+                                           class="btn btn-sm btn-primary">
+                                            {% if progress.completed %}Review{% elif progress.progress_percentage > 0 %}Continue{% else %}Start{% endif %}
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Learning Streak -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-fire me-2"></i>Learning Streak</h5>
+                </div>
+                <div class="card-body text-center">
+                    <div class="streak-display">
+                        <div class="streak-number">{{ current_streak }}</div>
+                        <p class="text-muted">Days in a row</p>
+                    </div>
+                    <small class="text-muted">Keep going! Come back tomorrow to maintain your streak.</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Complexity filter functionality
+        const filterButtons = document.querySelectorAll('input[name="complexityFilter"]');
+        const tableRows = document.querySelectorAll('#allLessonsTable tbody tr');
+
+        filterButtons.forEach(button => {
+            button.addEventListener('change', function() {
+                const filterValue = this.value;
+
+                tableRows.forEach(row => {
+                    if (filterValue === 'all') {
+                        row.style.display = '';
+                    } else {
+                        const rowComplexity = row.getAttribute('data-complexity');
+                        row.style.display = rowComplexity === filterValue ? '' : 'none';
+                    }
+                });
+            });
+        });
+
+        // Add hover effect to learning cards
+        const learningCards = document.querySelectorAll('.learning-card');
+        learningCards.forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-5px)';
+            });
+
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+            });
+        });
+    });
+</script>
+{% endblock %}

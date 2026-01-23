@@ -1,0 +1,433 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if help_article %}Edit{% else %}Create{% endif %} Help Article - ShopEase Docs{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'documentation/css/admin-docs.css' %}">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.css">
+<link rel="stylesheet" href="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-lg-9">
+            <!-- Page Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2>
+                        <i class="bi bi-life-preserver me-2"></i>
+                        {% if help_article %}Edit Help Article{% else %}Create Help Article{% endif %}
+                    </h2>
+                    <p class="text-muted mb-0">Provide solutions to common customer issues</p>
+                </div>
+                <a href="{% url 'documentation:manage_help' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-2"></i>Back to List
+                </a>
+            </div>
+
+            <!-- Form -->
+            <form method="post" enctype="multipart/form-data" class="admin-form">
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {{ form.non_field_errors }}
+                </div>
+                {% endif %}
+
+                <!-- Title -->
+                <div class="mb-3">
+                    <label for="{{ form.title.id_for_label }}" class="form-label">
+                        Title <span class="text-danger">*</span>
+                    </label>
+                    {{ form.title }}
+                    {% if form.title.errors %}
+                    <div class="text-danger small mt-1">{{ form.title.errors }}</div>
+                    {% endif %}
+                    <small class="form-text text-muted">
+                        Clear, descriptive title for the issue
+                    </small>
+                </div>
+
+                <!-- Slug -->
+                <div class="mb-3">
+                    <label for="{{ form.slug.id_for_label }}" class="form-label">
+                        Slug <span class="text-danger">*</span>
+                    </label>
+                    {{ form.slug }}
+                    {% if form.slug.errors %}
+                    <div class="text-danger small mt-1">{{ form.slug.errors }}</div>
+                    {% endif %}
+                    <small class="form-text text-muted">
+                        URL-friendly version (auto-generated from title)
+                    </small>
+                </div>
+
+                <!-- Problem Description -->
+                <div class="mb-3">
+                    <label for="{{ form.problem_description.id_for_label }}" class="form-label">
+                        Problem Description <span class="text-danger">*</span>
+                    </label>
+                    {{ form.problem_description }}
+                    {% if form.problem_description.errors %}
+                    <div class="text-danger small mt-1">{{ form.problem_description.errors }}</div>
+                    {% endif %}
+                    <small class="form-text text-muted">
+                        Describe the issue users are experiencing
+                    </small>
+                </div>
+
+                <!-- Editor Type Toggle -->
+                <div class="mb-3">
+                    <label class="form-label">
+                        Solution Content <span class="text-danger">*</span>
+                    </label>
+                    <div class="btn-group editor-toggle mb-2" role="group">
+                        <input type="radio" class="btn-check" name="editorType" id="markdownEditor" value="markdown" checked>
+                        <label class="btn btn-outline-primary" for="markdownEditor">
+                            <i class="bi bi-markdown me-1"></i>Markdown
+                        </label>
+                        <input type="radio" class="btn-check" name="editorType" id="richEditor" value="rich">
+                        <label class="btn btn-outline-primary" for="richEditor">
+                            <i class="bi bi-text-paragraph me-1"></i>Rich Text
+                        </label>
+                    </div>
+                    {{ form.solution_steps }}
+                    {% if form.solution_steps.errors %}
+                    <div class="text-danger small mt-1">{{ form.solution_steps.errors }}</div>
+                    {% endif %}
+                    <small class="form-text text-muted">
+                        Step-by-step solution to resolve the issue
+                    </small>
+                </div>
+
+                <div class="row">
+                    <!-- Issue Type -->
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.issue_type.id_for_label }}" class="form-label">
+                            Issue Type <span class="text-danger">*</span>
+                        </label>
+                        {{ form.issue_type }}
+                        {% if form.issue_type.errors %}
+                        <div class="text-danger small mt-1">{{ form.issue_type.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Audience -->
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.audience.id_for_label }}" class="form-label">
+                            Target Audience <span class="text-danger">*</span>
+                        </label>
+                        {{ form.audience }}
+                        {% if form.audience.errors %}
+                        <div class="text-danger small mt-1">{{ form.audience.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Keywords -->
+                <div class="mb-3">
+                    <label for="{{ form.keywords.id_for_label }}" class="form-label">
+                        Keywords
+                    </label>
+                    {{ form.keywords }}
+                    {% if form.keywords.errors %}
+                    <div class="text-danger small mt-1">{{ form.keywords.errors }}</div>
+                    {% endif %}
+                    <small class="form-text text-muted">
+                        Comma-separated keywords for better search results
+                    </small>
+                </div>
+
+                <!-- Status -->
+                <div class="mb-3">
+                    <label for="{{ form.status.id_for_label }}" class="form-label">
+                        Status <span class="text-danger">*</span>
+                    </label>
+                    {{ form.status }}
+                    {% if form.status.errors %}
+                    <div class="text-danger small mt-1">{{ form.status.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Screenshots Section -->
+                <div class="mb-4">
+                    <h5 class="mb-3">
+                        <i class="bi bi-images me-2"></i>Screenshots
+                    </h5>
+                    <p class="text-muted small">Add visual aids to help users follow the solution steps</p>
+
+                    {% if help_article and help_article.screenshots.exists %}
+                    <div class="row mb-3">
+                        {% for screenshot in help_article.screenshots.all %}
+                        <div class="col-md-4 mb-3">
+                            <div class="card">
+                                <img src="{{ screenshot.image.url }}" class="card-img-top" alt="{{ screenshot.caption }}">
+                                <div class="card-body">
+                                    <p class="card-text small">{{ screenshot.caption }}</p>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="delete_screenshot_{{ screenshot.id }}" id="delete_{{ screenshot.id }}">
+                                        <label class="form-check-label text-danger" for="delete_{{ screenshot.id }}">
+                                            Delete this screenshot
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <div id="screenshotFields">
+                        <div class="screenshot-field mb-3">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label class="form-label">Image</label>
+                                    <input type="file" class="form-control" name="screenshot_image_1" accept="image/*">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Caption</label>
+                                    <input type="text" class="form-control" name="screenshot_caption_1" placeholder="Describe this screenshot">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="addScreenshot">
+                        <i class="bi bi-plus-circle me-1"></i>Add Another Screenshot
+                    </button>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
+                    <div>
+                        {% if help_article %}
+                        <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                            <i class="bi bi-trash me-2"></i>Delete Article
+                        </button>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <a href="{% url 'documentation:manage_help' %}" class="btn btn-secondary me-2">
+                            Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle me-2"></i>
+                            {% if help_article %}Update{% else %}Create{% endif %} Article
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Sidebar Tips -->
+        <div class="col-lg-3">
+            <div class="card sticky-top" style="top: 20px;">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="bi bi-lightbulb me-2"></i>Writing Tips</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="small mb-0 ps-3">
+                        <li class="mb-2">Use clear, concise language</li>
+                        <li class="mb-2">Number solution steps sequentially</li>
+                        <li class="mb-2">Add screenshots for visual clarity</li>
+                        <li class="mb-2">Include common variations of the issue</li>
+                        <li class="mb-2">Test solutions before publishing</li>
+                        <li class="mb-2">Keep keywords relevant for search</li>
+                        <li class="mb-0">Update articles when solutions change</li>
+                    </ul>
+                </div>
+            </div>
+
+            {% if help_article %}
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="bi bi-graph-up me-2"></i>Article Stats</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-2">
+                        <strong>Views:</strong> {{ help_article.view_count }}
+                    </div>
+                    <div class="mb-2">
+                        <strong>Helpful:</strong> {{ help_article.helpful_count }}
+                    </div>
+                    <div class="mb-2">
+                        <strong>Created:</strong><br>
+                        <small>{{ help_article.created_at|date:"M d, Y g:i A" }}</small>
+                    </div>
+                    <div class="mb-0">
+                        <strong>Last Updated:</strong><br>
+                        <small>{{ help_article.updated_at|date:"M d, Y g:i A" }}</small>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+{% if help_article %}
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this help article?</p>
+                <p class="mb-0"><strong>{{ help_article.title }}</strong></p>
+                <p class="text-danger small mt-2">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="post" action="{% url 'documentation:help_delete' help_article.slug %}" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Delete Article</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.js"></script>
+<script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get form elements
+        const titleInput = document.getElementById('{{ form.title.id_for_label }}');
+        const slugInput = document.getElementById('{{ form.slug.id_for_label }}');
+        const contentTextarea = document.getElementById('{{ form.solution_steps.id_for_label }}');
+
+        // Auto-generate slug from title
+        titleInput.addEventListener('blur', function() {
+            if (!slugInput.value) {
+                slugInput.value = this.value
+                    .toLowerCase()
+                    .replace(/[^\w\s-]/g, '')
+                    .replace(/\s+/g, '-')
+                    .replace(/-+/g, '-')
+                    .trim();
+            }
+        });
+
+        // Editor variables
+        let simpleMDE = null;
+        let tinyMCEInitialized = false;
+
+        // Initialize SimpleMDE (Markdown editor) by default
+        simpleMDE = new SimpleMDE({
+            element: contentTextarea,
+            spellChecker: false,
+            placeholder: "Write your solution steps here...\n\n1. First step\n2. Second step\n3. Third step",
+            toolbar: ["bold", "italic", "heading", "|", "quote", "unordered-list", "ordered-list", "|",
+                     "link", "image", "|", "preview", "side-by-side", "fullscreen", "|", "guide"],
+            status: ["lines", "words", "cursor"],
+        });
+
+        // Editor toggle functionality
+        const markdownBtn = document.getElementById('markdownEditor');
+        const richBtn = document.getElementById('richEditor');
+
+        markdownBtn.addEventListener('change', function() {
+            if (this.checked) {
+                // Switch to Markdown
+                if (tinyMCEInitialized) {
+                    const content = tinymce.get('{{ form.solution_steps.id_for_label }}').getContent();
+                    tinymce.get('{{ form.solution_steps.id_for_label }}').remove();
+                    tinyMCEInitialized = false;
+                    contentTextarea.value = content;
+                }
+
+                simpleMDE = new SimpleMDE({
+                    element: contentTextarea,
+                    spellChecker: false,
+                    placeholder: "Write your solution steps here...",
+                    toolbar: ["bold", "italic", "heading", "|", "quote", "unordered-list", "ordered-list", "|",
+                             "link", "image", "|", "preview", "side-by-side", "fullscreen", "|", "guide"],
+                    status: ["lines", "words", "cursor"],
+                });
+            }
+        });
+
+        richBtn.addEventListener('change', function() {
+            if (this.checked) {
+                // Switch to TinyMCE
+                if (simpleMDE) {
+                    const content = simpleMDE.value();
+                    simpleMDE.toTextArea();
+                    simpleMDE = null;
+                    contentTextarea.value = content;
+                }
+
+                tinymce.init({
+                    selector: '#{{ form.solution_steps.id_for_label }}',
+                    height: 400,
+                    menubar: false,
+                    plugins: [
+                        'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+                        'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+                        'insertdatetime', 'media', 'table', 'help', 'wordcount'
+                    ],
+                    toolbar: 'undo redo | formatselect | bold italic underline | ' +
+                            'alignleft aligncenter alignright alignjustify | ' +
+                            'bullist numlist outdent indent | link image | ' +
+                            'removeformat | help',
+                    content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 14px; }'
+                });
+                tinyMCEInitialized = true;
+            }
+        });
+
+        // Screenshot field management
+        let screenshotCount = 1;
+        const addScreenshotBtn = document.getElementById('addScreenshot');
+        const screenshotFields = document.getElementById('screenshotFields');
+
+        addScreenshotBtn.addEventListener('click', function() {
+            screenshotCount++;
+            const newField = document.createElement('div');
+            newField.className = 'screenshot-field mb-3';
+            newField.innerHTML = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <label class="form-label">Image</label>
+                        <input type="file" class="form-control" name="screenshot_image_${screenshotCount}" accept="image/*">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Caption</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" name="screenshot_caption_${screenshotCount}" placeholder="Describe this screenshot">
+                            <button type="button" class="btn btn-outline-danger remove-screenshot">
+                                <i class="bi bi-x"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            screenshotFields.appendChild(newField);
+
+            // Add remove functionality
+            newField.querySelector('.remove-screenshot').addEventListener('click', function() {
+                newField.remove();
+            });
+        });
+
+        // Add form classes to Django form widgets
+        document.querySelectorAll('input[type="text"], input[type="email"], input[type="number"], select, textarea').forEach(function(element) {
+            if (!element.classList.contains('form-control') && !element.classList.contains('form-select')) {
+                if (element.tagName === 'SELECT') {
+                    element.classList.add('form-select');
+                } else {
+                    element.classList.add('form-control');
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

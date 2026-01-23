@@ -2,7 +2,8 @@ from django import forms
 from django.contrib.auth.models import User
 from .models import (
     DocCategory, Documentation, CodeExplanation, FAQ,
-    DeveloperDiscussion, DeveloperMessage, AppVersion, DailyIssueHelp
+    DeveloperDiscussion, DeveloperMessage, AppVersion, DailyIssueHelp,
+    HelpScreenshot, CodeLearningProgress
 )
 
 
@@ -123,8 +124,12 @@ class CodeExplanationForm(forms.ModelForm):
     class Meta:
         model = CodeExplanation
         fields = [
-            'title', 'slug', 'module', 'file_path', 'line_numbers',
-            'code_snippet', 'explanation', 'why_it_matters', 'complexity',
+            'title', 'slug', 'description', 'module', 'file_path', 'line_numbers',
+            'code_snippet', 'detailed_explanation', 'why_it_matters', 'complexity',
+            'line_by_line_explanation', 'execution_flow', 'visual_diagram',
+            'interactive_demo_url', 'learning_objectives', 'prerequisites',
+            'related_concepts', 'common_mistakes', 'practice_exercises',
+            'time_complexity', 'space_complexity', 'estimated_learning_time',
             'related_docs', 'author'
         ]
         widgets = {
@@ -135,6 +140,11 @@ class CodeExplanationForm(forms.ModelForm):
             'slug': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'auto-generated-slug'
+            }),
+            'description': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 2,
+                'placeholder': 'Brief description of what this code does'
             }),
             'module': forms.Select(attrs={
                 'class': 'form-select'
@@ -153,10 +163,10 @@ class CodeExplanationForm(forms.ModelForm):
                 'placeholder': 'Paste the code snippet here...',
                 'style': 'font-family: monospace;'
             }),
-            'explanation': forms.Textarea(attrs={
+            'detailed_explanation': forms.Textarea(attrs={
                 'class': 'form-control',
                 'rows': 8,
-                'placeholder': 'Detailed explanation of the code...'
+                'placeholder': 'Detailed overview explanation of the code...'
             }),
             'why_it_matters': forms.Textarea(attrs={
                 'class': 'form-control',
@@ -165,6 +175,62 @@ class CodeExplanationForm(forms.ModelForm):
             }),
             'complexity': forms.Select(attrs={
                 'class': 'form-select'
+            }),
+            'line_by_line_explanation': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 6,
+                'placeholder': '{"1": "Line 1 explanation", "2": "Line 2 explanation"}'
+            }),
+            'execution_flow': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 4,
+                'placeholder': '[{"step": 1, "line": 1, "description": "..."}, ...]'
+            }),
+            'visual_diagram': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 8,
+                'placeholder': 'Mermaid.js syntax for flowchart'
+            }),
+            'interactive_demo_url': forms.URLInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'https://codepen.io/...'
+            }),
+            'learning_objectives': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'What learners will understand...'
+            }),
+            'prerequisites': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Required knowledge before studying this...'
+            }),
+            'related_concepts': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Related programming concepts...'
+            }),
+            'common_mistakes': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Common mistakes to avoid...'
+            }),
+            'practice_exercises': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 4,
+                'placeholder': 'Exercises to practice this concept...'
+            }),
+            'time_complexity': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'O(n) or O(log n)'
+            }),
+            'space_complexity': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'O(1) or O(n)'
+            }),
+            'estimated_learning_time': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': '15'
             }),
             'related_docs': forms.SelectMultiple(attrs={
                 'class': 'form-select',
@@ -177,7 +243,8 @@ class CodeExplanationForm(forms.ModelForm):
         help_texts = {
             'slug': 'Leave blank to auto-generate from title',
             'file_path': 'Relative path from project root',
-            'line_numbers': 'e.g., 145-178 or just 145'
+            'line_numbers': 'e.g., 145-178 or just 145',
+            'estimated_learning_time': 'Estimated time in minutes'
         }
 
 
@@ -186,7 +253,7 @@ class FAQForm(forms.ModelForm):
 
     class Meta:
         model = FAQ
-        fields = ['category', 'question', 'answer', 'audience', 'order', 'is_active']
+        fields = ['category', 'question', 'answer', 'audience', 'keywords', 'order', 'status']
         widgets = {
             'category': forms.Select(attrs={
                 'class': 'form-select'
@@ -203,17 +270,22 @@ class FAQForm(forms.ModelForm):
             'audience': forms.Select(attrs={
                 'class': 'form-select'
             }),
+            'keywords': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'keyword1, keyword2, keyword3'
+            }),
             'order': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'placeholder': '0'
             }),
-            'is_active': forms.CheckboxInput(attrs={
-                'class': 'form-check-input'
+            'status': forms.Select(attrs={
+                'class': 'form-select'
             })
         }
         help_texts = {
             'order': 'Lower numbers appear first within category',
-            'audience': 'Who can see this FAQ'
+            'audience': 'Who can see this FAQ',
+            'keywords': 'Comma-separated keywords for search'
         }
 
 
@@ -274,14 +346,18 @@ class AppVersionForm(forms.ModelForm):
     class Meta:
         model = AppVersion
         fields = [
-            'version_number', 'version_type', 'release_date', 'release_notes',
+            'version_number', 'slug', 'version_type', 'release_date', 'release_notes',
             'new_features', 'bug_fixes', 'improvements', 'breaking_changes',
-            'is_current', 'created_by'
+            'migration_guide', 'is_current_version', 'created_by'
         ]
         widgets = {
             'version_number': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': '1.2.3'
+            }),
+            'slug': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'v-1-2-3'
             }),
             'version_type': forms.Select(attrs={
                 'class': 'form-select'
@@ -315,7 +391,12 @@ class AppVersionForm(forms.ModelForm):
                 'rows': 4,
                 'placeholder': '- Breaking change 1\n- Breaking change 2'
             }),
-            'is_current': forms.CheckboxInput(attrs={
+            'migration_guide': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 4,
+                'placeholder': 'Migration instructions from previous versions...'
+            }),
+            'is_current_version': forms.CheckboxInput(attrs={
                 'class': 'form-check-input'
             }),
             'created_by': forms.Select(attrs={
@@ -324,7 +405,8 @@ class AppVersionForm(forms.ModelForm):
         }
         help_texts = {
             'version_number': 'Semantic versioning (e.g., 1.2.3)',
-            'is_current': 'Only one version should be marked as current'
+            'slug': 'Leave blank to auto-generate from version number',
+            'is_current_version': 'Only one version should be marked as current'
         }
 
 
@@ -334,13 +416,17 @@ class DailyIssueHelpForm(forms.ModelForm):
     class Meta:
         model = DailyIssueHelp
         fields = [
-            'title', 'issue_type', 'problem_description', 'solution_steps',
-            'screenshot', 'audience', 'is_active'
+            'title', 'slug', 'issue_type', 'problem_description', 'solution_steps',
+            'keywords', 'audience', 'status'
         ]
         widgets = {
             'title': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'Enter issue title'
+            }),
+            'slug': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'auto-generated-slug'
             }),
             'issue_type': forms.Select(attrs={
                 'class': 'form-select'
@@ -355,19 +441,20 @@ class DailyIssueHelpForm(forms.ModelForm):
                 'rows': 7,
                 'placeholder': 'Step-by-step solution:\n1. First step\n2. Second step\n3. ...'
             }),
-            'screenshot': forms.FileInput(attrs={
+            'keywords': forms.TextInput(attrs={
                 'class': 'form-control',
-                'accept': 'image/*'
+                'placeholder': 'keyword1, keyword2, keyword3'
             }),
             'audience': forms.Select(attrs={
                 'class': 'form-select'
             }),
-            'is_active': forms.CheckboxInput(attrs={
-                'class': 'form-check-input'
+            'status': forms.Select(attrs={
+                'class': 'form-select'
             })
         }
         help_texts = {
-            'screenshot': 'Optional screenshot showing the issue or solution'
+            'slug': 'Leave blank to auto-generate from title',
+            'keywords': 'Comma-separated keywords for search'
         }
 
 

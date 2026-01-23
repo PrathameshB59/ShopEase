@@ -100,6 +100,7 @@ class Documentation(models.Model):
 class CodeExplanation(models.Model):
     """
     Detailed code-level explanations visible ONLY to superusers for learning
+    Enhanced with interactive visual learning features
     """
     MODULE_CHOICES = [
         ('ACCOUNTS', 'Accounts App'),
@@ -112,22 +113,81 @@ class CodeExplanation(models.Model):
     ]
 
     COMPLEXITY_CHOICES = [
-        ('BASIC', 'Basic'),
-        ('INTERMEDIATE', 'Intermediate'),
-        ('ADVANCED', 'Advanced'),
+        ('beginner', 'Beginner'),
+        ('intermediate', 'Intermediate'),
+        ('advanced', 'Advanced'),
     ]
 
     title = models.CharField(max_length=200)
     slug = models.SlugField(unique=True, max_length=220)
+    description = models.TextField(help_text="Brief description of what this code does")
     module = models.CharField(max_length=20, choices=MODULE_CHOICES)
     file_path = models.CharField(max_length=500, help_text="Relative path to file (e.g., 'shopease/apps/accounts/views.py')")
     line_numbers = models.CharField(max_length=50, blank=True, help_text="Line range (e.g., '145-178')")
 
     # Code details
     code_snippet = models.TextField(help_text="The actual code being explained")
-    explanation = models.TextField(help_text="Detailed line-by-line or block-by-block explanation")
+    detailed_explanation = models.TextField(help_text="Detailed overview explanation")
     why_it_matters = models.TextField(blank=True, help_text="Why this code pattern is important")
-    complexity = models.CharField(max_length=20, choices=COMPLEXITY_CHOICES, default='INTERMEDIATE')
+    complexity = models.CharField(max_length=20, choices=COMPLEXITY_CHOICES, default='intermediate')
+
+    # Enhanced visual learning fields
+    line_by_line_explanation = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="JSON object with line numbers as keys and detailed explanations as values"
+    )
+    execution_flow = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="JSON array describing execution order and flow"
+    )
+    visual_diagram = models.TextField(
+        blank=True,
+        help_text="Mermaid.js syntax for flowchart/diagram"
+    )
+    interactive_demo_url = models.URLField(
+        blank=True,
+        help_text="URL to interactive demo (e.g., CodePen, JSFiddle)"
+    )
+
+    # Learning content
+    learning_objectives = models.TextField(
+        blank=True,
+        help_text="What learners will understand after studying this code"
+    )
+    prerequisites = models.TextField(
+        blank=True,
+        help_text="Concepts/topics learners should know before studying this"
+    )
+    related_concepts = models.TextField(
+        blank=True,
+        help_text="Related programming concepts and patterns"
+    )
+    common_mistakes = models.TextField(
+        blank=True,
+        help_text="Common mistakes developers make with this pattern"
+    )
+    practice_exercises = models.TextField(
+        blank=True,
+        help_text="Exercises to practice and reinforce learning"
+    )
+
+    # Complexity analysis
+    time_complexity = models.CharField(
+        max_length=50,
+        blank=True,
+        help_text="Big O notation for time complexity (e.g., 'O(n)')"
+    )
+    space_complexity = models.CharField(
+        max_length=50,
+        blank=True,
+        help_text="Big O notation for space complexity (e.g., 'O(1)')"
+    )
+    estimated_learning_time = models.PositiveIntegerField(
+        default=15,
+        help_text="Estimated time to learn this code (in minutes)"
+    )
 
     # Related content
     related_docs = models.ManyToManyField(Documentation, blank=True, related_name='related_code_examples')
@@ -145,6 +205,7 @@ class CodeExplanation(models.Model):
         indexes = [
             models.Index(fields=['slug']),
             models.Index(fields=['module']),
+            models.Index(fields=['complexity']),
         ]
         db_table = 'documentation_codeexplanation'
 
@@ -169,12 +230,19 @@ class FAQ(models.Model):
     AUDIENCE_CHOICES = Documentation.AUDIENCE_CHOICES
     audience = models.CharField(max_length=20, choices=AUDIENCE_CHOICES, default='ALL')
 
+    # SEO
+    keywords = models.CharField(max_length=200, blank=True, help_text="Comma-separated keywords for search")
+
     # Display
     order = models.PositiveIntegerField(default=0, help_text="Display order within category")
-    is_active = models.BooleanField(default=True)
+    status = models.CharField(
+        max_length=20,
+        choices=[('published', 'Published'), ('draft', 'Draft')],
+        default='published'
+    )
 
     # Analytics
-    views_count = models.PositiveIntegerField(default=0)
+    view_count = models.PositiveIntegerField(default=0)
     helpful_count = models.PositiveIntegerField(default=0)
     not_helpful_count = models.PositiveIntegerField(default=0)
 
@@ -263,12 +331,13 @@ class AppVersion(models.Model):
     Track application versions and release notes
     """
     VERSION_TYPE = [
-        ('MAJOR', 'Major Release'),
-        ('MINOR', 'Minor Release'),
-        ('PATCH', 'Patch/Hotfix'),
+        ('major', 'Major Release'),
+        ('minor', 'Minor Release'),
+        ('patch', 'Patch/Hotfix'),
     ]
 
     version_number = models.CharField(max_length=20, unique=True, help_text="Semantic versioning (e.g., '1.2.3')")
+    slug = models.SlugField(unique=True, max_length=50)
     version_type = models.CharField(max_length=10, choices=VERSION_TYPE)
 
     # Release information
@@ -280,25 +349,34 @@ class AppVersion(models.Model):
     bug_fixes = models.TextField(blank=True, help_text="List of bug fixes")
     improvements = models.TextField(blank=True, help_text="List of improvements")
     breaking_changes = models.TextField(blank=True, help_text="Breaking changes that require action")
+    migration_guide = models.TextField(blank=True, help_text="Instructions for migrating from previous versions")
 
     # Metadata
-    is_current = models.BooleanField(default=False, help_text="Mark as current version (only one should be current)")
+    is_current_version = models.BooleanField(default=False, help_text="Mark as current version (only one should be current)")
+    view_count = models.PositiveIntegerField(default=0)
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         verbose_name = "App Version"
         verbose_name_plural = "App Versions"
         ordering = ['-release_date']
+        indexes = [
+            models.Index(fields=['slug']),
+            models.Index(fields=['-release_date']),
+        ]
         db_table = 'documentation_appversion'
 
     def __str__(self):
         return f"v{self.version_number} ({self.get_version_type_display()})"
 
     def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(f"v-{self.version_number}")
         # If this version is marked as current, unmark all others
-        if self.is_current:
-            AppVersion.objects.filter(is_current=True).update(is_current=False)
+        if self.is_current_version:
+            AppVersion.objects.filter(is_current_version=True).update(is_current_version=False)
         super().save(*args, **kwargs)
 
 
@@ -316,14 +394,15 @@ class DailyIssueHelp(models.Model):
     ]
 
     title = models.CharField(max_length=200)
+    slug = models.SlugField(unique=True, max_length=220)
     issue_type = models.CharField(max_length=20, choices=ISSUE_TYPE)
 
     # Problem and solution
     problem_description = models.TextField(help_text="Describe the problem")
     solution_steps = models.TextField(help_text="Step-by-step solution")
 
-    # Visual aids
-    screenshot = models.ImageField(upload_to='issue_help_screenshots/', blank=True, null=True, help_text="Optional screenshot showing the issue or solution")
+    # SEO
+    keywords = models.CharField(max_length=200, blank=True, help_text="Comma-separated keywords for search")
 
     # Audience targeting
     AUDIENCE_CHOICES = Documentation.AUDIENCE_CHOICES
@@ -335,7 +414,11 @@ class DailyIssueHelp(models.Model):
     not_helpful_count = models.PositiveIntegerField(default=0)
 
     # Status
-    is_active = models.BooleanField(default=True)
+    status = models.CharField(
+        max_length=20,
+        choices=[('published', 'Published'), ('draft', 'Draft')],
+        default='published'
+    )
 
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
@@ -346,13 +429,19 @@ class DailyIssueHelp(models.Model):
         verbose_name_plural = "Daily Issue Help"
         ordering = ['-created_at']
         indexes = [
+            models.Index(fields=['slug']),
             models.Index(fields=['issue_type']),
-            models.Index(fields=['audience', 'is_active']),
+            models.Index(fields=['audience', 'status']),
         ]
         db_table = 'documentation_dailyissuehelp'
 
     def __str__(self):
         return f"{self.title} ({self.get_issue_type_display()})"
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.title)
+        super().save(*args, **kwargs)
 
     @property
     def helpfulness_ratio(self):
@@ -361,3 +450,88 @@ class DailyIssueHelp(models.Model):
         if total == 0:
             return 0
         return (self.helpful_count / total) * 100
+
+
+class HelpScreenshot(models.Model):
+    """
+    Screenshots for help articles - supports multiple images per article
+    """
+    help_article = models.ForeignKey(
+        DailyIssueHelp,
+        on_delete=models.CASCADE,
+        related_name='screenshots'
+    )
+    image = models.ImageField(
+        upload_to='help_screenshots/%Y/%m/',
+        help_text="Screenshot showing the issue or solution step"
+    )
+    caption = models.CharField(
+        max_length=200,
+        blank=True,
+        help_text="Description of what this screenshot shows"
+    )
+    order = models.PositiveIntegerField(
+        default=0,
+        help_text="Display order for this screenshot"
+    )
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Help Screenshot"
+        verbose_name_plural = "Help Screenshots"
+        ordering = ['order', 'uploaded_at']
+        db_table = 'documentation_helpscreenshot'
+
+    def __str__(self):
+        return f"Screenshot for {self.help_article.title}"
+
+
+class CodeLearningProgress(models.Model):
+    """
+    Track user progress through code explanations for personalized learning
+    """
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='code_learning_progress')
+    code_explanation = models.ForeignKey(CodeExplanation, on_delete=models.CASCADE, related_name='user_progress')
+
+    # Progress tracking
+    started_at = models.DateTimeField(auto_now_add=True)
+    last_accessed = models.DateTimeField(auto_now=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    time_spent = models.PositiveIntegerField(
+        default=0,
+        help_text="Total time spent in seconds"
+    )
+
+    # Detailed progress
+    lines_explored = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="List of line numbers the user has explored"
+    )
+    completed = models.BooleanField(default=False)
+    progress_percentage = models.PositiveIntegerField(default=0)
+
+    # Learning notes
+    user_notes = models.TextField(
+        blank=True,
+        help_text="Personal notes from the learner"
+    )
+
+    class Meta:
+        verbose_name = "Code Learning Progress"
+        verbose_name_plural = "Code Learning Progress"
+        unique_together = [['user', 'code_explanation']]
+        ordering = ['-last_accessed']
+        db_table = 'documentation_codelearningprogress'
+
+    def __str__(self):
+        status = "Completed" if self.completed else f"{self.progress_percentage}%"
+        return f"{self.user.username} - {self.code_explanation.title} ({status})"
+
+    def mark_complete(self):
+        """Mark this code explanation as completed"""
+        from django.utils import timezone
+        self.completed = True
+        self.progress_percentage = 100
+        self.completed_at = timezone.now()
+        self.save()

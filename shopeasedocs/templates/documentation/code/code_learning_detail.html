@@ -1,0 +1,473 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ code_explanation.title }} - Interactive Learning{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'documentation/css/docs.css' %}">
+<link rel="stylesheet" href="{% static 'documentation/css/code-learning.css' %}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.css">
+{% endblock %}
+
+{% block content %}
+<!-- Header Section -->
+<div class="learning-header">
+    <div class="container-fluid">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-2">
+                        <li class="breadcrumb-item"><a href="{% url 'documentation:doc_home' %}">Home</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'documentation:code_index' %}">Code Learning</a></li>
+                        <li class="breadcrumb-item active">{{ code_explanation.title }}</li>
+                    </ol>
+                </nav>
+                <h1 class="mb-2">
+                    <i class="bi bi-code-slash me-2"></i>{{ code_explanation.title }}
+                </h1>
+                <p class="text-muted mb-0">{{ code_explanation.description }}</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <div class="learning-controls">
+                    <button id="stepThroughBtn" class="btn btn-primary me-2">
+                        <i class="bi bi-play-fill me-1"></i>Step Through
+                    </button>
+                    <button id="resetBtn" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-counterclockwise me-1"></i>Reset
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Learning Metadata -->
+        <div class="row mt-3">
+            <div class="col-12">
+                <div class="learning-meta">
+                    <span class="badge bg-info me-2">
+                        <i class="bi bi-folder me-1"></i>{{ code_explanation.module }}
+                    </span>
+                    <span class="badge bg-warning me-2">
+                        Complexity: {{ code_explanation.get_complexity_display }}
+                    </span>
+                    {% if code_explanation.time_complexity %}
+                    <span class="badge bg-secondary me-2">
+                        Time: {{ code_explanation.time_complexity }}
+                    </span>
+                    {% endif %}
+                    {% if code_explanation.space_complexity %}
+                    <span class="badge bg-secondary me-2">
+                        Space: {{ code_explanation.space_complexity }}
+                    </span>
+                    {% endif %}
+                    <span class="text-muted ms-3">
+                        <i class="bi bi-clock me-1"></i>Est. {{ code_explanation.estimated_learning_time }} min
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Learning Content -->
+<div class="container-fluid mt-4">
+    <div class="row">
+        <!-- Left Column: Code Display -->
+        <div class="col-lg-6">
+            <div class="learning-panel code-panel">
+                <div class="panel-header">
+                    <h5><i class="bi bi-file-code me-2"></i>Code</h5>
+                    <div class="panel-actions">
+                        <button class="btn btn-sm btn-outline-primary" id="copyCodeBtn">
+                            <i class="bi bi-clipboard"></i> Copy
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary" id="toggleLineNumbers">
+                            <i class="bi bi-list-ol"></i> Line Numbers
+                        </button>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div id="codeContainer" class="code-container">
+                        <pre class="line-numbers"><code class="language-python">{{ code_explanation.code_snippet }}</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Execution Flow Visualization -->
+            {% if code_explanation.execution_flow %}
+            <div class="learning-panel mt-3">
+                <div class="panel-header">
+                    <h5><i class="bi bi-diagram-3 me-2"></i>Execution Flow</h5>
+                </div>
+                <div class="panel-body">
+                    <div id="flowVisualization" class="flow-visualization">
+                        <div id="executionTimeline" class="execution-timeline"></div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Variable State Tracker -->
+            <div class="learning-panel mt-3">
+                <div class="panel-header">
+                    <h5><i class="bi bi-box me-2"></i>Variable State</h5>
+                </div>
+                <div class="panel-body">
+                    <div id="variableTracker" class="variable-tracker">
+                        <p class="text-muted text-center">Click on code lines to see variable states</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Explanations and Learning Content -->
+        <div class="col-lg-6">
+            <div class="learning-panel explanation-panel">
+                <div class="panel-header">
+                    <h5><i class="bi bi-book me-2"></i>Explanation</h5>
+                </div>
+                <div class="panel-body">
+                    <div id="explanationContent" class="explanation-content">
+                        <!-- Overview Section -->
+                        <div class="explanation-section">
+                            <h6 class="section-title">Overview</h6>
+                            <div class="section-content">
+                                {{ code_explanation.detailed_explanation|safe }}
+                            </div>
+                        </div>
+
+                        <!-- Learning Objectives -->
+                        {% if code_explanation.learning_objectives %}
+                        <div class="explanation-section mt-3">
+                            <h6 class="section-title">
+                                <i class="bi bi-bullseye me-1"></i>Learning Objectives
+                            </h6>
+                            <div class="section-content">
+                                {{ code_explanation.learning_objectives|linebreaks }}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Prerequisites -->
+                        {% if code_explanation.prerequisites %}
+                        <div class="explanation-section mt-3">
+                            <h6 class="section-title">
+                                <i class="bi bi-bookmark-check me-1"></i>Prerequisites
+                            </h6>
+                            <div class="section-content">
+                                {{ code_explanation.prerequisites|linebreaks }}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Line-by-Line Explanation (Populated by JavaScript) -->
+                        <div id="lineExplanation" class="explanation-section mt-3" style="display: none;">
+                            <h6 class="section-title">
+                                <i class="bi bi-search me-1"></i>Line Details
+                            </h6>
+                            <div id="lineExplanationContent" class="section-content">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Related Concepts -->
+            {% if code_explanation.related_concepts %}
+            <div class="learning-panel mt-3">
+                <div class="panel-header">
+                    <h5><i class="bi bi-link-45deg me-2"></i>Related Concepts</h5>
+                </div>
+                <div class="panel-body">
+                    {{ code_explanation.related_concepts|linebreaks }}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Common Mistakes -->
+            {% if code_explanation.common_mistakes %}
+            <div class="learning-panel mt-3 alert-warning">
+                <div class="panel-header">
+                    <h5><i class="bi bi-exclamation-triangle me-2"></i>Common Mistakes</h5>
+                </div>
+                <div class="panel-body">
+                    {{ code_explanation.common_mistakes|linebreaks }}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Flowchart Section -->
+    {% if code_explanation.visual_diagram %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="learning-panel">
+                <div class="panel-header">
+                    <h5><i class="bi bi-diagram-2 me-2"></i>Visual Flowchart</h5>
+                    <div class="panel-actions">
+                        <button class="btn btn-sm btn-outline-primary" id="exportFlowchartBtn">
+                            <i class="bi bi-download"></i> Export
+                        </button>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div id="flowchartContainer" class="flowchart-container">
+                        <div class="mermaid">
+                            {{ code_explanation.visual_diagram }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Practice Exercises -->
+    {% if code_explanation.practice_exercises %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="learning-panel">
+                <div class="panel-header">
+                    <h5><i class="bi bi-pencil-square me-2"></i>Practice Exercises</h5>
+                </div>
+                <div class="panel-body">
+                    {{ code_explanation.practice_exercises|linebreaks }}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Interactive Demo -->
+    {% if code_explanation.interactive_demo_url %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="learning-panel">
+                <div class="panel-header">
+                    <h5><i class="bi bi-play-circle me-2"></i>Interactive Demo</h5>
+                </div>
+                <div class="panel-body">
+                    <iframe src="{{ code_explanation.interactive_demo_url }}"
+                            class="interactive-demo-iframe"
+                            frameborder="0"
+                            allowfullscreen></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Related Code Explanations -->
+    {% if related_codes %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="learning-panel">
+                <div class="panel-header">
+                    <h5><i class="bi bi-files me-2"></i>Related Code Explanations</h5>
+                </div>
+                <div class="panel-body">
+                    <div class="row">
+                        {% for related in related_codes %}
+                        <div class="col-md-4 mb-3">
+                            <a href="{% url 'documentation:code_learning_detail' related.slug %}"
+                               class="text-decoration-none">
+                                <div class="card hover-card h-100">
+                                    <div class="card-body">
+                                        <h6 class="card-title">{{ related.title }}</h6>
+                                        <p class="card-text small text-muted">
+                                            {{ related.description|truncatewords:15 }}
+                                        </p>
+                                        <span class="badge bg-warning">
+                                            {{ related.get_complexity_display }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Progress Tracking -->
+    <div class="row mt-4 mb-4">
+        <div class="col-12">
+            <div class="learning-panel">
+                <div class="panel-header">
+                    <h5><i class="bi bi-graph-up me-2"></i>Your Progress</h5>
+                </div>
+                <div class="panel-body">
+                    <div class="progress-stats">
+                        <div class="stat-item">
+                            <div class="stat-label">Time Spent</div>
+                            <div class="stat-value" id="timeSpent">0m 0s</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Completion</div>
+                            <div class="stat-value" id="completionPercent">0%</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Lines Explored</div>
+                            <div class="stat-value" id="linesExplored">0 / <span id="totalLines">0</span></div>
+                        </div>
+                    </div>
+                    <button id="markCompleteBtn" class="btn btn-success mt-3">
+                        <i class="bi bi-check-circle me-1"></i>Mark as Complete
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Notification -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+    <div id="learningToast" class="toast" role="alert">
+        <div class="toast-header">
+            <i class="bi bi-info-circle me-2"></i>
+            <strong class="me-auto">Learning Progress</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script src="{% static 'documentation/js/code-learning.js' %}"></script>
+<script src="{% static 'documentation/js/flowchart-generator.js' %}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize Mermaid for flowcharts
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+
+        // Parse line-by-line explanations from Django context
+        const lineByLineData = {{ code_explanation.line_by_line_explanation|safe|default:"{}"|safe }};
+        const executionFlowData = {{ code_explanation.execution_flow|safe|default:"[]"|safe }};
+
+        // Initialize Code Learning Viewer
+        const viewer = new CodeLearningViewer({
+            codeContainer: document.getElementById('codeContainer'),
+            explanationPanel: document.getElementById('lineExplanationContent'),
+            explanationSection: document.getElementById('lineExplanation'),
+            variableTracker: document.getElementById('variableTracker'),
+            executionTimeline: document.getElementById('executionTimeline'),
+            explanations: lineByLineData,
+            executionFlow: executionFlowData,
+            codeExplanationId: {{ code_explanation.id }}
+        });
+
+        // Step Through Button
+        document.getElementById('stepThroughBtn').addEventListener('click', function() {
+            viewer.startStepThrough();
+        });
+
+        // Reset Button
+        document.getElementById('resetBtn').addEventListener('click', function() {
+            viewer.reset();
+        });
+
+        // Copy Code Button
+        document.getElementById('copyCodeBtn').addEventListener('click', function() {
+            const codeText = document.querySelector('#codeContainer code').textContent;
+            navigator.clipboard.writeText(codeText).then(function() {
+                showToast('Code copied to clipboard!');
+            });
+        });
+
+        // Toggle Line Numbers
+        document.getElementById('toggleLineNumbers').addEventListener('click', function() {
+            const pre = document.querySelector('#codeContainer pre');
+            pre.classList.toggle('line-numbers');
+            Prism.highlightAll();
+        });
+
+        // Export Flowchart
+        {% if code_explanation.visual_diagram %}
+        document.getElementById('exportFlowchartBtn').addEventListener('click', function() {
+            const svgElement = document.querySelector('#flowchartContainer svg');
+            if (svgElement) {
+                const svgData = new XMLSerializer().serializeToString(svgElement);
+                const blob = new Blob([svgData], { type: 'image/svg+xml' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = '{{ code_explanation.slug }}-flowchart.svg';
+                link.click();
+                URL.revokeObjectURL(url);
+                showToast('Flowchart exported!');
+            }
+        });
+        {% endif %}
+
+        // Mark as Complete
+        document.getElementById('markCompleteBtn').addEventListener('click', async function() {
+            const timeSpent = viewer.getTimeSpent();
+            const response = await fetch('{% url "documentation:mark_code_complete" code_explanation.slug %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    time_spent: timeSpent,
+                    completed: true
+                })
+            });
+
+            if (response.ok) {
+                showToast('Marked as complete! Great job!', 'success');
+                this.classList.add('disabled');
+                this.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i>Completed';
+            }
+        });
+
+        // Toast notification helper
+        function showToast(message, type = 'info') {
+            const toastEl = document.getElementById('learningToast');
+            const toastBody = toastEl.querySelector('.toast-body');
+            toastBody.textContent = message;
+
+            const toast = new bootstrap.Toast(toastEl);
+            toast.show();
+        }
+
+        // CSRF token helper
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        // Update progress stats
+        setInterval(function() {
+            const timeSpent = viewer.getTimeSpent();
+            const minutes = Math.floor(timeSpent / 60);
+            const seconds = timeSpent % 60;
+            document.getElementById('timeSpent').textContent = `${minutes}m ${seconds}s`;
+
+            const stats = viewer.getProgressStats();
+            document.getElementById('completionPercent').textContent = stats.completionPercent + '%';
+            document.getElementById('linesExplored').textContent = stats.linesExplored;
+            document.getElementById('totalLines').textContent = stats.totalLines;
+        }, 1000);
+    });
+</script>
+{% endblock %}
