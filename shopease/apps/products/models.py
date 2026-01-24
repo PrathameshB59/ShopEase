@@ -20,6 +20,12 @@ from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils.text import slugify
 from decimal import Decimal
+# from mongoengine import Document, StringField, FloatField
+
+# class Product(Document):
+#     name = StringField(required=True)
+#     price = FloatField()
+#     description = StringField()
 
 
 # ==========================================

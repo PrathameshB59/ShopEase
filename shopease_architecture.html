@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShopEase System Architecture Guide</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            color: #fff;
+            line-height: 1.6;
+            padding: 30px;
+        }
+
+        h1,
+        h2,
+        h3 {
+            color: #00ffd5;
+        }
+
+        pre {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+
+        code {
+            color: #7df9ff;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        .diagram {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 12px;
+            font-family: monospace;
+            white-space: pre;
+            overflow-x: auto;
+        }
+
+        ul {
+            margin-left: 20px;
+        }
+
+        .highlight {
+            color: #ffd166;
+            font-weight: bold;
+        }
+
+        footer {
+            margin-top: 50px;
+            opacity: 0.6;
+            font-size: 14px;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>🛒 ShopEase Production Architecture & Implementation Guide</h1>
+
+    <div class="section">
+        <h2>🏗 FINAL DATABASE ARCHITECTURE FOR SHOEASE</h2>
+        <div class="diagram">
+            ┌────────────────────┐
+            │ User Browser │
+            └─────────┬──────────┘
+            │
+            (HTTP Request)
+            │
+            ┌─────────▼──────────┐
+            │ Nginx │
+            └─────────┬──────────┘
+            │
+            ┌─────────▼──────────┐
+            │ Gunicorn │
+            └─────────┬──────────┘
+            │
+            ┌─────────▼──────────┐
+            │ Django │
+            └───────┬───────┬────┘
+            │ │
+            ┌─────────────────▼─┐ ┌─▼─────────────────┐
+            │ MySQL │ │ MongoDB Atlas │
+            │ (Structured Data) │ │ (Unstructured Data) │
+            └───────────────────┘ └─────────────────────┘
+            │
+            ┌──────▼──────┐
+            │ Redis │
+            └──────┬──────┘
+            │
+            ┌──────▼──────┐
+            │ Celery │
+            └─────────────┘
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>🧠 WHO STORES WHAT?</h2>
+
+        <h3>🟦 MySQL (Main Database – Structured)</h3>
+        <p>Used by <span class="highlight">Django ORM</span></p>
+        <ul>
+            <li>Users</li>
+            <li>Products</li>
+            <li>Categories</li>
+            <li>Product Images</li>
+            <li>Reviews</li>
+            <li>Cart</li>
+            <li>Orders</li>
+            <li>Payments</li>
+        </ul>
+        <p>Needs: Relationships, Transactions, Data Integrity</p>
+
+        <h3>🟩 MongoDB Atlas (Secondary – Flexible)</h3>
+        <p>Used via <span class="highlight">PyMongo</span></p>
+        <ul>
+            <li>User activity logs</li>
+            <li>Recently viewed products</li>
+            <li>Search history</li>
+            <li>User preferences</li>
+            <li>Product extra specifications</li>
+            <li>Analytics events</li>
+        </ul>
+
+        <h3>🟥 Redis (Fast Memory)</h3>
+        <ul>
+            <li>Cache (fast page loads)</li>
+            <li>Session storage</li>
+            <li>Cart cache (optional)</li>
+            <li>Celery message broker</li>
+        </ul>
+
+        <h3>🟨 Celery (Background Worker)</h3>
+        <ul>
+            <li>Send order confirmation email</li>
+            <li>Send OTP SMS</li>
+            <li>Reduce stock after order</li>
+            <li>Generate invoice</li>
+            <li>Log activity to MongoDB</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>⚙️ IMPLEMENTATION GUIDE</h2>
+
+        <h3>🟦 STEP 1 — MySQL</h3>
+        <pre><code>DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        ...
+    }
+}</code></pre>
+
+        <h3>🟩 STEP 2 — Connect MongoDB Atlas</h3>
+        <pre><code>pip install pymongo</code></pre>
+
+        <p><b>mongo.py</b></p>
+        <pre><code>from pymongo import MongoClient
+from decouple import config
+
+client = MongoClient(config("MONGO_URI"))
+mongo_db = client["shopease_logs"]</code></pre>
+
+        <p><b>.env</b></p>
+        <pre><code>MONGO_URI=mongodb+srv://username:password@cluster.mongodb.net/</code></pre>
+
+        <h4>Example: Log user activity</h4>
+        <pre><code>from .mongo import mongo_db
+
+def log_product_view(user_id, product_id):
+    mongo_db.views.insert_one({
+        "user_id": user_id,
+        "product_id": product_id,
+        "action": "view",
+    })</code></pre>
+
+        <h3>🟥 STEP 3 — Redis Setup</h3>
+        <pre><code>CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/1",
+    }
+}</code></pre>
+
+        <h3>🟨 STEP 4 — Celery Setup</h3>
+        <p><b>celery.py</b></p>
+        <pre><code>import os
+from celery import Celery
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'shopease.settings')
+
+app = Celery('shopease')
+app.config_from_object('django.conf:settings', namespace='CELERY')
+app.autodiscover_tasks()</code></pre>
+
+        <p><b>settings.py</b></p>
+        <pre><code>CELERY_BROKER_URL = 'redis://127.0.0.1:6379/0'</code></pre>
+
+        <h4>Example Celery Task</h4>
+        <pre><code>from celery import shared_task
+from .mongo import mongo_db
+
+@shared_task
+def log_order_activity(order_id, user_id):
+    mongo_db.orders.insert_one({
+        "order_id": order_id,
+        "user_id": user_id,
+        "status": "created"
+    })</code></pre>
+    </div>
+
+    <div class="section">
+        <h2>🚀 HOW EVERYTHING WORKS TOGETHER</h2>
+        <ol>
+            <li>Django saves order → <b>MySQL</b></li>
+            <li>Celery task triggered</li>
+            <li>Celery logs event → <b>MongoDB Atlas</b></li>
+            <li>Redis carries task message</li>
+            <li>Email sent in background</li>
+        </ol>
+    </div>
+
+    <footer>
+        ShopEase Architecture Guide | Django + MySQL + MongoDB + Redis + Celery
+    </footer>
+
+</body>
+
+</html>
