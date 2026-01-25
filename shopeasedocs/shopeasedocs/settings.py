@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 import os
-from mongoengine import connect
+# from mongoengine import connect
 from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -80,26 +80,40 @@ WSGI_APPLICATION = 'shopeasedocs.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.mysql',
-#         'NAME': config('DB_NAME'),
-#         'USER': config('DB_USER'),
-#         'PASSWORD': config('DB_PASSWORD'),
-#         'HOST': config('DB_HOST', default='localhost'),
-#         'PORT': config('DB_PORT', default='3306'),
-#         'OPTIONS': {
-#             'charset': 'utf8mb4',
-#             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-#         },
-#     }
-# }
-connect(
-    db=config("MONGO_DB_NAME"),
-    username=config("MONGO_DB_USER"),
-    password=config("MONGO_DB_PASSWORD"),
-    host=f"mongodb+srv://{config('MONGO_DB_USER')}:{config('MONGO_DB_PASSWORD')}@{config('MONGO_DB_HOST')}/{config('MONGO_DB_NAME')}?retryWrites=true&w=majority"
-)
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': config('DB_NAME'),
+        'USER': config('DB_USER'),
+        'PASSWORD': config('DB_PASSWORD'),
+        'HOST': config('DB_HOST', default='localhost'),
+        'PORT': config('DB_PORT', default='3306'),
+        'OPTIONS': {
+            'charset': 'utf8mb4',
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+        },
+    }
+}
+# connect(
+#     db=config("MONGO_DB_NAME"),
+#     username=config("MONGO_DB_USER"),
+#     password=config("MONGO_DB_PASSWORD"),
+#     host=f"mongodb+srv://{config('MONGO_DB_USER')}:{config('MONGO_DB_PASSWORD')}@{config('MONGO_DB_HOST')}/{config('MONGO_DB_NAME')}?retryWrites=true&w=majority"
+# )
+print("DB NAME:", config("DB_NAME"))
+
+from pymongo import MongoClient
+
+MONGO_URI = config("MONGO_URI", default="")
+MONGO_DB_NAME = config("MONGO_DB_NAME", default="shopease_logs")
+
+if MONGO_URI:
+    mongo_client = MongoClient(MONGO_URI)
+    mongo_db = mongo_client[MONGO_DB_NAME]
+    print("Connected to MongoDB:", MONGO_DB_NAME)
+else:
+    mongo_db = None
+    print("MongoDB URI not provided. MongoDB connection not established.")
 
 
 # Password validation

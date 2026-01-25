@@ -1,0 +1,23 @@
+@echo off
+echo 🚀 Starting ShopEase Local Server...
+
+REM Activate virtual environment
+call .venv\Scripts\activate
+
+REM Start Django Server
+start cmd /k "echo Starting Django... && python manage.py runserver 0.0.0.0:8000"
+
+REM Wait a few seconds so Django starts first
+timeout /t 5
+
+REM Start Celery Worker
+start cmd /k "echo Starting Celery Worker... && celery -A shopease worker --loglevel=info"
+
+REM Wait before starting Ngrok
+timeout /t 5
+
+REM Start Ngrok Tunnel
+start cmd /k "echo Starting Ngrok Tunnel... && ngrok http 8000"
+
+echo ✅ All services started!
+pause
