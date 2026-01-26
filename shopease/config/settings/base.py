@@ -29,7 +29,8 @@ SECRET_KEY = config('SECRET_KEY')
 # Replace hardcoded DEBUG
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = []
+# Parse comma-separated ALLOWED_HOSTS from .env
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
 
 
 # Application definition
@@ -138,7 +139,7 @@ DATABASES = {
 #     password=config("MONGO_DB_PASSWORD"),
 #     host=f"mongodb+srv://{config('MONGO_DB_USER')}:{config('MONGO_DB_PASSWORD')}@{config('MONGO_DB_HOST')}/{config('MONGO_DB_NAME')}?retryWrites=true&w=majority"
 # )
-print("DB NAME:", config("DB_NAME"))
+# print("DB NAME:", config("DB_NAME"))  # Debug - uncomment if needed
 
 from pymongo import MongoClient
 
@@ -148,10 +149,10 @@ MONGO_DB_NAME = config("MONGO_DB_NAME", default="shopease_logs")
 if MONGO_URI:
     mongo_client = MongoClient(MONGO_URI)
     mongo_db = mongo_client[MONGO_DB_NAME]
-    print("Connected to MongoDB:", MONGO_DB_NAME)
+    # print("Connected to MongoDB:", MONGO_DB_NAME)  # Debug - uncomment if needed
 else:
     mongo_db = None
-    print("MongoDB URI not provided. MongoDB connection not established.")
+    # print("MongoDB URI not provided. MongoDB connection not established.")  # Debug
 
 
 # # Password validation
@@ -218,7 +219,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Options: 'django.contrib.sessions.backends.db' (database)
 #         'django.contrib.sessions.backends.cache' (Redis/Memcached)
 #         'django.contrib.sessions.backends.file' (filesystem)
-SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+# Store sessions in Redis for better performance and scalability
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+SESSION_CACHE_ALIAS = 'default'
 
 # Session cookie settings
 # SESSION_COOKIE_NAME = 'shopease_sessionid'  # Now set per-server (customer.py/admin.py)
@@ -243,21 +246,59 @@ SESSION_SAVE_EVERY_REQUEST = False
 # LocMemCache was causing redirect loops because each server had its own cache
 # Production: Consider Redis or Memcached for better performance
 
-import os
+# ==========================================
+# REDIS & CACHE CONFIGURATION
+# ==========================================
+
+# Redis connection URL (WSL2 uses localhost:6379)
+REDIS_URL = config('REDIS_URL', default='redis://127.0.0.1:6379/0')
 
 CACHES = {
     'default': {
-        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
-        'LOCATION': os.path.join(BASE_DIR, 'cache'),  # Stores cache in shopease/cache/ directory
+        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+        'LOCATION': REDIS_URL,
+        'KEY_PREFIX': 'shopease',
         'TIMEOUT': 300,  # 5 minutes default
-        'OPTIONS': {
-            'MAX_ENTRIES': 1000
-        }
     }
 }
 
-# Create cache directory if it doesn't exist
-os.makedirs(os.path.join(BASE_DIR, 'cache'), exist_ok=True)
+# ==========================================
+# CELERY CONFIGURATION
+# ==========================================
+
+# Broker and Backend
+CELERY_BROKER_URL = REDIS_URL
+CELERY_RESULT_BACKEND = REDIS_URL
+
+# Serialization
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = TIME_ZONE
+
+# Task execution settings
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 30 * 60  # 30 minutes max per task
+CELERY_TASK_SOFT_TIME_LIMIT = 25 * 60  # Soft limit at 25 minutes
+
+# Result backend settings
+CELERY_RESULT_EXPIRES = 3600  # Results expire after 1 hour
+CELERY_RESULT_BACKEND_MAX_RETRIES = 10
+
+# Task routing (optional - for future scalability)
+CELERY_TASK_ROUTES = {
+    'apps.orders.tasks.*': {'queue': 'orders'},
+    'apps.accounts.tasks.*': {'queue': 'accounts'},
+    'apps.admin_panel.tasks.*': {'queue': 'analytics'},
+}
+
+# Worker settings
+CELERY_WORKER_PREFETCH_MULTIPLIER = 4
+CELERY_WORKER_MAX_TASKS_PER_CHILD = 1000
+
+# Logging
+CELERY_WORKER_HIJACK_ROOT_LOGGER = False
+CELERY_WORKER_LOG_FORMAT = '[%(asctime)s: %(levelname)s/%(processName)s] %(message)s'
 
 # ==========================================
 # AUTHENTICATION SETTINGS
@@ -364,25 +405,32 @@ DEFAULT_TAX_RATE = 0.18  # 18% GST
 SHIPPING_COST = 50.00
 FREE_SHIPPING_THRESHOLD = 1000.00
 
-# config/settings.py
+# ==========================================
+# PRODUCTION SECURITY SETTINGS
+# ==========================================
 
-# Production settings
 if not DEBUG:
+    # Force HTTPS
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
-    SECURE_HSTS_SECONDS = 31536000
+
+    # HSTS (HTTP Strict Transport Security)
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
 
-# Set ALLOWED_HOSTS
-if DEBUG:
-    ALLOWED_HOSTS = ['localhost', '127.0.0.1', '[::1]']
+    # Additional security headers
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = 'DENY'
+
+    # Secure proxy headers (for Nginx)
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 else:
-    ALLOWED_HOSTS = [
-        'yoursite.com',
-        'www.yoursite.com',
-    ]
+    # Development mode - no HTTPS required
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
 
 # Server Configuration (for dual-server architecture)
 ADMIN_SERVER_PORT = 8080

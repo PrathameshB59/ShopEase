@@ -34,3 +34,8 @@ tzdata==2025.2
 urllib3==2.5.0
 weasyprint==60.2
 yarl==1.22.0
+celery==5.4.0
+redis==5.0.1
+flower==2.0.1
+pymongo==4.6.0
+django-redis==5.4.0

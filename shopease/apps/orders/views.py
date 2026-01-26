@@ -19,6 +19,7 @@ from decimal import Decimal
 from .models import Order, OrderItem
 from .forms import CheckoutForm
 from apps.cart.models import Cart
+from .tasks import send_order_confirmation_email, log_order_to_mongodb
 
 
 @login_required
@@ -190,7 +191,16 @@ def checkout(request):
                     # ======================================
                     # Order is placed, clear the cart
                     cart.items.all().delete()
-                    
+
+                    # ======================================
+                    # SEND ASYNC NOTIFICATIONS
+                    # ======================================
+                    # Send confirmation email asynchronously
+                    send_order_confirmation_email.delay(order.id)
+
+                    # Log to MongoDB asynchronously
+                    log_order_to_mongodb.delay(order.id, 'ORDER_CREATED')
+
                     # ======================================
                     # SUCCESS MESSAGE
                     # ======================================

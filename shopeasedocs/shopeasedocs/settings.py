@@ -23,12 +23,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-sq8ejmwy9ug!qm5gpwj98%f6tt*p)v9!8o_e0d@lc3ep3k2du)'
+SECRET_KEY = config('SECRET_KEY', default='django-insecure-sq8ejmwy9ug!qm5gpwj98%f6tt*p)v9!8o_e0d@lc3ep3k2du)')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = []
+# Parse comma-separated ALLOWED_HOSTS from .env
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
 
 
 # Application definition
@@ -175,4 +176,30 @@ LOGOUT_REDIRECT_URL = '/'
 # ShopEase Customer server: port 8000
 # ShopEase Admin server: port 8080
 DOCUMENTATION_SERVER_PORT = 9000
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
+
+# ==========================================
+# PRODUCTION SECURITY SETTINGS
+# ==========================================
+
+if not DEBUG:
+    # Force HTTPS
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+
+    # HSTS (HTTP Strict Transport Security)
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+
+    # Security headers
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = 'DENY'
+
+    # Secure proxy headers (for Nginx)
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+else:
+    # Development mode
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
