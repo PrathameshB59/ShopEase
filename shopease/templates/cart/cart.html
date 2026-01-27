@@ -7,9 +7,11 @@ ShopEase{% endblock %} {% block extra_css %}
     <div class="cart-header">
       <h1 class="cart-title">Shopping Cart</h1>
       <p class="cart-subtitle">
-        {% if cart_items %} {{ cart_items|length }} item{{
-        cart_items|length|pluralize }} in your cart {% else %} Your cart is
-        empty {% endif %}
+        {% if cart_items %}
+          {{ cart_items|length }} item{{ cart_items|length|pluralize }} in your cart
+        {% else %}
+          Your cart is empty
+        {% endif %}
       </p>
     </div>
 
@@ -93,8 +95,7 @@ ShopEase{% endblock %} {% block extra_css %}
 
         <div class="summary-details">
           <div class="summary-row">
-            <span>Subtotal ({{ cart_items|length }} item{{
-              cart_items|length|pluralize }}):</span>
+            <span>Subtotal ({{ cart_items|length }} item{{ cart_items|length|pluralize }}):</span>
             <span class="cart-subtotal">{{ currency_symbol }}{{ subtotal }}</span>
           </div>
 

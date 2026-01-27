@@ -11,6 +11,16 @@
                 </a>
             </div>
 
+            <!-- Hamburger Toggle (Mobile Only) -->
+            <button type="button" class="navbar-toggler" id="navbarToggler" onclick="toggleMobileMenu()" aria-label="Toggle navigation">
+                <span class="toggler-bar"></span>
+                <span class="toggler-bar"></span>
+                <span class="toggler-bar"></span>
+            </button>
+
+            <!-- Collapsible Content -->
+            <div class="navbar-collapse" id="navbarCollapse">
+
             <!-- Search (Customer Server Only) -->
             {% if server_type == 'customer' %}
             <div class="navbar-search">
@@ -218,6 +228,7 @@
                 </a>
                 {% endif %}
             </div>
+            </div><!-- end navbar-collapse -->
         </div>
     </div>
 </nav>
@@ -315,6 +326,44 @@
         stroke-width: 2;
     }
 
+    /* Hamburger Toggle - hidden on desktop */
+    .navbar-toggler {
+        display: none;
+        flex-direction: column;
+        gap: 5px;
+        padding: 0.5rem;
+        background: none;
+        border: none;
+        cursor: pointer;
+    }
+
+    .toggler-bar {
+        display: block;
+        width: 24px;
+        height: 2px;
+        background: #374151;
+        border-radius: 2px;
+        transition: all 0.3s ease;
+    }
+
+    .navbar-toggler.active .toggler-bar:nth-child(1) {
+        transform: rotate(45deg) translate(5px, 5px);
+    }
+    .navbar-toggler.active .toggler-bar:nth-child(2) {
+        opacity: 0;
+    }
+    .navbar-toggler.active .toggler-bar:nth-child(3) {
+        transform: rotate(-45deg) translate(5px, -5px);
+    }
+
+    /* Collapse wrapper - flex row on desktop */
+    .navbar-collapse {
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+        flex: 1;
+    }
+
     /* Navigation */
     .navbar-nav {
         display: flex;
@@ -323,6 +372,7 @@
         margin: 0;
         padding: 0;
         align-items: center;
+        flex-shrink: 0;
     }
 
     .nav-link {
@@ -554,6 +604,7 @@
         display: flex;
         gap: 1rem;
         align-items: center;
+        flex-shrink: 0;
     }
 
     .action-link {
@@ -596,9 +647,131 @@
         text-align: center;
         line-height: 1;
     }
+
+    /* ===== RESPONSIVE: TABLET & MOBILE ===== */
+    @media (max-width: 768px) {
+        .brand-logo {
+            width: 48px;
+            height: 48px;
+        }
+
+        .brand-text {
+            font-size: 1.2rem;
+        }
+
+        .navbar-inner {
+            flex-wrap: wrap;
+            gap: 0;
+            padding: 0.75rem 0;
+        }
+
+        .navbar-brand {
+            flex: 1;
+        }
+
+        .navbar-toggler {
+            display: flex;
+        }
+
+        .navbar-collapse {
+            display: none;
+            flex-direction: column;
+            width: 100%;
+            gap: 0;
+            padding: 1rem 0 0.5rem;
+            border-top: 1px solid #e5e7eb;
+            margin-top: 0.75rem;
+        }
+
+        .navbar-collapse.open {
+            display: flex;
+        }
+
+        .navbar-search {
+            width: 100%;
+            max-width: 100%;
+            order: 1;
+            margin-bottom: 0.75rem;
+        }
+
+        .navbar-nav {
+            flex-direction: column;
+            width: 100%;
+            gap: 0;
+            order: 2;
+        }
+
+        .navbar-nav .nav-item {
+            width: 100%;
+        }
+
+        .navbar-nav .nav-link {
+            display: block;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #f3f4f6;
+            width: 100%;
+        }
+
+        .shop-dropdown {
+            position: static;
+            box-shadow: none;
+            border: none;
+            border-radius: 0;
+            margin-top: 0;
+            padding-left: 1rem;
+            background: #f9fafb;
+        }
+
+        .navbar-actions {
+            width: 100%;
+            justify-content: flex-start;
+            gap: 1.5rem;
+            padding: 0.75rem 0;
+            order: 3;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .currency-dropdown,
+        .user-dropdown {
+            position: fixed;
+            top: auto;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            margin-top: 0;
+            border-radius: 16px 16px 0 0;
+            min-width: 100%;
+            max-height: 60vh;
+            overflow-y: auto;
+            box-shadow: 0 -10px 25px rgba(0, 0, 0, 0.15);
+        }
+    }
+
+    @media (max-width: 480px) {
+        .brand-logo {
+            width: 40px;
+            height: 40px;
+        }
+
+        .brand-text {
+            font-size: 1rem;
+        }
+
+        .navbar-inner {
+            padding: 0.5rem 0;
+        }
+    }
 </style>
 
 <script>
+    /* MOBILE MENU TOGGLE */
+    function toggleMobileMenu() {
+        var toggler = document.getElementById('navbarToggler');
+        var collapse = document.getElementById('navbarCollapse');
+        toggler.classList.toggle('active');
+        collapse.classList.toggle('open');
+    }
+
     /* BULLETPROOF DROPDOWN LOGIC */
     console.log('🚀 Navbar loaded');
 

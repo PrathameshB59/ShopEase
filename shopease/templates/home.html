@@ -10,15 +10,15 @@
     <div class="hero-overlay"></div>
 
     <div class="hero-content">
-        <h1 class="hero-title" data-aos="fade-up">
+        <h1 class="hero-title animate-in">
             Discover Your Perfect Style
         </h1>
 
-        <p class="hero-subtitle" data-aos="fade-up" data-aos-delay="100">
+        <p class="hero-subtitle animate-in" style="animation-delay: 0.1s">
             Curated collections of premium products delivered to your door
         </p>
 
-        <div class="hero-cta" data-aos="fade-up" data-aos-delay="200">
+        <div class="hero-cta animate-in" style="animation-delay: 0.2s">
             <!-- Temporary: Link to home until products app ready -->
             <a href="#featured" class="btn btn-primary btn-lg">
                 Explore Collections
@@ -31,7 +31,7 @@
 <section class="products-section" id="featured">
     <div class="container">
         <!-- Section Header -->
-        <div class="section-header" data-aos="fade-up">
+        <div class="section-header animate-in">
             <h2 class="section-title">Featured Products</h2>
             <p class="section-subtitle">Handpicked items our customers love</p>
         </div>
@@ -40,7 +40,7 @@
         {% if featured_products %}
         <div class="products-grid">
             {% for product in featured_products %}
-            <div class="product-card" data-aos="fade-up">
+            <div class="product-card animate-in">
                 <!-- Product Image -->
                 <div class="product-image">
                     <!-- Wrap image in clickable link -->
@@ -129,7 +129,7 @@
 <!-- CATEGORIES SECTION -->
 <section class="categories-section">
     <div class="container">
-        <div class="section-header" data-aos="fade-up">
+        <div class="section-header animate-in">
             <h2 class="section-title">Shop by Category</h2>
             <p class="section-subtitle">Browse our curated collections</p>
         </div>
@@ -137,7 +137,7 @@
         {% if categories %}
         <div class="categories-grid">
             {% for category in categories %}
-            <div class="category-card" data-aos="fade-up" data-aos-delay="{{ forloop.counter0|add:0 }}00">
+            <div class="category-card animate-in">
                 <div class="category-image">
                     {% if category.image %}
                     <img src="{{ category.image.url }}" alt="{{ category.name }}">
@@ -161,7 +161,7 @@
 <section class="features-section">
     <div class="container">
         <div class="features-grid">
-            <div class="feature-item" data-aos="fade-up" data-aos-delay="0">
+            <div class="feature-item" class="animate-in" style="0">
                 <div class="feature-icon">
                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
@@ -174,7 +174,7 @@
                 </p>
             </div>
 
-            <div class="feature-item" data-aos="fade-up" data-aos-delay="100">
+            <div class="feature-item" class="animate-in" style="100">
                 <div class="feature-icon">
                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <rect x="1" y="3" width="15" height="13" />
@@ -187,7 +187,7 @@
                 </p>
             </div>
 
-            <div class="feature-item" data-aos="fade-up" data-aos-delay="200">
+            <div class="feature-item" class="animate-in" style="200">
                 <div class="feature-icon">
                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <circle cx="12" cy="12" r="10" />
@@ -200,7 +200,7 @@
                 </p>
             </div>
 
-            <div class="feature-item" data-aos="fade-up" data-aos-delay="300">
+            <div class="feature-item" class="animate-in" style="300">
                 <div class="feature-icon">
                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
@@ -219,19 +219,20 @@
 {% endblock %}
 
 {% block extra_css %}
-<link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
 <link rel="stylesheet" href="{% static 'css/home.css' %}">
+<style>
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-in {
+        animation: fadeInUp 0.6s ease-out both;
+    }
+</style>
 {% endblock %}
 
 {% block extra_js %}
-<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
 <script>
-    AOS.init({
-        duration: 800,
-        once: true,
-        offset: 100
-    });
-    
     // CSRF Token Helper
     function getCookie(name) {
         let cookieValue = null;

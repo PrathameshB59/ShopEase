@@ -32,6 +32,21 @@ DEBUG = config('DEBUG', default=False, cast=bool)
 # Parse comma-separated ALLOWED_HOSTS from .env
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
 
+# CSRF trusted origins (required by Django 4+ for cross-port requests)
+CSRF_TRUSTED_ORIGINS = [
+    'http://127.0.0.1:8000',
+    'http://127.0.0.1:8080',
+    'http://127.0.0.1:9000',
+    'http://localhost:8000',
+    'http://localhost:8080',
+    'http://localhost:9000',
+    'http://127.0.0.1',
+    'http://localhost',
+    'https://*.ngrok-free.app',
+    'https://*.ngrok-free.dev',
+    'https://*.ngrok.io',
+]
+
 
 # Application definition
 
