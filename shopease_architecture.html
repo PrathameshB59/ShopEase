@@ -14,12 +14,21 @@
             color: #fff;
             line-height: 1.6;
             padding: 30px;
+            scrollbar-width: none;
+        }
+
+        body::-webkit-scrollbar {
+            display: none;
         }
 
         h1,
         h2,
         h3 {
             color: #00ffd5;
+        }
+
+        h4 {
+            color: #7df9ff;
         }
 
         pre {
@@ -46,7 +55,7 @@
             overflow-x: auto;
         }
 
-        ul {
+        ul, ol {
             margin-left: 20px;
         }
 
@@ -55,185 +64,898 @@
             font-weight: bold;
         }
 
+        .mode-box {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(0, 255, 213, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        .mode-box.dev {
+            border-color: rgba(0, 200, 255, 0.4);
+        }
+
+        .mode-box.prod {
+            border-color: rgba(255, 100, 100, 0.4);
+        }
+
+        .warning {
+            background: rgba(255, 209, 102, 0.15);
+            border-left: 4px solid #ffd166;
+            padding: 12px 16px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+
+        .success {
+            background: rgba(0, 255, 136, 0.1);
+            border-left: 4px solid #00ff88;
+            padding: 12px 16px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+
+        th, td {
+            padding: 10px 15px;
+            text-align: left;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        th {
+            background: rgba(0, 255, 213, 0.15);
+            color: #00ffd5;
+        }
+
+        td {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .page-nav {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .page-nav a {
+            color: #00ffd5;
+            text-decoration: none;
+            display: inline-block;
+            margin: 5px 15px 5px 0;
+        }
+
+        .page-nav a:hover {
+            text-decoration: underline;
+        }
+
+        .step-number {
+            display: inline-block;
+            background: #00ffd5;
+            color: #0f2027;
+            width: 28px;
+            height: 28px;
+            line-height: 28px;
+            text-align: center;
+            border-radius: 50%;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+
         footer {
             margin-top: 50px;
             opacity: 0.6;
             font-size: 14px;
             text-align: center;
         }
+        pre {
+            position: relative;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(0, 255, 213, 0.15);
+            border: 1px solid rgba(0, 255, 213, 0.4);
+            color: #00ffd5;
+            padding: 4px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            transition: all 0.2s;
+        }
+
+        .copy-btn:hover {
+            background: rgba(0, 255, 213, 0.3);
+        }
+
+        .copy-btn.copied {
+            background: rgba(0, 255, 136, 0.3);
+            color: #00ff88;
+        }
+
+        .scroll-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 46px;
+            height: 46px;
+            background: rgba(0, 255, 213, 0.2);
+            border: 1px solid rgba(0, 255, 213, 0.5);
+            color: #00ffd5;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 22px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            z-index: 999;
+        }
+
+        .scroll-top:hover {
+            background: rgba(0, 255, 213, 0.4);
+        }
     </style>
 </head>
 
 <body>
 
-    <h1>🛒 ShopEase Production Architecture & Implementation Guide</h1>
+    <h1>ShopEase Production Architecture & Implementation Guide</h1>
 
-    <div class="section">
-        <h2>🏗 FINAL DATABASE ARCHITECTURE FOR SHOEASE</h2>
+    <!-- PAGE NAVIGATION -->
+    <div class="page-nav">
+        <strong>Quick Navigation:</strong><br>
+        <a href="#architecture">Architecture Diagram</a>
+        <a href="#storage">Who Stores What</a>
+        <a href="#projects">Two Projects Overview</a>
+        <a href="#port-map">Port Mapping</a>
+        <a href="#dev-mode">Development Mode</a>
+        <a href="#prod-mode">Production Mode</a>
+        <a href="#switching">Switching Modes</a>
+        <a href="#ngrok">Going Public (Ngrok)</a>
+        <a href="#implementation">Implementation Guide</a>
+        <a href="#troubleshooting">Troubleshooting</a>
+    </div>
+
+    <!-- ==================== PAGE 1: ARCHITECTURE ==================== -->
+    <div class="section" id="architecture">
+        <h2>1. FINAL PRODUCTION ARCHITECTURE</h2>
+
+        <h3>Development Mode (HTTP)</h3>
         <div class="diagram">
-            ┌────────────────────┐
-            │ User Browser │
-            └─────────┬──────────┘
-            │
-            (HTTP Request)
-            │
-            ┌─────────▼──────────┐
-            │ Nginx │
-            └─────────┬──────────┘
-            │
-            ┌─────────▼──────────┐
-            │ Gunicorn │
-            └─────────┬──────────┘
-            │
-            ┌─────────▼──────────┐
-            │ Django │
-            └───────┬───────┬────┘
-            │ │
-            ┌─────────────────▼─┐ ┌─▼─────────────────┐
-            │ MySQL │ │ MongoDB Atlas │
-            │ (Structured Data) │ │ (Unstructured Data) │
-            └───────────────────┘ └─────────────────────┘
-            │
-            ┌──────▼──────┐
-            │ Redis │
-            └──────┬──────┘
-            │
-            ┌──────▼──────┐
-            │ Celery │
-            └─────────────┘
+  User Browser (http://localhost:8000, :8080, :9000)
+         |
+    Django runserver  (DEBUG=True, serves static files)
+         |
+    +---------+---------+
+    |         |         |
+ Customer   Admin     Docs
+ :8000      :8080     :9000
+    |         |         |
+    +----+----+----+----+
+         |         |
+      MySQL     MongoDB Atlas
+     (WSL)       (Cloud)
+         |
+       Redis (WSL :6379)
+         |
+       Celery Worker
+        </div>
+
+        <h3>Production Mode (HTTPS via Ngrok)</h3>
+        <div class="diagram">
+  User Browser / Mobile / Internet
+         |
+    Ngrok (HTTPS tunnel)
+         |
+    https://xxx.ngrok-free.dev
+         |
+    Nginx (WSL - Reverse Proxy + Static Files)
+    Listens on: 80, 8080, 9000
+         |
+    +----------+----------+
+    |          |          |
+ Gunicorn   Gunicorn   Gunicorn
+ :8001      :8081      :9001
+ (Customer) (Admin)    (Docs)
+    |          |          |
+    +-----+----+-----+---+
+          |          |
+       MySQL      MongoDB Atlas
+      (WSL)        (Cloud)
+          |
+        Redis (WSL :6379)
+          |
+        Celery Worker
+        </div>
+
+        <div class="warning">
+            <strong>Key Difference:</strong> In development, Django serves static files directly.
+            In production, Nginx serves static files and proxies dynamic requests to Gunicorn.
         </div>
     </div>
 
-    <div class="section">
-        <h2>🧠 WHO STORES WHAT?</h2>
+    <!-- ==================== PAGE 2: WHO STORES WHAT ==================== -->
+    <div class="section" id="storage">
+        <h2>2. WHO STORES WHAT?</h2>
 
-        <h3>🟦 MySQL (Main Database – Structured)</h3>
+        <h3>MySQL (Main Database - Structured)</h3>
         <p>Used by <span class="highlight">Django ORM</span></p>
         <ul>
-            <li>Users</li>
-            <li>Products</li>
-            <li>Categories</li>
-            <li>Product Images</li>
-            <li>Reviews</li>
-            <li>Cart</li>
-            <li>Orders</li>
-            <li>Payments</li>
+            <li>Users, Products, Categories, Product Images</li>
+            <li>Reviews, Cart, Orders, Payments</li>
         </ul>
         <p>Needs: Relationships, Transactions, Data Integrity</p>
 
-        <h3>🟩 MongoDB Atlas (Secondary – Flexible)</h3>
+        <h3>MongoDB Atlas (Secondary - Flexible)</h3>
         <p>Used via <span class="highlight">PyMongo</span></p>
         <ul>
-            <li>User activity logs</li>
-            <li>Recently viewed products</li>
-            <li>Search history</li>
-            <li>User preferences</li>
-            <li>Product extra specifications</li>
-            <li>Analytics events</li>
+            <li>User activity logs, Recently viewed products</li>
+            <li>Search history, User preferences</li>
+            <li>Product extra specifications, Analytics events</li>
         </ul>
 
-        <h3>🟥 Redis (Fast Memory)</h3>
+        <h3>Redis (Fast Memory - WSL)</h3>
         <ul>
             <li>Cache (fast page loads)</li>
-            <li>Session storage</li>
-            <li>Cart cache (optional)</li>
+            <li>Session storage (shared across servers)</li>
             <li>Celery message broker</li>
         </ul>
 
-        <h3>🟨 Celery (Background Worker)</h3>
+        <h3>Celery (Background Worker)</h3>
         <ul>
             <li>Send order confirmation email</li>
-            <li>Send OTP SMS</li>
+            <li>Send OTP SMS via Twilio</li>
             <li>Reduce stock after order</li>
-            <li>Generate invoice</li>
             <li>Log activity to MongoDB</li>
         </ul>
     </div>
 
-    <div class="section">
-        <h2>⚙️ IMPLEMENTATION GUIDE</h2>
+    <!-- ==================== PAGE 3: TWO PROJECTS ==================== -->
+    <div class="section" id="projects">
+        <h2>3. TWO PROJECTS OVERVIEW</h2>
 
-        <h3>🟦 STEP 1 — MySQL</h3>
-        <pre><code>DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        ...
-    }
-}</code></pre>
+        <table>
+            <tr>
+                <th>Aspect</th>
+                <th>ShopEase (Main)</th>
+                <th>ShopEaseDocs</th>
+            </tr>
+            <tr>
+                <td>Purpose</td>
+                <td>E-commerce platform (Customer + Admin)</td>
+                <td>API Documentation portal</td>
+            </tr>
+            <tr>
+                <td>Django Apps</td>
+                <td>core, products, cart, accounts, orders, admin_panel</td>
+                <td>documentation</td>
+            </tr>
+            <tr>
+                <td>Database</td>
+                <td>MySQL (shopease_db) + MongoDB Atlas</td>
+                <td>MySQL (shopease_db)</td>
+            </tr>
+            <tr>
+                <td>Dev Ports</td>
+                <td>Customer: 8000, Admin: 8080</td>
+                <td>9000</td>
+            </tr>
+            <tr>
+                <td>Prod Ports (Nginx)</td>
+                <td>Customer: 80, Admin: 8080</td>
+                <td>9000</td>
+            </tr>
+            <tr>
+                <td>Prod Ports (Gunicorn)</td>
+                <td>Customer: 8001, Admin: 8081</td>
+                <td>9001</td>
+            </tr>
+            <tr>
+                <td>Settings</td>
+                <td>config.settings.customer / config.settings.admin</td>
+                <td>shopeasedocs.settings</td>
+            </tr>
+            <tr>
+                <td>Directory</td>
+                <td><code>ShopEase/shopease/</code></td>
+                <td><code>ShopEase/shopeasedocs/</code></td>
+            </tr>
+        </table>
 
-        <h3>🟩 STEP 2 — Connect MongoDB Atlas</h3>
-        <pre><code>pip install pymongo</code></pre>
-
-        <p><b>mongo.py</b></p>
-        <pre><code>from pymongo import MongoClient
-from decouple import config
-
-client = MongoClient(config("MONGO_URI"))
-mongo_db = client["shopease_logs"]</code></pre>
-
-        <p><b>.env</b></p>
-        <pre><code>MONGO_URI=mongodb+srv://username:password@cluster.mongodb.net/</code></pre>
-
-        <h4>Example: Log user activity</h4>
-        <pre><code>from .mongo import mongo_db
-
-def log_product_view(user_id, product_id):
-    mongo_db.views.insert_one({
-        "user_id": user_id,
-        "product_id": product_id,
-        "action": "view",
-    })</code></pre>
-
-        <h3>🟥 STEP 3 — Redis Setup</h3>
-        <pre><code>CACHES = {
-    "default": {
-        "BACKEND": "django.core.cache.backends.redis.RedisCache",
-        "LOCATION": "redis://127.0.0.1:6379/1",
-    }
-}</code></pre>
-
-        <h3>🟨 STEP 4 — Celery Setup</h3>
-        <p><b>celery.py</b></p>
-        <pre><code>import os
-from celery import Celery
-
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'shopease.settings')
-
-app = Celery('shopease')
-app.config_from_object('django.conf:settings', namespace='CELERY')
-app.autodiscover_tasks()</code></pre>
-
-        <p><b>settings.py</b></p>
-        <pre><code>CELERY_BROKER_URL = 'redis://127.0.0.1:6379/0'</code></pre>
-
-        <h4>Example Celery Task</h4>
-        <pre><code>from celery import shared_task
-from .mongo import mongo_db
-
-@shared_task
-def log_order_activity(order_id, user_id):
-    mongo_db.orders.insert_one({
-        "order_id": order_id,
-        "user_id": user_id,
-        "status": "created"
-    })</code></pre>
-    </div>
-
-    <div class="section">
-        <h2>🚀 HOW EVERYTHING WORKS TOGETHER</h2>
+        <h3>User Routing Logic (Customer Server - Port 8000/80)</h3>
         <ol>
-            <li>Django saves order → <b>MySQL</b></li>
-            <li>Celery task triggered</li>
-            <li>Celery logs event → <b>MongoDB Atlas</b></li>
-            <li>Redis carries task message</li>
-            <li>Email sent in background</li>
+            <li>Anonymous user visits <code>/</code> &rarr; Redirect to <code>/accounts/auth/</code> (login page)</li>
+            <li>Logged-in customer visits <code>/</code> &rarr; Redirect to <code>/home/</code></li>
+            <li>Logged-in staff visits <code>/</code> &rarr; Redirect to Admin server (<code>:8080</code>) via auth token</li>
         </ol>
     </div>
 
+    <!-- ==================== PAGE 4: PORT MAPPING ==================== -->
+    <div class="section" id="port-map">
+        <h2>4. PORT MAPPING (Development vs Production)</h2>
+
+        <h3>Development Mode</h3>
+        <table>
+            <tr>
+                <th>Service</th>
+                <th>Port</th>
+                <th>Server</th>
+                <th>Access URL</th>
+            </tr>
+            <tr>
+                <td>Customer</td>
+                <td>8000</td>
+                <td>Django runserver</td>
+                <td>http://localhost:8000</td>
+            </tr>
+            <tr>
+                <td>Admin</td>
+                <td>8080</td>
+                <td>Django runserver</td>
+                <td>http://localhost:8080</td>
+            </tr>
+            <tr>
+                <td>Docs</td>
+                <td>9000</td>
+                <td>Django runserver</td>
+                <td>http://localhost:9000</td>
+            </tr>
+            <tr>
+                <td>Redis</td>
+                <td>6379</td>
+                <td>redis-server (WSL)</td>
+                <td>redis://127.0.0.1:6379</td>
+            </tr>
+            <tr>
+                <td>MySQL</td>
+                <td>3306</td>
+                <td>mysqld (WSL)</td>
+                <td>localhost:3306</td>
+            </tr>
+        </table>
+
+        <h3>Production Mode</h3>
+        <table>
+            <tr>
+                <th>Service</th>
+                <th>Nginx (External)</th>
+                <th>Gunicorn (Internal)</th>
+                <th>Access URL</th>
+            </tr>
+            <tr>
+                <td>Customer</td>
+                <td>80</td>
+                <td>8001</td>
+                <td>http://localhost or https://xxx.ngrok-free.dev</td>
+            </tr>
+            <tr>
+                <td>Admin</td>
+                <td>8080</td>
+                <td>8081</td>
+                <td>http://localhost:8080</td>
+            </tr>
+            <tr>
+                <td>Docs</td>
+                <td>9000</td>
+                <td>9001</td>
+                <td>http://localhost:9000</td>
+            </tr>
+            <tr>
+                <td>Redis</td>
+                <td>-</td>
+                <td>6379</td>
+                <td>redis://127.0.0.1:6379</td>
+            </tr>
+            <tr>
+                <td>MySQL</td>
+                <td>-</td>
+                <td>3306</td>
+                <td>localhost:3306</td>
+            </tr>
+        </table>
+
+        <div class="warning">
+            <strong>Why different Gunicorn ports?</strong> Nginx listens on 80, 8080, 9000.
+            Gunicorn cannot bind to the same ports. So Gunicorn uses 8001, 8081, 9001 internally,
+            and Nginx proxies external traffic to them.
+        </div>
+    </div>
+
+    <!-- ==================== PAGE 5: DEVELOPMENT MODE ==================== -->
+    <div class="section" id="dev-mode">
+        <h2>5. DEVELOPMENT MODE (HTTP) - Step by Step</h2>
+
+        <div class="mode-box dev">
+            <h3>Prerequisites</h3>
+            <ul>
+                <li>WSL2 with Ubuntu installed</li>
+                <li>Python 3.12 virtual environment at <code>ShopEase/venv/</code></li>
+                <li>MySQL running in WSL</li>
+                <li>Redis running in WSL</li>
+            </ul>
+        </div>
+
+        <h3><span class="step-number">1</span> Start MySQL &amp; Redis (WSL Terminal 1)</h3>
+<pre><code>sudo service mysql start
+sudo service redis-server start
+redis-cli ping   # Should return PONG</code></pre>
+
+        <h3><span class="step-number">2</span> Run the Development Startup Script (WSL Terminal 2)</h3>
+<pre><code>cd "/mnt/c/Users/Prathmesh D Birajdar/OneDrive/Desktop/ShopEase"
+bash start_all_servers.sh</code></pre>
+
+        <p>This script automatically:</p>
+        <ul>
+            <li>Stops any running servers (Gunicorn/Django)</li>
+            <li>Sets <code>DEBUG=True</code> in <code>.env</code> (Django serves static files)</li>
+            <li>Activates the virtual environment</li>
+            <li>Starts Redis if not running</li>
+            <li>Collects static files</li>
+            <li>Starts 3 Django development servers (8000, 8080, 9000)</li>
+        </ul>
+
+        <h3><span class="step-number">3</span> (Optional) Start Celery Worker (WSL Terminal 3)</h3>
+<pre><code>cd "/mnt/c/Users/Prathmesh D Birajdar/OneDrive/Desktop/ShopEase"
+source venv/bin/activate
+cd shopease
+celery -A config worker -l info -P solo</code></pre>
+
+        <h3><span class="step-number">4</span> Access the Application</h3>
+        <table>
+            <tr><th>Service</th><th>URL</th></tr>
+            <tr><td>Customer</td><td><code>http://localhost:8000</code></td></tr>
+            <tr><td>Admin</td><td><code>http://localhost:8080</code></td></tr>
+            <tr><td>Docs</td><td><code>http://localhost:9000</code></td></tr>
+        </table>
+
+        <div class="success">
+            <strong>Development Features:</strong> Auto-reload on code changes, Django serves static files,
+            debug error pages, console email output.
+        </div>
+    </div>
+
+    <!-- ==================== PAGE 6: PRODUCTION MODE ==================== -->
+    <div class="section" id="prod-mode">
+        <h2>6. PRODUCTION MODE (HTTPS) - Step by Step</h2>
+
+        <div class="mode-box prod">
+            <h3>Prerequisites</h3>
+            <ul>
+                <li>All development prerequisites</li>
+                <li>Nginx installed in WSL: <code>sudo apt install nginx -y</code></li>
+                <li>Gunicorn installed: <code>pip install gunicorn</code></li>
+                <li>Ngrok installed and authenticated</li>
+            </ul>
+        </div>
+
+        <h3><span class="step-number">1</span> Start MySQL &amp; Redis (WSL Terminal 1)</h3>
+<pre><code>sudo service mysql start
+sudo service redis-server start
+redis-cli ping   # Should return PONG</code></pre>
+
+        <h3><span class="step-number">2</span> Run the Production Startup Script (WSL Terminal 2)</h3>
+<pre><code>cd "/mnt/c/Users/Prathmesh D Birajdar/OneDrive/Desktop/ShopEase"
+bash start_production.sh</code></pre>
+
+        <p>This script automatically:</p>
+        <ul>
+            <li>Stops any running servers</li>
+            <li>Sets <code>DEBUG=False</code> in <code>.env</code> (Nginx serves static files)</li>
+            <li>Activates the virtual environment</li>
+            <li>Installs the Nginx config to <code>/etc/nginx/sites-available/shopease</code></li>
+            <li>Starts Redis if not running</li>
+            <li>Runs <code>collectstatic</code></li>
+            <li>Starts 3 Gunicorn servers (ports 8001, 8081, 9001)</li>
+            <li>Starts Nginx (ports 80, 8080, 9000)</li>
+            <li>Verifies all services are running</li>
+        </ul>
+
+        <h3><span class="step-number">3</span> (Optional) Start Celery Worker (WSL Terminal 3)</h3>
+<pre><code>cd "/mnt/c/Users/Prathmesh D Birajdar/OneDrive/Desktop/ShopEase"
+source venv/bin/activate
+cd shopease
+celery -A config worker -l info -P solo</code></pre>
+
+        <h3><span class="step-number">4</span> Start Ngrok for Public Access (WSL Terminal 4)</h3>
+<pre><code>ngrok http 80</code></pre>
+
+        <div class="warning">
+            <strong>Important:</strong> Ngrok must point to <strong>port 80</strong> (Nginx),
+            NOT port 8000 or 8001. Nginx handles routing to the correct Gunicorn backend.
+        </div>
+
+        <h3><span class="step-number">5</span> Access the Application</h3>
+        <table>
+            <tr><th>Service</th><th>Local URL</th><th>Public URL (Ngrok)</th></tr>
+            <tr><td>Customer</td><td><code>http://localhost</code></td><td><code>https://xxx.ngrok-free.dev</code></td></tr>
+            <tr><td>Admin</td><td><code>http://localhost:8080</code></td><td>Local only (internal use)</td></tr>
+            <tr><td>Docs</td><td><code>http://localhost:9000</code></td><td>Local only (internal use)</td></tr>
+        </table>
+
+        <div class="success">
+            <strong>Production Features:</strong> Multi-worker Gunicorn (handles concurrent users),
+            Nginx serves static files with caching, HTTPS via Ngrok, security headers,
+            HSTS, CSRF/session cookie security.
+        </div>
+    </div>
+
+    <!-- ==================== PAGE 7: SWITCHING MODES ==================== -->
+    <div class="section" id="switching">
+        <h2>7. SWITCHING BETWEEN MODES</h2>
+
+        <div class="warning">
+            <strong>Always stop all servers before switching!</strong>
+            Running both modes simultaneously causes port conflicts.
+        </div>
+
+        <h3>Stop All Servers</h3>
+<pre><code>cd "/mnt/c/Users/Prathmesh D Birajdar/OneDrive/Desktop/ShopEase"
+bash stop_all.sh</code></pre>
+        <p>Or for production specifically:</p>
+<pre><code>bash stop_production.sh</code></pre>
+
+        <h3>Switch: Production &rarr; Development</h3>
+<pre><code># Step 1: Stop production
+bash stop_production.sh
+
+# Step 2: Start development
+bash start_all_servers.sh</code></pre>
+
+        <h3>Switch: Development &rarr; Production</h3>
+<pre><code># Step 1: Stop development
+bash stop_all.sh
+
+# Step 2: Start production
+bash start_production.sh
+
+# Step 3: Start Ngrok (separate terminal)
+ngrok http 80</code></pre>
+
+        <h3>Mode Comparison</h3>
+        <table>
+            <tr>
+                <th>Aspect</th>
+                <th>Development</th>
+                <th>Production</th>
+            </tr>
+            <tr>
+                <td>Server</td>
+                <td>Django runserver</td>
+                <td>Gunicorn + Nginx</td>
+            </tr>
+            <tr>
+                <td>DEBUG</td>
+                <td>True</td>
+                <td>False</td>
+            </tr>
+            <tr>
+                <td>Static Files</td>
+                <td>Django serves</td>
+                <td>Nginx serves (cached 30 days)</td>
+            </tr>
+            <tr>
+                <td>Protocol</td>
+                <td>HTTP</td>
+                <td>HTTPS (via Ngrok)</td>
+            </tr>
+            <tr>
+                <td>Auto-reload</td>
+                <td>Yes (code changes)</td>
+                <td>No (restart Gunicorn)</td>
+            </tr>
+            <tr>
+                <td>Workers</td>
+                <td>1 (single-threaded)</td>
+                <td>3 Customer + 2 Admin + 2 Docs</td>
+            </tr>
+            <tr>
+                <td>Security</td>
+                <td>Minimal (debug pages)</td>
+                <td>Full (HSTS, secure cookies, CSP)</td>
+            </tr>
+            <tr>
+                <td>Public Access</td>
+                <td>localhost only</td>
+                <td>Ngrok HTTPS URL</td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- ==================== PAGE 8: NGROK ==================== -->
+    <div class="section" id="ngrok">
+        <h2>8. GOING PUBLIC WITH NGROK</h2>
+
+        <h3>Setup (One-time)</h3>
+<pre><code># Install ngrok (if not done)
+# Download from: https://ngrok.com/download
+
+# Authenticate
+ngrok config add-authtoken YOUR_AUTH_TOKEN</code></pre>
+
+        <h3>Start Ngrok</h3>
+<pre><code># After production servers are running:
+ngrok http 80</code></pre>
+
+        <h3>Ngrok Output</h3>
+<pre><code>Session Status   online
+Forwarding       https://merchantlike-dann-multiphasic.ngrok-free.dev -> http://localhost:80</code></pre>
+
+        <p>Copy the <code>https://xxx.ngrok-free.dev</code> URL and share it with anyone to demo your project.</p>
+
+        <h3>Request Flow</h3>
+        <div class="diagram">
+  User visits: https://xxx.ngrok-free.dev/accounts/auth/
+       |
+  Ngrok (HTTPS) decrypts &rarr; sends HTTP to localhost:80
+       |
+  Nginx (port 80) receives request
+       |-- /static/  &rarr; Serves file directly from /staticfiles/
+       |-- /media/   &rarr; Serves file directly from /media/
+       |-- /         &rarr; Proxies to Gunicorn (127.0.0.1:8001)
+                          Sets X-Forwarded-Proto: https
+                          (Django knows it's HTTPS, no redirect loop)
+       |
+  Gunicorn (port 8001) &rarr; Django processes request
+       |
+  Django returns HTML response &rarr; back through chain to user
+        </div>
+
+        <div class="warning">
+            <strong>Free Ngrok Limitation:</strong> URL changes every time you restart ngrok.
+            Paid plans provide a fixed subdomain.
+        </div>
+    </div>
+
+    <!-- ==================== PAGE 9: IMPLEMENTATION GUIDE ==================== -->
+    <div class="section" id="implementation">
+        <h2>9. IMPLEMENTATION GUIDE</h2>
+
+        <h3>STEP 1 - MySQL (Django ORM)</h3>
+<pre><code>DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': config('DB_NAME'),
+        'USER': config('DB_USER'),
+        'PASSWORD': config('DB_PASSWORD'),
+        'HOST': config('DB_HOST', default='localhost'),
+        'PORT': config('DB_PORT', default='3306'),
+    }
+}</code></pre>
+
+        <h3>STEP 2 - Connect MongoDB Atlas</h3>
+<pre><code>pip install pymongo</code></pre>
+        <p><b>In settings/base.py:</b></p>
+<pre><code>from pymongo import MongoClient
+
+MONGO_URI = config("MONGO_URI", default="")
+MONGO_DB_NAME = config("MONGO_DB_NAME", default="shopease_logs")
+
+if MONGO_URI:
+    mongo_client = MongoClient(MONGO_URI)
+    mongo_db = mongo_client[MONGO_DB_NAME]</code></pre>
+
+        <h3>STEP 3 - Redis Setup</h3>
+<pre><code># Install in WSL
+sudo apt install redis-server -y
+sudo service redis-server start
+
+# Django settings
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/0",
+    }
+}
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'</code></pre>
+
+        <h3>STEP 4 - Celery Setup</h3>
+        <p><b>config/celery.py:</b></p>
+<pre><code>import os
+from celery import Celery
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings.customer')
+
+app = Celery('config')
+app.config_from_object('django.conf:settings', namespace='CELERY')
+app.autodiscover_tasks()</code></pre>
+
+        <p><b>settings/base.py:</b></p>
+<pre><code>CELERY_BROKER_URL = 'redis://127.0.0.1:6379/0'
+CELERY_RESULT_BACKEND = 'redis://127.0.0.1:6379/0'</code></pre>
+
+        <h4>Example Celery Task (apps/orders/tasks.py)</h4>
+<pre><code>from celery import shared_task
+from django.core.mail import send_mail
+
+@shared_task
+def send_order_confirmation_email(order_id):
+    from apps.orders.models import Order
+    order = Order.objects.get(id=order_id)
+    send_mail(
+        subject=f'Order Confirmed - #{str(order.order_id)[:8]}',
+        message=f'Thank you for your order!',
+        from_email='noreply@shopease.com',
+        recipient_list=[order.user.email],
+    )</code></pre>
+
+        <h3>STEP 5 - Nginx Configuration</h3>
+        <p><b>File: nginx_shopease.conf</b></p>
+<pre><code># Upstream servers (Gunicorn)
+upstream shopease_customer {
+    server 127.0.0.1:8001;   # NOT 8000 (Nginx uses 80)
+}
+upstream shopease_admin {
+    server 127.0.0.1:8081;   # NOT 8080 (Nginx uses 8080)
+}
+upstream shopease_docs {
+    server 127.0.0.1:9001;   # NOT 9000 (Nginx uses 9000)
+}
+
+server {
+    listen 80;
+    location /static/ {
+        alias "/path/to/shopease/staticfiles/";
+    }
+    location / {
+        proxy_pass http://shopease_customer;
+        proxy_set_header X-Forwarded-Proto https;  # Prevents redirect loop
+    }
+}</code></pre>
+
+        <h3>STEP 6 - Security Settings (DEBUG=False)</h3>
+<pre><code># shopease/config/settings/base.py
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')</code></pre>
+    </div>
+
+    <!-- ==================== PAGE 10: HOW EVERYTHING WORKS ==================== -->
+    <div class="section">
+        <h2>10. HOW EVERYTHING WORKS TOGETHER</h2>
+        <ol>
+            <li>User visits Ngrok URL &rarr; <b>Ngrok</b> forwards to Nginx</li>
+            <li>Nginx serves static files directly, proxies dynamic requests to <b>Gunicorn</b></li>
+            <li>Gunicorn runs <b>Django</b> application</li>
+            <li>Django saves order &rarr; <b>MySQL</b></li>
+            <li>Django dispatches async task &rarr; <b>Redis</b> (message broker)</li>
+            <li><b>Celery</b> worker picks up task</li>
+            <li>Celery sends confirmation email &rarr; <b>Gmail SMTP</b></li>
+            <li>Celery logs event &rarr; <b>MongoDB Atlas</b></li>
+        </ol>
+    </div>
+
+    <!-- ==================== PAGE 11: TROUBLESHOOTING ==================== -->
+    <div class="section" id="troubleshooting">
+        <h2>11. TROUBLESHOOTING</h2>
+
+        <h3>ERR_TOO_MANY_REDIRECTS (Redirect Loop)</h3>
+        <p><b>Cause:</b> Nginx passes <code>X-Forwarded-Proto: http</code> but Django has <code>SECURE_SSL_REDIRECT=True</code></p>
+<pre><code># Fix in nginx_shopease.conf - change in ALL server blocks:
+proxy_set_header X-Forwarded-Proto https;   # NOT $scheme</code></pre>
+
+        <h3>502 Bad Gateway</h3>
+        <p><b>Cause:</b> Gunicorn is not running on the expected port</p>
+<pre><code># Check Gunicorn processes
+ps aux | grep gunicorn
+
+# Restart Gunicorn
+bash start_production.sh</code></pre>
+
+        <h3>Static Files 404 (Development)</h3>
+        <p><b>Cause:</b> DEBUG=False in .env</p>
+<pre><code># Fix: Set DEBUG=True for development
+sed -i 's/DEBUG=False/DEBUG=True/' shopease/.env
+
+# Or just run:
+bash start_all_servers.sh   # Automatically sets DEBUG=True</code></pre>
+
+        <h3>Static Files 404 (Production)</h3>
+        <p><b>Cause:</b> collectstatic not run, or Nginx config not loaded</p>
+<pre><code># Collect static files
+cd shopease && python manage.py collectstatic --noinput
+
+# Reload Nginx
+sudo cp nginx_shopease.conf /etc/nginx/sites-available/shopease
+sudo nginx -t && sudo service nginx restart</code></pre>
+
+        <h3>Port Already in Use</h3>
+<pre><code># Stop all servers first
+bash stop_all.sh
+
+# Check what's using a port
+lsof -i :8000
+lsof -i :8080</code></pre>
+
+        <h3>Redis Connection Failed</h3>
+<pre><code>sudo service redis-server start
+redis-cli ping   # Should return PONG</code></pre>
+
+        <h3>MySQL Connection Failed</h3>
+<pre><code>sudo service mysql start
+mysql -u shopease_user -p   # Test login with password: prath@76</code></pre>
+
+        <h3>Nginx Config Error</h3>
+<pre><code>sudo nginx -t                    # Test config syntax
+sudo tail -f /var/log/nginx/error.log   # View error logs</code></pre>
+
+        <h3>View Gunicorn Logs</h3>
+<pre><code>tail -f /tmp/gunicorn_customer_error.log
+tail -f /tmp/gunicorn_admin_error.log
+tail -f /tmp/gunicorn_docs_error.log</code></pre>
+    </div>
+
+    <!-- ==================== PAGE 12: FILE STRUCTURE ==================== -->
+    <div class="section">
+        <h2>12. KEY FILES REFERENCE</h2>
+
+        <table>
+            <tr><th>File</th><th>Purpose</th></tr>
+            <tr><td><code>start_all_servers.sh</code></td><td>Start development mode (DEBUG=True, Django runserver)</td></tr>
+            <tr><td><code>start_production.sh</code></td><td>Start production mode (DEBUG=False, Gunicorn + Nginx)</td></tr>
+            <tr><td><code>stop_all.sh</code></td><td>Stop all Django/Gunicorn servers</td></tr>
+            <tr><td><code>stop_production.sh</code></td><td>Stop Gunicorn + Nginx</td></tr>
+            <tr><td><code>nginx_shopease.conf</code></td><td>Nginx reverse proxy configuration</td></tr>
+            <tr><td><code>shopease/.env</code></td><td>Environment variables (SECRET_KEY, DEBUG, DB, etc.)</td></tr>
+            <tr><td><code>shopease/config/settings/base.py</code></td><td>Shared Django settings</td></tr>
+            <tr><td><code>shopease/config/settings/customer.py</code></td><td>Customer server settings (port 8000/8001)</td></tr>
+            <tr><td><code>shopease/config/settings/admin.py</code></td><td>Admin server settings (port 8080/8081)</td></tr>
+            <tr><td><code>shopease/config/celery.py</code></td><td>Celery configuration</td></tr>
+            <tr><td><code>shopease/config/urls_customer.py</code></td><td>Customer URL routing</td></tr>
+            <tr><td><code>shopease/apps/core/views.py</code></td><td>Landing page routing logic</td></tr>
+        </table>
+    </div>
+
     <footer>
-        ShopEase Architecture Guide | Django + MySQL + MongoDB + Redis + Celery
+        ShopEase Architecture Guide | Django + MySQL + MongoDB + Redis + Celery + Nginx + Gunicorn + Ngrok
+        <br>
+        Last updated: January 2026
     </footer>
 
+<button class="scroll-top" id="scrollTop" title="Back to top">&#8679;</button>
+
+<script>
+    // Scroll to top button
+    var scrollBtn = document.getElementById('scrollTop');
+    window.addEventListener('scroll', function() {
+        scrollBtn.style.display = window.scrollY > 400 ? 'flex' : 'none';
+    });
+    scrollBtn.addEventListener('click', function() {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    // Copy code buttons
+    document.querySelectorAll('pre').forEach(function(pre) {
+        var btn = document.createElement('button');
+        btn.className = 'copy-btn';
+        btn.textContent = 'Copy';
+        btn.addEventListener('click', function() {
+            var code = pre.querySelector('code');
+            var text = (code || pre).innerText;
+            navigator.clipboard.writeText(text).then(function() {
+                btn.textContent = 'Copied!';
+                btn.classList.add('copied');
+                setTimeout(function() {
+                    btn.textContent = 'Copy';
+                    btn.classList.remove('copied');
+                }, 2000);
+            });
+        });
+        pre.appendChild(btn);
+    });
+</script>
 </body>
 
 </html>
