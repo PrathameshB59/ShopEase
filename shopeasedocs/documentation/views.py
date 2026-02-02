@@ -1,17 +1,19 @@
+from functools import wraps
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse, HttpResponseForbidden
-from django.db.models import Q, Count, F
+from django.db.models import Q, Count, F, Sum
 from django.utils import timezone
 from django.core.paginator import Paginator
 from django.views.decorators.http import require_http_methods, require_POST
+from django.views.decorators.cache import cache_page
 from django.db import transaction
 
 from .models import (
     DocCategory, Documentation, CodeExplanation, FAQ,
     DeveloperDiscussion, DeveloperMessage, AppVersion, DailyIssueHelp,
-    HelpScreenshot, CodeLearningProgress
+    HelpScreenshot, CodeLearningProgress, CodeQuiz, QuizAttempt
 )
 from .forms import (
     DocCategoryForm, DocumentationForm, CodeExplanationForm, FAQForm,
@@ -30,22 +32,25 @@ def admin_permission_required(permission_name):
     Works with ShopEase AdminRole model
     """
     def decorator(view_func):
+        @wraps(view_func)
         def wrapper(request, *args, **kwargs):
             if not request.user.is_authenticated:
                 messages.error(request, 'Please login to access this page.')
                 return redirect('login')
 
-            # Superusers have all permissions
-            if request.user.is_superuser:
+            # Superusers and staff have all permissions
+            if request.user.is_superuser or request.user.is_staff:
                 return view_func(request, *args, **kwargs)
 
-            # Check AdminRole permission
+            # Check AdminRole permission if it exists (from shopease integration)
             if hasattr(request.user, 'admin_role'):
-                if getattr(request.user.admin_role, permission_name, False):
+                admin_role = request.user.admin_role
+                if getattr(admin_role, permission_name, False):
                     return view_func(request, *args, **kwargs)
 
-            messages.error(request, 'You do not have permission to access this page.')
-            return HttpResponseForbidden('Permission denied')
+            # Permission denied
+            messages.error(request, f"You don't have permission to access this page. Required: {permission_name}")
+            return redirect('documentation:doc_home')
         return wrapper
     return decorator
 
@@ -183,6 +188,7 @@ def category_docs(request, category_slug):
     return render(request, 'documentation/public/category_docs.html', context)
 
 
+@cache_page(60 * 10)
 def faq_list(request):
     """FAQ listing by category"""
     categories = DocCategory.objects.filter(is_active=True).prefetch_related(
@@ -359,12 +365,21 @@ def doc_search(request):
     return render(request, 'documentation/public/search_results.html', context)
 
 
+@cache_page(60 * 15)
 def version_list(request):
     """List all app versions"""
     versions = AppVersion.objects.all().select_related('created_by').order_by('-release_date')
+    current_version = AppVersion.objects.filter(is_current_version=True).first()
+
+    # Filter by type if provided
+    version_type = request.GET.get('type')
+    if version_type:
+        versions = versions.filter(version_type=version_type.lower())
 
     context = {
         'versions': versions,
+        'current_version': current_version,
+        'version_types': AppVersion.VERSION_TYPE,
     }
     return render(request, 'documentation/public/version_list.html', context)
 
@@ -998,10 +1013,16 @@ def dev_chat_list(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
+    # Get user permissions for template
+    user_permissions = None
+    if hasattr(request.user, 'admin_role'):
+        user_permissions = request.user.admin_role
+
     context = {
         'page_obj': page_obj,
         'status_choices': DeveloperDiscussion.THREAD_STATUS,
         'selected_status': status_filter,
+        'user_permissions': user_permissions,
     }
     return render(request, 'documentation/dev_chat/chat_list.html', context)
 
@@ -1247,3 +1268,295 @@ def delete_message(request, message_id):
         'success': True,
         'message_id': message_id
     })
+
+
+# ====================================
+# LEARNING DASHBOARD & AJAX VIEWS
+# ====================================
+
+@superuser_required
+def learning_dashboard(request):
+    """Learning dashboard with progress stats"""
+    all_explanations = CodeExplanation.objects.all()
+    progress_records = CodeLearningProgress.objects.filter(user=request.user)
+
+    total_lessons = all_explanations.count()
+    completed = progress_records.filter(completed=True)
+    completed_count = completed.count()
+    in_progress = progress_records.filter(completed=False)
+    in_progress_count = in_progress.count()
+
+    # Calculate total time spent
+    total_time_seconds = sum(p.time_spent for p in progress_records)
+    total_time_hours = int(total_time_seconds // 3600)
+    total_time_minutes = int((total_time_seconds % 3600) // 60)
+
+    # Calculate completion percentage
+    completion_percentage = round((completed_count / total_lessons * 100) if total_lessons else 0, 1)
+
+    # Progress by module
+    modules = {}
+    for exp in all_explanations:
+        mod = exp.get_module_display()
+        if mod not in modules:
+            modules[mod] = {'total': 0, 'completed': 0, 'key': exp.module}
+        modules[mod]['total'] += 1
+
+    for prog in completed.select_related('code_explanation'):
+        mod = prog.code_explanation.get_module_display()
+        if mod in modules:
+            modules[mod]['completed'] += 1
+
+    # Continue learning (in-progress)
+    continue_learning = in_progress.select_related(
+        'code_explanation'
+    ).order_by('-last_accessed')[:5]
+
+    # Recently completed
+    recently_completed = completed.select_related(
+        'code_explanation'
+    ).order_by('-completed_at')[:5]
+
+    # Recommended (not started yet)
+    started_ids = progress_records.values_list('code_explanation_id', flat=True)
+    recommended = all_explanations.exclude(
+        id__in=started_ids
+    ).order_by('complexity', '-created_at')[:5]
+
+    # Recent quiz attempts
+    recent_quizzes = QuizAttempt.objects.filter(
+        user=request.user
+    ).select_related('quiz').order_by('-attempted_at')[:5]
+
+    context = {
+        'total_lessons': total_lessons,
+        'total_explanations': total_lessons,  # Alias for template compatibility
+        'completed': completed_count,
+        'completed_count': completed_count,
+        'in_progress': in_progress_count,
+        'in_progress_count': in_progress_count,
+        'total_time_hours': total_time_hours,
+        'total_time_minutes': total_time_minutes,
+        'overall_progress': completion_percentage,
+        'completion_percentage': completion_percentage,
+        'modules': modules,
+        'continue_learning': continue_learning,
+        'recently_completed': recently_completed,
+        'recommended': recommended,
+        'all_explanations': all_explanations,
+        'progress_records': progress_records,
+        'recent_quizzes': recent_quizzes,
+    }
+    return render(request, 'documentation/code/learning_dashboard.html', context)
+
+
+@require_POST
+@login_required
+def save_learning_progress(request):
+    """AJAX: Save learning progress for a code explanation"""
+    if not request.user.is_superuser:
+        return JsonResponse({'success': False, 'error': 'Superuser only'}, status=403)
+
+    code_id = request.POST.get('code_id')
+    time_spent = request.POST.get('time_spent', 0)
+    lines_explored = request.POST.get('lines_explored', '[]')
+    progress_pct = request.POST.get('progress_percentage', 0)
+
+    try:
+        code = CodeExplanation.objects.get(pk=code_id)
+    except CodeExplanation.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Not found'}, status=404)
+
+    import json
+    progress, created = CodeLearningProgress.objects.get_or_create(
+        user=request.user,
+        code_explanation=code,
+    )
+    progress.time_spent += int(time_spent)
+    try:
+        progress.lines_explored = json.loads(lines_explored)
+    except (json.JSONDecodeError, TypeError):
+        pass
+    progress.progress_percentage = min(int(progress_pct), 100)
+    progress.save()
+
+    return JsonResponse({'success': True, 'progress_percentage': progress.progress_percentage})
+
+
+@require_POST
+@login_required
+def mark_code_complete(request):
+    """AJAX: Mark a code explanation as completed"""
+    if not request.user.is_superuser:
+        return JsonResponse({'success': False, 'error': 'Superuser only'}, status=403)
+
+    code_id = request.POST.get('code_id')
+    try:
+        code = CodeExplanation.objects.get(pk=code_id)
+    except CodeExplanation.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Not found'}, status=404)
+
+    progress, created = CodeLearningProgress.objects.get_or_create(
+        user=request.user,
+        code_explanation=code,
+    )
+    progress.mark_complete()
+
+    return JsonResponse({'success': True, 'completed': True})
+
+
+# ====================================
+# QUIZ / ASSESSMENT SYSTEM
+# ====================================
+
+@superuser_required
+def code_quiz(request, slug):
+    """Quiz page for a code explanation."""
+    code = get_object_or_404(CodeExplanation, slug=slug)
+    quizzes = code.quizzes.all()
+
+    # Get previous attempts
+    attempts = {}
+    if request.user.is_authenticated:
+        user_attempts = QuizAttempt.objects.filter(
+            user=request.user, quiz__code_explanation=code
+        ).select_related('quiz')
+        for attempt in user_attempts:
+            attempts[attempt.quiz_id] = attempt
+
+    context = {
+        'code': code,
+        'quizzes': quizzes,
+        'attempts': attempts,
+        'total_questions': quizzes.count(),
+        'correct_count': sum(1 for a in attempts.values() if a.is_correct),
+    }
+    return render(request, 'documentation/code/code_quiz.html', context)
+
+
+@require_POST
+@login_required
+def submit_quiz(request):
+    """AJAX: Submit a quiz answer."""
+    quiz_id = request.POST.get('quiz_id')
+    selected = request.POST.get('selected_answer')
+
+    try:
+        quiz = CodeQuiz.objects.get(pk=quiz_id)
+        selected = int(selected)
+    except (CodeQuiz.DoesNotExist, TypeError, ValueError):
+        return JsonResponse({'success': False, 'error': 'Invalid quiz'}, status=400)
+
+    is_correct = selected == quiz.correct_answer
+
+    # Save attempt (allow retries - update existing)
+    attempt, created = QuizAttempt.objects.update_or_create(
+        user=request.user,
+        quiz=quiz,
+        defaults={
+            'selected_answer': selected,
+            'is_correct': is_correct,
+        }
+    )
+
+    return JsonResponse({
+        'success': True,
+        'is_correct': is_correct,
+        'correct_answer': quiz.correct_answer,
+        'explanation': quiz.explanation,
+    })
+
+
+@superuser_required
+def quiz_results(request, slug):
+    """Quiz results summary for a code explanation."""
+    code = get_object_or_404(CodeExplanation, slug=slug)
+    quizzes = code.quizzes.all()
+    attempts = QuizAttempt.objects.filter(
+        user=request.user, quiz__code_explanation=code
+    ).select_related('quiz')
+
+    attempt_map = {a.quiz_id: a for a in attempts}
+    total = quizzes.count()
+    correct = sum(1 for a in attempts if a.is_correct)
+    percentage = int((correct / total) * 100) if total > 0 else 0
+
+    context = {
+        'code': code,
+        'quizzes': quizzes,
+        'attempt_map': attempt_map,
+        'total': total,
+        'correct': correct,
+        'percentage': percentage,
+    }
+    return render(request, 'documentation/code/quiz_results.html', context)
+
+
+# ====================================
+# SEARCH AUTOCOMPLETE (AJAX)
+# ====================================
+
+def ajax_search_suggest(request):
+    """Return JSON search suggestions for autocomplete."""
+    query = request.GET.get('q', '').strip()
+    if len(query) < 2:
+        return JsonResponse({'results': []})
+
+    results = []
+
+    # Search documentation
+    docs = Documentation.objects.filter(
+        is_published=True
+    ).filter(
+        Q(title__icontains=query) | Q(content__icontains=query)
+    ).values('title', 'slug')[:3]
+    for doc in docs:
+        results.append({
+            'title': doc['title'],
+            'url': f"/docs/{doc['slug']}/",
+            'type': 'Documentation',
+            'icon': 'bi-file-text',
+        })
+
+    # Search FAQs
+    faqs = FAQ.objects.filter(
+        status='published'
+    ).filter(
+        Q(question__icontains=query) | Q(answer__icontains=query)
+    ).values('id', 'question', 'category__slug')[:2]
+    for faq in faqs:
+        results.append({
+            'title': faq['question'][:60],
+            'url': '/faq/',
+            'type': 'FAQ',
+            'icon': 'bi-question-circle',
+        })
+
+    # Search code explanations (superuser only)
+    if request.user.is_authenticated and request.user.is_superuser:
+        codes = CodeExplanation.objects.filter(
+            Q(title__icontains=query) | Q(description__icontains=query)
+        ).values('title', 'slug')[:2]
+        for code in codes:
+            results.append({
+                'title': code['title'],
+                'url': f"/code/{code['slug']}/",
+                'type': 'Code Explanation',
+                'icon': 'bi-code-slash',
+            })
+
+    # Search help articles
+    helps = DailyIssueHelp.objects.filter(
+        status='published'
+    ).filter(
+        Q(title__icontains=query) | Q(problem_description__icontains=query)
+    ).values('id', 'title')[:2]
+    for h in helps:
+        results.append({
+            'title': h['title'][:60],
+            'url': f"/help/{h['id']}/",
+            'type': 'Help Article',
+            'icon': 'bi-life-preserver',
+        })
+
+    return JsonResponse({'results': results[:8]})

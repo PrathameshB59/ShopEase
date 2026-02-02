@@ -103,6 +103,13 @@
                 </a>
                 {% endif %}
 
+                {% if user.is_superuser or user_permissions.can_view_documentation %}
+                <!-- Documentation -->
+                <a href="http://localhost:9000/" target="_blank" class="list-group-item list-group-item-action bg-dark text-white">
+                    <i class="bi bi-book me-2"></i>Documentation
+                </a>
+                {% endif %}
+
                 {% if user.is_superuser or user_permissions.can_view_analytics %}
                 <!-- Reports -->
                 <a href="{% url 'admin_panel:reports_dashboard' %}" class="list-group-item list-group-item-action bg-dark text-white {% if 'report' in request.resolver_match.url_name or 'sales' in request.resolver_match.url_name or 'revenue' in request.resolver_match.url_name %}active{% endif %}">

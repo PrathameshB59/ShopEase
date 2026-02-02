@@ -224,6 +224,7 @@
         <a href="#ngrok">Going Public (Ngrok)</a>
         <a href="#implementation">Implementation Guide</a>
         <a href="#troubleshooting">Troubleshooting</a>
+        <a href="#os-setup">OS Setup Guide</a>
     </div>
 
     <!-- ==================== PAGE 1: ARCHITECTURE ==================== -->
@@ -442,13 +443,13 @@
                 <td>Admin</td>
                 <td>8080</td>
                 <td>8081</td>
-                <td>http://localhost:8080</td>
+                <td>http://localhost:8080 or https://xxx.ngrok-free.dev/admin-portal/</td>
             </tr>
             <tr>
                 <td>Docs</td>
                 <td>9000</td>
                 <td>9001</td>
-                <td>http://localhost:9000</td>
+                <td>http://localhost:9000 or https://xxx.ngrok-free.dev/docs/</td>
             </tr>
             <tr>
                 <td>Redis</td>
@@ -577,9 +578,9 @@ celery -A config worker -l info -P solo</code></pre>
         <h3><span class="step-number">5</span> Access the Application</h3>
         <table>
             <tr><th>Service</th><th>Local URL</th><th>Public URL (Ngrok)</th></tr>
-            <tr><td>Customer</td><td><code>http://localhost</code></td><td><code>https://xxx.ngrok-free.dev</code></td></tr>
-            <tr><td>Admin</td><td><code>http://localhost:8080</code></td><td>Local only (internal use)</td></tr>
-            <tr><td>Docs</td><td><code>http://localhost:9000</code></td><td>Local only (internal use)</td></tr>
+            <tr><td>Customer</td><td><code>http://localhost</code></td><td><code>https://xxx.ngrok-free.dev/</code></td></tr>
+            <tr><td>Admin</td><td><code>http://localhost:8080</code></td><td><code>https://xxx.ngrok-free.dev/admin-portal/</code></td></tr>
+            <tr><td>Docs</td><td><code>http://localhost:9000</code></td><td><code>https://xxx.ngrok-free.dev/docs/</code></td></tr>
         </table>
 
         <div class="success">
@@ -698,14 +699,18 @@ Forwarding       https://merchantlike-dann-multiphasic.ngrok-free.dev -> http://
        |
   Ngrok (HTTPS) decrypts &rarr; sends HTTP to localhost:80
        |
-  Nginx (port 80) receives request
-       |-- /static/  &rarr; Serves file directly from /staticfiles/
-       |-- /media/   &rarr; Serves file directly from /media/
-       |-- /         &rarr; Proxies to Gunicorn (127.0.0.1:8001)
-                          Sets X-Forwarded-Proto: https
-                          (Django knows it's HTTPS, no redirect loop)
+  Nginx (port 80) receives request — Path-Based Routing:
+       |-- /static/            &rarr; Customer static files
+       |-- /media/             &rarr; Customer media files
+       |-- /admin-portal/static/ &rarr; Admin static files
+       |-- /admin-portal/      &rarr; Strips prefix, proxies to Gunicorn Admin (8081)
+       |                           Sets X-Script-Name: /admin-portal
+       |-- /docs/static/       &rarr; Docs static files
+       |-- /docs/              &rarr; Strips prefix, proxies to Gunicorn Docs (9001)
+       |                           Sets X-Script-Name: /docs
+       |-- /                   &rarr; Proxies to Gunicorn Customer (8001)
        |
-  Gunicorn (port 8001) &rarr; Django processes request
+  Gunicorn &rarr; Django (ScriptNameMiddleware prefixes all URLs)
        |
   Django returns HTML response &rarr; back through chain to user
         </div>
@@ -916,6 +921,857 @@ tail -f /tmp/gunicorn_docs_error.log</code></pre>
             <tr><td><code>shopease/config/urls_customer.py</code></td><td>Customer URL routing</td></tr>
             <tr><td><code>shopease/apps/core/views.py</code></td><td>Landing page routing logic</td></tr>
         </table>
+    </div>
+
+    <!-- ==================== PAGE 13: OS-SPECIFIC SETUP ==================== -->
+    <div class="section" id="os-setup">
+        <h2>13. SETUP BY OPERATING SYSTEM</h2>
+
+        <p>ShopEase can run on multiple operating systems. Each has different strengths, limitations, and setup procedures.
+        This section provides an in-depth guide for <b>WSL2</b>, <b>Native Linux</b>, <b>macOS</b>, and <b>Windows (Native)</b>,
+        covering development mode, production mode, pros &amp; cons, performance notes, and OS-specific troubleshooting.</p>
+
+        <!-- Master Comparison Table -->
+        <h3>Master Comparison</h3>
+        <table>
+            <tr>
+                <th>Feature</th>
+                <th>WSL2 (Ubuntu)</th>
+                <th>Native Linux</th>
+                <th>macOS</th>
+                <th>Windows (Native)</th>
+            </tr>
+            <tr>
+                <td>Development</td>
+                <td><span class="highlight">Full</span></td>
+                <td><span class="highlight">Full</span></td>
+                <td><span class="highlight">Full</span></td>
+                <td>Partial</td>
+            </tr>
+            <tr>
+                <td>Production (Nginx + Gunicorn)</td>
+                <td><span class="highlight">Full</span></td>
+                <td><span class="highlight">Full</span></td>
+                <td><span class="highlight">Full</span></td>
+                <td>Not supported</td>
+            </tr>
+            <tr>
+                <td>Ngrok Public Access</td>
+                <td><span class="highlight">Full</span></td>
+                <td><span class="highlight">Full</span></td>
+                <td><span class="highlight">Full</span></td>
+                <td>Dev only (runserver)</td>
+            </tr>
+            <tr>
+                <td>Redis</td>
+                <td>Native apt</td>
+                <td>Native apt</td>
+                <td>Homebrew</td>
+                <td>Memurai / Docker</td>
+            </tr>
+            <tr>
+                <td>MySQL</td>
+                <td>Native apt</td>
+                <td>Native apt</td>
+                <td>Homebrew</td>
+                <td>MSI Installer</td>
+            </tr>
+            <tr>
+                <td>Celery Worker</td>
+                <td><span class="highlight">Full</span></td>
+                <td><span class="highlight">Full</span></td>
+                <td><span class="highlight">Full</span></td>
+                <td>Limited (no fork)</td>
+            </tr>
+            <tr>
+                <td>Bash Scripts (.sh)</td>
+                <td>Native</td>
+                <td>Native</td>
+                <td>Native</td>
+                <td>Git Bash only</td>
+            </tr>
+            <tr>
+                <td>File I/O Performance</td>
+                <td>Slow on /mnt/c (Windows FS)</td>
+                <td>Fast (native ext4)</td>
+                <td>Fast (APFS)</td>
+                <td>Fast (NTFS)</td>
+            </tr>
+            <tr>
+                <td>Service Manager</td>
+                <td><code>service</code></td>
+                <td><code>systemctl</code></td>
+                <td><code>brew services</code></td>
+                <td>Windows Services / manual</td>
+            </tr>
+            <tr>
+                <td>Recommended</td>
+                <td><span class="highlight">Yes (current)</span></td>
+                <td><span class="highlight">Yes (best perf)</span></td>
+                <td>Yes</td>
+                <td>No</td>
+            </tr>
+        </table>
+
+        <!-- =============================== WSL2 =============================== -->
+        <h3>13.1 WSL2 (Ubuntu on Windows) &mdash; Current Setup</h3>
+
+        <h4>Pros &amp; Cons</h4>
+        <table>
+            <tr><th>Pros</th><th>Cons</th></tr>
+            <tr>
+                <td>
+                    <ul>
+                        <li>Full Linux environment inside Windows</li>
+                        <li>All Linux tools work (Nginx, Gunicorn, Redis, Celery)</li>
+                        <li>Access Windows files via <code>/mnt/c/</code></li>
+                        <li>Shares localhost with Windows (browser access)</li>
+                        <li>VS Code WSL extension for seamless editing</li>
+                        <li>All ShopEase scripts work as-is</li>
+                    </ul>
+                </td>
+                <td>
+                    <ul>
+                        <li>Slow file I/O on <code>/mnt/c/</code> (Windows filesystem)</li>
+                        <li><code>systemctl</code> doesn't work (use <code>service</code> instead)</li>
+                        <li>Services don't auto-start on reboot</li>
+                        <li>Consumes RAM (WSL2 VM)</li>
+                        <li>Occasional networking quirks</li>
+                    </ul>
+                </td>
+            </tr>
+        </table>
+
+        <h4>Development Setup</h4>
+        <p><b>Step 1: Install WSL2 &amp; Ubuntu</b></p>
+<pre><code># PowerShell (Admin) on Windows:
+wsl --install -d Ubuntu-22.04
+# Restart Windows, then open Ubuntu terminal</code></pre>
+
+        <p><b>Step 2: Install Dependencies</b></p>
+<pre><code>sudo apt update && sudo apt upgrade -y
+sudo apt install -y mysql-server redis-server python3.12 python3.12-venv \
+    python3.12-dev libmysqlclient-dev build-essential pkg-config</code></pre>
+
+        <p><b>Step 3: Setup MySQL</b></p>
+<pre><code>sudo service mysql start
+sudo mysql_secure_installation
+# Create database and user:
+sudo mysql -e "CREATE DATABASE IF NOT EXISTS shopease_db CHARACTER SET utf8mb4;"
+sudo mysql -e "CREATE USER IF NOT EXISTS 'shopease_user'@'localhost' IDENTIFIED BY 'your_password';"
+sudo mysql -e "GRANT ALL PRIVILEGES ON shopease_db.* TO 'shopease_user'@'localhost';"
+sudo mysql -e "FLUSH PRIVILEGES;"</code></pre>
+
+        <p><b>Step 4: Setup Python &amp; Project</b></p>
+<pre><code>cd "/mnt/c/Users/Prathmesh D Birajdar/OneDrive/Desktop/ShopEase"
+python3.12 -m venv venv
+source venv/bin/activate
+pip install -r shopease/requirements.txt
+pip install -r shopeasedocs/requirements.txt</code></pre>
+
+        <p><b>Step 5: Configure .env Files</b></p>
+<pre><code># shopease/.env and shopeasedocs/.env
+DEBUG=True
+SECRET_KEY=your-secret-key
+DB_NAME=shopease_db
+DB_USER=shopease_user
+DB_PASSWORD=your_password
+DB_HOST=localhost
+DB_PORT=3306</code></pre>
+
+        <p><b>Step 6: Run Migrations &amp; Start</b></p>
+<pre><code>cd shopease && python manage.py migrate --settings=config.settings.customer
+cd ../shopeasedocs && python manage.py migrate
+cd ..
+bash start_all_servers.sh</code></pre>
+
+        <h4>Production Setup</h4>
+<pre><code># Install production tools
+sudo apt install -y nginx
+pip install gunicorn
+
+# Install Ngrok
+curl -sSL https://ngrok-agent.s3.amazonaws.com/ngrok-v3-stable-linux-amd64.tgz | sudo tar xzf - -C /usr/local/bin
+ngrok config add-authtoken YOUR_TOKEN
+
+# Start production
+bash start_production.sh
+
+# Open another terminal for public access:
+ngrok http 80</code></pre>
+
+        <h4>Performance Optimization</h4>
+        <div class="warning">
+            <strong>Slow File I/O Fix:</strong> Project files on <code>/mnt/c/</code> (Windows NTFS) are ~5x slower
+            than native Linux filesystem. For better performance:
+<pre><code># Option 1: Move project to WSL home (fastest)
+cp -r "/mnt/c/Users/.../ShopEase" ~/ShopEase
+cd ~/ShopEase
+
+# Option 2: Add to /etc/wsl.conf for better /mnt/c performance
+[automount]
+options = "metadata,umask=22,fmask=11"
+
+# Option 3: Limit WSL2 memory usage
+# Create/edit %USERPROFILE%/.wslconfig on Windows:
+[wsl2]
+memory=4GB
+processors=4</code></pre>
+        </div>
+
+        <h4>Troubleshooting (WSL2)</h4>
+        <table>
+            <tr><th>Issue</th><th>Cause</th><th>Fix</th></tr>
+            <tr>
+                <td><code>systemctl</code> not found</td>
+                <td>WSL2 uses init, not systemd (older versions)</td>
+                <td>Use <code>sudo service mysql start</code> instead. Or enable systemd:
+<pre><code># /etc/wsl.conf
+[boot]
+systemd=true
+# Then: wsl --shutdown (from PowerShell)</code></pre></td>
+            </tr>
+            <tr>
+                <td>MySQL won't start</td>
+                <td>AppArmor or socket issues</td>
+                <td><pre><code>sudo mkdir -p /var/run/mysqld
+sudo chown mysql:mysql /var/run/mysqld
+sudo service mysql start</code></pre></td>
+            </tr>
+            <tr>
+                <td>Redis connection refused</td>
+                <td>Redis not running (services don't auto-start in WSL)</td>
+                <td><pre><code>sudo service redis-server start
+redis-cli ping  # Should return PONG</code></pre></td>
+            </tr>
+            <tr>
+                <td>Port 80 already in use</td>
+                <td>Windows IIS or other service using port 80</td>
+                <td><pre><code># From Windows PowerShell (Admin):
+netsh interface ipv4 show excludedportrange protocol=tcp
+# Stop IIS if running:
+net stop W3SVC</code></pre></td>
+            </tr>
+            <tr>
+                <td>localhost not accessible from browser</td>
+                <td>WSL2 networking issue</td>
+                <td><pre><code># Try 127.0.0.1 instead of localhost
+# Or restart WSL: wsl --shutdown (from PowerShell)</code></pre></td>
+            </tr>
+            <tr>
+                <td>Services stop after closing terminal</td>
+                <td>WSL shuts down when no terminals open</td>
+                <td>Keep at least one WSL terminal open, or run <code>wsl -d Ubuntu</code> in background</td>
+            </tr>
+            <tr>
+                <td>Permission denied on /mnt/c/ files</td>
+                <td>WSL mount permissions</td>
+                <td><pre><code># Add to /etc/wsl.conf:
+[automount]
+enabled = true
+options = "metadata,umask=22,fmask=11"
+# Restart WSL</code></pre></td>
+            </tr>
+        </table>
+
+        <div class="success">
+            <strong>This is the current ShopEase environment.</strong> All scripts, configs, and paths work as-is.
+        </div>
+
+        <!-- =============================== NATIVE LINUX =============================== -->
+        <h3>13.2 Native Linux (Ubuntu/Debian)</h3>
+
+        <h4>Pros &amp; Cons</h4>
+        <table>
+            <tr><th>Pros</th><th>Cons</th></tr>
+            <tr>
+                <td>
+                    <ul>
+                        <li>Best performance (no virtualization layer)</li>
+                        <li>Native <code>systemctl</code> for service management</li>
+                        <li>Services auto-start on boot</li>
+                        <li>Native filesystem (ext4) &mdash; fastest I/O</li>
+                        <li>All Linux tools work natively</li>
+                        <li>Ideal for production deployment (VPS/cloud)</li>
+                    </ul>
+                </td>
+                <td>
+                    <ul>
+                        <li>Requires dedicated Linux machine or VM</li>
+                        <li>No Windows apps alongside</li>
+                        <li>Must update <code>nginx_shopease.conf</code> paths</li>
+                    </ul>
+                </td>
+            </tr>
+        </table>
+
+        <h4>Development Setup</h4>
+        <p><b>Step 1: Install System Dependencies</b></p>
+<pre><code>sudo apt update && sudo apt upgrade -y
+sudo apt install -y mysql-server redis-server python3.12 python3.12-venv \
+    python3.12-dev libmysqlclient-dev build-essential pkg-config git curl</code></pre>
+
+        <p><b>Step 2: Enable &amp; Start Services</b></p>
+<pre><code># Enable auto-start on boot
+sudo systemctl enable mysql
+sudo systemctl enable redis-server
+
+# Start now
+sudo systemctl start mysql
+sudo systemctl start redis-server
+
+# Verify
+sudo systemctl status mysql    # Active: active (running)
+redis-cli ping                 # PONG</code></pre>
+
+        <p><b>Step 3: Setup MySQL Database</b></p>
+<pre><code>sudo mysql_secure_installation
+sudo mysql -e "CREATE DATABASE shopease_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+sudo mysql -e "CREATE USER 'shopease_user'@'localhost' IDENTIFIED BY 'your_password';"
+sudo mysql -e "GRANT ALL PRIVILEGES ON shopease_db.* TO 'shopease_user'@'localhost';"
+sudo mysql -e "FLUSH PRIVILEGES;"</code></pre>
+
+        <p><b>Step 4: Clone &amp; Setup Project</b></p>
+<pre><code>cd ~
+git clone https://your-repo-url/ShopEase.git
+cd ShopEase
+python3.12 -m venv venv
+source venv/bin/activate
+pip install -r shopease/requirements.txt
+pip install -r shopeasedocs/requirements.txt
+
+# Configure .env files (same as WSL section)
+# Run migrations
+cd shopease && python manage.py migrate --settings=config.settings.customer
+cd ../shopeasedocs && python manage.py migrate</code></pre>
+
+        <p><b>Step 5: Update Paths in Scripts</b></p>
+        <div class="warning">
+            <strong>Critical:</strong> Update file paths in these files to match your Linux directory:
+<pre><code># In nginx_shopease.conf, change all alias paths:
+# FROM: "/mnt/c/Users/Prathmesh D Birajdar/OneDrive/Desktop/ShopEase/..."
+# TO:   "/home/youruser/ShopEase/..."
+
+# In start_production.sh, update BASE_DIR:
+# FROM: BASE_DIR="/mnt/c/Users/Prathmesh D Birajdar/OneDrive/Desktop/ShopEase"
+# TO:   BASE_DIR="/home/youruser/ShopEase"
+
+# Same for start_all_servers.sh and stop scripts</code></pre>
+        </div>
+
+        <p><b>Step 6: Start Development</b></p>
+<pre><code>bash start_all_servers.sh</code></pre>
+
+        <h4>Production Setup</h4>
+<pre><code># Install production tools
+sudo apt install -y nginx
+pip install gunicorn
+
+# Install Ngrok
+curl -sSL https://ngrok-agent.s3.amazonaws.com/ngrok-v3-stable-linux-amd64.tgz | sudo tar xzf - -C /usr/local/bin
+ngrok config add-authtoken YOUR_TOKEN
+
+# Setup Nginx
+sudo cp nginx_shopease.conf /etc/nginx/sites-available/shopease
+sudo ln -sf /etc/nginx/sites-available/shopease /etc/nginx/sites-enabled/
+sudo rm -f /etc/nginx/sites-enabled/default
+sudo nginx -t && sudo systemctl restart nginx
+
+# Enable Nginx auto-start
+sudo systemctl enable nginx
+
+# Start production
+bash start_production.sh
+
+# Public access
+ngrok http 80</code></pre>
+
+        <h4>Auto-Start Services on Boot (Linux Advantage)</h4>
+<pre><code># Create a systemd service for Gunicorn (optional)
+sudo nano /etc/systemd/system/shopease-customer.service
+
+[Unit]
+Description=ShopEase Customer Gunicorn
+After=network.target mysql.service redis.service
+
+[Service]
+User=youruser
+WorkingDirectory=/home/youruser/ShopEase/shopease
+ExecStart=/home/youruser/ShopEase/venv/bin/gunicorn config.wsgi_customer:application --bind 127.0.0.1:8001 --workers 3
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+
+# Enable:
+sudo systemctl enable shopease-customer
+sudo systemctl start shopease-customer</code></pre>
+
+        <h4>Troubleshooting (Native Linux)</h4>
+        <table>
+            <tr><th>Issue</th><th>Cause</th><th>Fix</th></tr>
+            <tr>
+                <td><code>mysqlclient</code> pip install fails</td>
+                <td>Missing C headers</td>
+                <td><pre><code>sudo apt install -y libmysqlclient-dev python3.12-dev build-essential
+pip install mysqlclient</code></pre></td>
+            </tr>
+            <tr>
+                <td>Nginx 403 Forbidden on static files</td>
+                <td>File permissions</td>
+                <td><pre><code># Ensure Nginx user (www-data) can read files:
+chmod -R 755 /home/youruser/ShopEase/shopease/staticfiles/
+# Or add your user to www-data group:
+sudo usermod -aG www-data youruser</code></pre></td>
+            </tr>
+            <tr>
+                <td>MySQL access denied for root</td>
+                <td>Ubuntu MySQL uses auth_socket by default</td>
+                <td><pre><code>sudo mysql
+ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'password';
+FLUSH PRIVILEGES;</code></pre></td>
+            </tr>
+            <tr>
+                <td>Port 80 requires sudo</td>
+                <td>Ports below 1024 need root</td>
+                <td>Nginx runs as root (normal). Gunicorn runs on high ports (8001+) &mdash; no sudo needed.</td>
+            </tr>
+            <tr>
+                <td>Gunicorn not found</td>
+                <td>Virtual env not activated</td>
+                <td><pre><code>source /home/youruser/ShopEase/venv/bin/activate
+which gunicorn  # Should show venv path</code></pre></td>
+            </tr>
+            <tr>
+                <td>Celery worker crashes</td>
+                <td>Redis not running</td>
+                <td><pre><code>sudo systemctl status redis-server
+sudo systemctl start redis-server</code></pre></td>
+            </tr>
+        </table>
+
+        <!-- =============================== macOS =============================== -->
+        <h3>13.3 macOS (Intel &amp; Apple Silicon)</h3>
+
+        <h4>Pros &amp; Cons</h4>
+        <table>
+            <tr><th>Pros</th><th>Cons</th></tr>
+            <tr>
+                <td>
+                    <ul>
+                        <li>Unix-based &mdash; most Linux tools work</li>
+                        <li>Homebrew makes installing easy</li>
+                        <li>Good filesystem performance (APFS)</li>
+                        <li>Bash/Zsh terminal built-in</li>
+                        <li>VS Code, PyCharm, etc. work great</li>
+                        <li>Gunicorn and Nginx fully supported</li>
+                    </ul>
+                </td>
+                <td>
+                    <ul>
+                        <li>Nginx config paths differ from Linux</li>
+                        <li>Apple Silicon (M1/M2/M3) may have pip build issues</li>
+                        <li>No <code>systemctl</code> &mdash; use <code>brew services</code> or <code>launchctl</code></li>
+                        <li>Must update all paths in scripts and configs</li>
+                        <li>MySQL may conflict with MariaDB from Homebrew</li>
+                        <li><code>start_production.sh</code> uses <code>sudo service</code> &mdash; must modify for macOS</li>
+                    </ul>
+                </td>
+            </tr>
+        </table>
+
+        <h4>Development Setup</h4>
+        <p><b>Step 1: Install Homebrew &amp; Dependencies</b></p>
+<pre><code># Install Homebrew (if not installed)
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+# Install all dependencies
+brew install mysql redis python@3.12 pkg-config mysqlclient git</code></pre>
+
+        <p><b>Step 2: Start &amp; Configure Services</b></p>
+<pre><code># Start MySQL and Redis (auto-starts on login)
+brew services start mysql
+brew services start redis
+
+# Verify
+mysql -u root -e "SELECT 1;"    # Should work (macOS MySQL has no root password by default)
+redis-cli ping                   # PONG
+
+# Secure MySQL (set root password)
+mysql_secure_installation
+
+# Create database
+mysql -u root -p -e "CREATE DATABASE shopease_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+mysql -u root -p -e "CREATE USER 'shopease_user'@'localhost' IDENTIFIED BY 'your_password';"
+mysql -u root -p -e "GRANT ALL PRIVILEGES ON shopease_db.* TO 'shopease_user'@'localhost';"</code></pre>
+
+        <p><b>Step 3: Setup Python &amp; Project</b></p>
+<pre><code>cd ~/Desktop/ShopEase    # or wherever you clone the project
+python3.12 -m venv venv
+source venv/bin/activate
+
+# Apple Silicon users may need:
+export CFLAGS="-I$(brew --prefix)/include"
+export LDFLAGS="-L$(brew --prefix)/lib"
+
+pip install -r shopease/requirements.txt
+pip install -r shopeasedocs/requirements.txt</code></pre>
+
+        <p><b>Step 4: Configure .env Files</b></p>
+<pre><code># Same as Linux/WSL, but verify MySQL socket path:
+# macOS Homebrew MySQL socket: /tmp/mysql.sock
+# If DB_HOST=localhost doesn't work, try:
+DB_HOST=127.0.0.1</code></pre>
+
+        <p><b>Step 5: Run Migrations &amp; Start</b></p>
+<pre><code>cd shopease && python manage.py migrate --settings=config.settings.customer
+cd ../shopeasedocs && python manage.py migrate
+cd ..
+bash start_all_servers.sh</code></pre>
+
+        <h4>Production Setup</h4>
+<pre><code># Install production tools
+brew install nginx ngrok
+pip install gunicorn
+
+# Ngrok auth
+ngrok config add-authtoken YOUR_TOKEN</code></pre>
+
+        <p><b>Nginx Configuration on macOS:</b></p>
+<pre><code># Config paths differ on macOS:
+#   Apple Silicon: /opt/homebrew/etc/nginx/
+#   Intel Mac:     /usr/local/etc/nginx/
+
+# Check your architecture:
+uname -m    # arm64 = Apple Silicon, x86_64 = Intel
+
+# Copy config (Apple Silicon example):
+cp nginx_shopease.conf /opt/homebrew/etc/nginx/servers/shopease.conf
+
+# IMPORTANT: Update all alias paths in the config!
+# Change:  "/mnt/c/Users/Prathmesh D Birajdar/OneDrive/Desktop/ShopEase/..."
+# To:      "/Users/yourname/Desktop/ShopEase/..."
+
+# Test and start Nginx
+nginx -t
+brew services start nginx</code></pre>
+
+        <p><b>Modify <code>start_production.sh</code> for macOS:</b></p>
+<pre><code># Replace these lines in start_production.sh:
+
+# CHANGE: sudo cp ... /etc/nginx/sites-available/shopease
+# TO:     cp nginx_shopease.conf /opt/homebrew/etc/nginx/servers/shopease.conf
+
+# CHANGE: sudo service nginx restart
+# TO:     brew services restart nginx
+
+# CHANGE: sudo nginx -t
+# TO:     nginx -t
+
+# Update BASE_DIR to your macOS path:
+BASE_DIR="/Users/yourname/Desktop/ShopEase"</code></pre>
+
+        <h4>Troubleshooting (macOS)</h4>
+        <table>
+            <tr><th>Issue</th><th>Cause</th><th>Fix</th></tr>
+            <tr>
+                <td><code>pip install mysqlclient</code> fails</td>
+                <td>Missing MySQL C headers on Apple Silicon</td>
+                <td><pre><code>brew install mysql pkg-config
+export MYSQLCLIENT_CFLAGS=$(pkg-config --cflags mysqlclient)
+export MYSQLCLIENT_LDFLAGS=$(pkg-config --libs mysqlclient)
+pip install mysqlclient</code></pre></td>
+            </tr>
+            <tr>
+                <td>Nginx: <code>Address already in use</code></td>
+                <td>Apache or another server on port 80</td>
+                <td><pre><code># Stop Apache (macOS built-in):
+sudo apachectl stop
+# Then start Nginx:
+brew services start nginx</code></pre></td>
+            </tr>
+            <tr>
+                <td>Nginx config not loading</td>
+                <td>Wrong config directory</td>
+                <td><pre><code># Check which nginx:
+which nginx
+# Check config path:
+nginx -t
+# Apple Silicon: /opt/homebrew/etc/nginx/
+# Intel: /usr/local/etc/nginx/
+# Include servers dir in nginx.conf:
+# include servers/*;</code></pre></td>
+            </tr>
+            <tr>
+                <td>MySQL socket error</td>
+                <td>macOS MySQL uses <code>/tmp/mysql.sock</code></td>
+                <td><pre><code># In .env, use IP instead of hostname:
+DB_HOST=127.0.0.1
+# Or create symlink:
+sudo ln -s /tmp/mysql.sock /var/run/mysqld/mysqld.sock</code></pre></td>
+            </tr>
+            <tr>
+                <td>Permission denied on port 80</td>
+                <td>macOS requires root for ports &lt; 1024</td>
+                <td><pre><code># Run Nginx with sudo:
+sudo brew services start nginx
+# Or use port 8080 instead of 80 and point ngrok there:
+ngrok http 8080</code></pre></td>
+            </tr>
+            <tr>
+                <td>Celery: <code>objc[...] +[__NSCFConstantString initialize]</code></td>
+                <td>macOS fork() safety</td>
+                <td><pre><code># Set this before running Celery:
+export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
+celery -A config worker -l info -P solo</code></pre></td>
+            </tr>
+            <tr>
+                <td><code>brew services</code> not starting</td>
+                <td>Homebrew service files need refresh</td>
+                <td><pre><code>brew services stop --all
+brew services start mysql
+brew services start redis
+brew services list  # Check status</code></pre></td>
+            </tr>
+        </table>
+
+        <!-- =============================== WINDOWS =============================== -->
+        <h3>13.4 Windows (Native &mdash; No WSL)</h3>
+
+        <h4>Pros &amp; Cons</h4>
+        <table>
+            <tr><th>Pros</th><th>Cons</th></tr>
+            <tr>
+                <td>
+                    <ul>
+                        <li>Familiar Windows environment</li>
+                        <li>Django <code>runserver</code> works fine</li>
+                        <li>MySQL Installer is user-friendly (GUI)</li>
+                        <li>VS Code and PyCharm work natively</li>
+                        <li>Good for basic development and learning</li>
+                    </ul>
+                </td>
+                <td>
+                    <ul>
+                        <li><b>No Gunicorn</b> (Unix-only, uses fork())</li>
+                        <li><b>No native Nginx</b> (third-party Windows builds are outdated)</li>
+                        <li><b>No native Redis</b> (requires Memurai or Docker)</li>
+                        <li>Celery has limited support (no fork, must use <code>-P solo</code> or <code>-P threads</code>)</li>
+                        <li>Bash scripts (<code>.sh</code>) don't run &mdash; need Git Bash or PowerShell alternatives</li>
+                        <li>Path separator issues (<code>\</code> vs <code>/</code>)</li>
+                        <li>Cannot run the full production architecture</li>
+                        <li>File permissions work differently</li>
+                    </ul>
+                </td>
+            </tr>
+        </table>
+
+        <h4>Development Setup</h4>
+        <p><b>Step 1: Install Software</b></p>
+<pre><code># Download and install manually:
+# 1. Python 3.12:    https://www.python.org/downloads/
+#    CHECK: "Add Python to PATH" during installation!
+# 2. MySQL 8.x:      https://dev.mysql.com/downloads/installer/
+#    Choose "Server Only" or "Custom" install
+# 3. Git for Windows: https://git-scm.com/download/win
+#    This includes Git Bash (Unix-like terminal)
+# 4. Redis alternative (choose one):
+#    a) Memurai:      https://www.memurai.com/get-memurai
+#    b) Docker:       docker run -d -p 6379:6379 redis
+#    c) Skip Redis:   Use file-based cache (see below)</code></pre>
+
+        <p><b>Step 2: Setup MySQL (via MySQL Installer GUI or CMD)</b></p>
+<pre><code># Open MySQL Command Line Client:
+CREATE DATABASE shopease_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER 'shopease_user'@'localhost' IDENTIFIED BY 'your_password';
+GRANT ALL PRIVILEGES ON shopease_db.* TO 'shopease_user'@'localhost';
+FLUSH PRIVILEGES;</code></pre>
+
+        <p><b>Step 3: Setup Python Virtual Environment</b></p>
+<pre><code># PowerShell:
+cd "C:\Users\YourName\Desktop\ShopEase"
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+
+# If Activate.ps1 fails due to execution policy:
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+
+pip install -r shopease\requirements.txt
+pip install -r shopeasedocs\requirements.txt</code></pre>
+
+        <p><b>Step 4: Configure .env for Windows</b></p>
+<pre><code># shopease/.env
+DEBUG=True
+SECRET_KEY=your-secret-key
+DB_NAME=shopease_db
+DB_USER=shopease_user
+DB_PASSWORD=your_password
+DB_HOST=127.0.0.1
+DB_PORT=3306
+
+# If NOT using Redis, change cache backend in settings:
+# CACHES = {
+#     'default': {
+#         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+#     }
+# }
+# SESSION_ENGINE = 'django.contrib.sessions.backends.db'</code></pre>
+
+        <p><b>Step 5: Run Migrations</b></p>
+<pre><code># PowerShell:
+cd shopease
+python manage.py migrate --settings=config.settings.customer
+cd ..\shopeasedocs
+python manage.py migrate</code></pre>
+
+        <p><b>Step 6: Start Development Servers (3 terminals)</b></p>
+<pre><code># PowerShell Terminal 1 - Customer Server
+cd "C:\Users\YourName\Desktop\ShopEase\shopease"
+..\venv\Scripts\Activate.ps1
+python manage.py runserver 8000 --settings=config.settings.customer
+
+# PowerShell Terminal 2 - Admin Server
+cd "C:\Users\YourName\Desktop\ShopEase\shopease"
+..\venv\Scripts\Activate.ps1
+python manage.py runserver 8080 --settings=config.settings.admin
+
+# PowerShell Terminal 3 - Docs Server
+cd "C:\Users\YourName\Desktop\ShopEase\shopeasedocs"
+..\venv\Scripts\Activate.ps1
+python manage.py runserver 9000</code></pre>
+
+        <p><b>Alternative: Use Git Bash (runs .sh scripts)</b></p>
+<pre><code># Git Bash can run the startup scripts directly:
+cd "/c/Users/YourName/Desktop/ShopEase"
+source venv/Scripts/activate   # Note: Scripts, not bin
+bash start_all_servers.sh</code></pre>
+
+        <h4>Production Setup</h4>
+        <div class="warning">
+            <strong>Production is NOT supported on native Windows.</strong>
+            Gunicorn requires Unix fork() system call which Windows does not have.
+            Nginx has unofficial Windows builds but they are outdated and lack features.
+        </div>
+
+        <p><b>Alternatives for Production on Windows:</b></p>
+        <table>
+            <tr><th>Alternative</th><th>Effort</th><th>Description</th></tr>
+            <tr>
+                <td><span class="highlight">WSL2 (Recommended)</span></td>
+                <td>Low</td>
+                <td>Install WSL2 with Ubuntu. Full Linux environment inside Windows.
+                    All ShopEase production scripts work. See Section 13.1.</td>
+            </tr>
+            <tr>
+                <td>Docker Desktop</td>
+                <td>Medium</td>
+                <td>Containerize with Docker Compose. Requires writing Dockerfile
+                    and docker-compose.yml. Runs Linux containers on Windows.</td>
+            </tr>
+            <tr>
+                <td>Cloud VPS (AWS, DigitalOcean)</td>
+                <td>Medium</td>
+                <td>Deploy to a Linux VPS. Best for real production.
+                    Follow Native Linux (Section 13.2) on the server.</td>
+            </tr>
+            <tr>
+                <td>Waitress (Python WSGI server)</td>
+                <td>Low</td>
+                <td>Windows-compatible WSGI server. No Nginx or multi-worker support.
+                    Only for testing, NOT real production.</td>
+            </tr>
+        </table>
+
+        <p><b>Waitress (Quick Windows-only workaround &mdash; NOT recommended for real production):</b></p>
+<pre><code># Install Waitress (Windows-compatible WSGI server)
+pip install waitress
+
+# Run Customer server:
+waitress-serve --host=127.0.0.1 --port=8001 config.wsgi_customer:application
+
+# Run Admin server (another terminal):
+waitress-serve --host=127.0.0.1 --port=8081 config.wsgi_admin:application
+
+# Run Docs server (another terminal):
+cd ..\shopeasedocs
+waitress-serve --host=127.0.0.1 --port=9001 shopeasedocs.wsgi:application
+
+# Ngrok (if installed):
+ngrok http 8001   # Only Customer, no path-based routing without Nginx</code></pre>
+
+        <h4>Troubleshooting (Windows)</h4>
+        <table>
+            <tr><th>Issue</th><th>Cause</th><th>Fix</th></tr>
+            <tr>
+                <td><code>pip install mysqlclient</code> fails</td>
+                <td>Missing Visual C++ Build Tools</td>
+                <td><pre><code># Option 1: Install pre-built wheel
+pip install mysqlclient --only-binary :all:
+
+# Option 2: Install Visual Studio Build Tools
+# Download: https://visualstudio.microsoft.com/visual-cpp-build-tools/
+# Select "Desktop development with C++"</code></pre></td>
+            </tr>
+            <tr>
+                <td><code>Activate.ps1 cannot be loaded</code></td>
+                <td>PowerShell execution policy</td>
+                <td><pre><code>Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned</code></pre></td>
+            </tr>
+            <tr>
+                <td>MySQL: <code>Access denied for user 'root'</code></td>
+                <td>Root password not set or wrong</td>
+                <td><pre><code># Open MySQL Installer > MySQL Server > Reconfigure
+# Reset root password through the GUI</code></pre></td>
+            </tr>
+            <tr>
+                <td><code>redis.exceptions.ConnectionError</code></td>
+                <td>Redis not installed/running</td>
+                <td>Install Memurai or run Redis via Docker:
+<pre><code>docker run -d --name redis -p 6379:6379 redis</code></pre>
+Or switch to file-based cache in settings (no Redis needed):
+<pre><code>CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    }
+}
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'</code></pre></td>
+            </tr>
+            <tr>
+                <td>Celery: <code>billiard.exceptions.WorkerLostError</code></td>
+                <td>Windows doesn't support fork()</td>
+                <td><pre><code># Use solo pool (single-threaded):
+celery -A config worker -l info -P solo
+# Or use threads pool:
+celery -A config worker -l info -P threads --concurrency=4</code></pre></td>
+            </tr>
+            <tr>
+                <td>Bash scripts don't run</td>
+                <td>Windows CMD/PowerShell can't execute .sh</td>
+                <td>Use Git Bash, or manually run each command from the script in PowerShell</td>
+            </tr>
+            <tr>
+                <td><code>UnicodeDecodeError</code> in templates</td>
+                <td>Windows default encoding is cp1252, not UTF-8</td>
+                <td><pre><code># Set environment variable:
+$env:PYTHONUTF8 = "1"
+# Or add to system environment variables permanently</code></pre></td>
+            </tr>
+            <tr>
+                <td>Static files 404 with <code>runserver</code></td>
+                <td>DEBUG=False but no Nginx to serve static files</td>
+                <td>Keep <code>DEBUG=True</code> on Windows (Django serves static files), or run <code>collectstatic</code> and use WhiteNoise:
+<pre><code>pip install whitenoise
+# Add to MIDDLEWARE (after SecurityMiddleware):
+'whitenoise.middleware.WhiteNoiseMiddleware'</code></pre></td>
+            </tr>
+        </table>
+
+        <div class="warning">
+            <strong>Final Recommendation:</strong> If you're on Windows and need production capabilities,
+            install <b>WSL2</b> &mdash; it gives you a full Ubuntu Linux environment inside Windows with
+            zero dual-boot hassle. All ShopEase production scripts, Nginx, Gunicorn, Redis, and Celery
+            work exactly as documented. It's a 10-minute setup: <code>wsl --install -d Ubuntu-22.04</code>
+        </div>
     </div>
 
     <footer>

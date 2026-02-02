@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Quiz Results: {{ code.title }} - ShopEase Docs{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'documentation:doc_home' %}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'documentation:code_index' %}">Code Docs</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'documentation:code_detail' code.slug %}">{{ code.title }}</a></li>
+            <li class="breadcrumb-item active">Quiz Results</li>
+        </ol>
+    </nav>
+
+    <div class="text-center mb-5">
+        <h2><i class="bi bi-trophy me-2"></i>Quiz Results</h2>
+        <h4 class="text-muted">{{ code.title }}</h4>
+
+        <div class="my-4">
+            <div class="display-1 fw-bold {% if percentage >= 80 %}text-success{% elif percentage >= 50 %}text-warning{% else %}text-danger{% endif %}">
+                {{ percentage }}%
+            </div>
+            <p class="fs-5">{{ correct }} out of {{ total }} correct</p>
+        </div>
+
+        <div class="progress mx-auto" style="max-width:400px;height:12px;">
+            <div class="progress-bar {% if percentage >= 80 %}bg-success{% elif percentage >= 50 %}bg-warning{% else %}bg-danger{% endif %}"
+                 style="width:{{ percentage }}%"></div>
+        </div>
+    </div>
+
+    <!-- Question Review -->
+    {% for quiz in quizzes %}
+    <div class="card mb-3">
+        <div class="card-body">
+            <div class="d-flex align-items-start">
+                {% if quiz.id in attempt_map and attempt_map|dictsort:"quiz_id" %}
+                {% with attempt=attempt_map %}
+                {% endwith %}
+                {% endif %}
+                <span class="badge {% if quiz.id in attempt_map %}{% if attempt_map|length > 0 %}bg-secondary{% endif %}{% else %}bg-light text-dark{% endif %} me-3 fs-6">Q{{ forloop.counter }}</span>
+                <div class="flex-grow-1">
+                    <h6>{{ quiz.question }}</h6>
+                    <div class="small text-muted">
+                        Correct answer: <strong>{{ quiz.choices|slice:":4" }}</strong>
+                    </div>
+                    {% if quiz.explanation %}
+                    <div class="mt-2 small"><i class="bi bi-lightbulb text-warning"></i> {{ quiz.explanation }}</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+    <div class="text-center mt-4">
+        <a href="{% url 'documentation:code_quiz' code.slug %}" class="btn btn-primary">
+            <i class="bi bi-arrow-repeat me-2"></i>Retake Quiz
+        </a>
+        <a href="{% url 'documentation:code_detail' code.slug %}" class="btn btn-outline-secondary ms-2">
+            <i class="bi bi-arrow-left me-2"></i>Back to Code
+        </a>
+        <a href="{% url 'documentation:learning_dashboard' %}" class="btn btn-outline-info ms-2">
+            <i class="bi bi-speedometer2 me-2"></i>Learning Dashboard
+        </a>
+    </div>
+</div>
+{% endblock %}

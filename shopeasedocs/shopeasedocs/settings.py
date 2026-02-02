@@ -42,18 +42,30 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+    # Third-party
+    'axes',
+    'rest_framework',
+
     # Documentation app
     'documentation',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'documentation.middleware.ScriptNameMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'axes.middleware.AxesMiddleware',
+]
+
+# Authentication backends (axes must be first)
+AUTHENTICATION_BACKENDS = [
+    'axes.backends.AxesStandaloneBackend',
+    'django.contrib.auth.backends.ModelBackend',
 ]
 
 ROOT_URLCONF = 'shopeasedocs.urls'
@@ -70,6 +82,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'django.template.context_processors.static',
+                'documentation.context_processors.learning_progress',
             ],
         },
     },
@@ -171,6 +184,10 @@ LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 
+# Unique cookie names to prevent collision with ShopEase main project
+CSRF_COOKIE_NAME = 'shopeasedocs_csrftoken'
+SESSION_COOKIE_NAME = 'shopeasedocs_sessionid'
+
 # Server Configuration
 # ShopEase Documentation Project runs on port 9000
 # ShopEase Customer server: port 8000
@@ -203,3 +220,63 @@ else:
     # Development mode
     SESSION_COOKIE_SECURE = False
     CSRF_COOKIE_SECURE = False
+
+# CSRF trusted origins (for cross-server navigation)
+CSRF_TRUSTED_ORIGINS = [
+    'http://127.0.0.1:8000',
+    'http://127.0.0.1:8080',
+    'http://127.0.0.1:9000',
+    'http://localhost:8000',
+    'http://localhost:8080',
+    'http://localhost:9000',
+    'https://*.ngrok-free.app',
+    'https://*.ngrok-free.dev',
+]
+
+# =========================
+# CACHING (Redis with fallback)
+# =========================
+REDIS_URL = config('REDIS_URL', default='')
+if REDIS_URL:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+            'LOCATION': REDIS_URL,
+        }
+    }
+else:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        }
+    }
+
+# =========================
+# DJANGO-AXES (Rate Limiting)
+# =========================
+from datetime import timedelta
+AXES_FAILURE_LIMIT = 5
+AXES_COOLOFF_TIME = timedelta(minutes=15)
+AXES_LOCKOUT_TEMPLATE = 'registration/lockout.html'
+AXES_RESET_ON_SUCCESS = True
+
+# =========================
+# DJANGO REST FRAMEWORK
+# =========================
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticatedOrReadOnly',
+    ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 20,
+}
+
+# =========================
+# STATIC FILE FINGERPRINTING
+# =========================
+if not DEBUG:
+    STORAGES = {
+        'staticfiles': {
+            'BACKEND': 'django.contrib.staticfiles.storage.ManifestStaticFilesStorage',
+        },
+    }

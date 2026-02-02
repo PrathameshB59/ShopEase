@@ -10,6 +10,14 @@
 
 {% block content %}
 <div class="container-fluid mt-4">
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'documentation:doc_home' %}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'documentation:code_index' %}">Code Docs</a></li>
+            <li class="breadcrumb-item active">Learning Dashboard</li>
+        </ol>
+    </nav>
+
     <!-- Dashboard Header -->
     <div class="row mb-4">
         <div class="col-12">

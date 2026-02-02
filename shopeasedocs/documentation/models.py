@@ -371,6 +371,20 @@ class AppVersion(models.Model):
     def __str__(self):
         return f"v{self.version_number} ({self.get_version_type_display()})"
 
+    def get_version_type_color(self):
+        """Return Bootstrap color class for version type"""
+        color_map = {
+            'major': 'danger',
+            'minor': 'warning',
+            'patch': 'info',
+        }
+        return color_map.get(self.version_type, 'secondary')
+
+    @property
+    def is_stable(self):
+        """Check if this is a stable release (not beta/alpha)"""
+        return not any(tag in self.version_number.lower() for tag in ['alpha', 'beta', 'rc', 'dev'])
+
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = slugify(f"v-{self.version_number}")
@@ -535,3 +549,50 @@ class CodeLearningProgress(models.Model):
         self.progress_percentage = 100
         self.completed_at = timezone.now()
         self.save()
+
+
+class CodeQuiz(models.Model):
+    """Quiz questions for code explanations"""
+    DIFFICULTY_CHOICES = [
+        ('easy', 'Easy'),
+        ('medium', 'Medium'),
+        ('hard', 'Hard'),
+    ]
+
+    code_explanation = models.ForeignKey(
+        CodeExplanation, on_delete=models.CASCADE, related_name='quizzes'
+    )
+    question = models.TextField()
+    choices = models.JSONField(
+        help_text='List of choice strings, e.g. ["Option A", "Option B", "Option C", "Option D"]'
+    )
+    correct_answer = models.IntegerField(
+        help_text='Zero-based index of correct choice'
+    )
+    explanation = models.TextField(
+        blank=True, help_text='Explanation shown after answering'
+    )
+    difficulty = models.CharField(max_length=10, choices=DIFFICULTY_CHOICES, default='medium')
+    order = models.IntegerField(default=0)
+
+    class Meta:
+        ordering = ['order']
+        verbose_name_plural = 'Code Quizzes'
+
+    def __str__(self):
+        return f"Quiz: {self.question[:50]}"
+
+
+class QuizAttempt(models.Model):
+    """Track user quiz attempts"""
+    user = models.ForeignKey('auth.User', on_delete=models.CASCADE, related_name='quiz_attempts')
+    quiz = models.ForeignKey(CodeQuiz, on_delete=models.CASCADE, related_name='attempts')
+    selected_answer = models.IntegerField()
+    is_correct = models.BooleanField()
+    attempted_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-attempted_at']
+
+    def __str__(self):
+        return f"{self.user.username} - {'Correct' if self.is_correct else 'Wrong'}"

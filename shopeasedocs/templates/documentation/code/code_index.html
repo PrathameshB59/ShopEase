@@ -9,6 +9,14 @@
 {% endblock %}
 
 {% block content %}
+<div class="container mt-3">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'documentation:doc_home' %}">Home</a></li>
+            <li class="breadcrumb-item active">Code Docs</li>
+        </ol>
+    </nav>
+</div>
 <div class="container-fluid bg-dark text-white py-4">
     <div class="container">
         <h1><i class="bi bi-code-slash me-2"></i>Code Explanations</h1>

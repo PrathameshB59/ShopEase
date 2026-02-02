@@ -1,9 +1,26 @@
-from django.urls import path
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
 from . import views
+from . import api_views
 
 app_name = 'documentation'
 
+# REST API Router
+router = DefaultRouter()
+router.register(r'categories', api_views.DocCategoryViewSet)
+router.register(r'docs', api_views.DocumentationViewSet)
+router.register(r'faqs', api_views.FAQViewSet)
+router.register(r'code', api_views.CodeExplanationViewSet)
+router.register(r'help', api_views.DailyIssueHelpViewSet)
+router.register(r'versions', api_views.AppVersionViewSet)
+router.register(r'discussions', api_views.DeveloperDiscussionViewSet)
+
 urlpatterns = [
+    # ====================================
+    # REST API
+    # ====================================
+    path('api/', include(router.urls)),
+
     # ====================================
     # PUBLIC DOCUMENTATION ROUTES
     # ====================================
@@ -32,6 +49,9 @@ urlpatterns = [
 
     # Analytics (helpful buttons)
     path('ajax/mark-helpful/', views.mark_helpful, name='mark_helpful'),
+
+    # Search autocomplete (AJAX)
+    path('ajax/search-suggest/', views.ajax_search_suggest, name='ajax_search_suggest'),
 
 
     # ====================================
@@ -82,6 +102,18 @@ urlpatterns = [
     path('code/', views.code_index, name='code_index'),
     path('code/<slug:slug>/', views.code_detail, name='code_detail'),
     path('code/module/<str:module>/', views.code_by_module, name='code_by_module'),
+
+    # Learning dashboard
+    path('code/learning-dashboard/', views.learning_dashboard, name='learning_dashboard'),
+
+    # Code AJAX endpoints
+    path('code/ajax/save-progress/', views.save_learning_progress, name='save_learning_progress'),
+    path('code/ajax/mark-complete/', views.mark_code_complete, name='mark_code_complete'),
+    path('code/ajax/submit-quiz/', views.submit_quiz, name='submit_quiz'),
+
+    # Quiz / Assessment
+    path('code/<slug:slug>/quiz/', views.code_quiz, name='code_quiz'),
+    path('code/<slug:slug>/quiz-results/', views.quiz_results, name='quiz_results'),
 
     # Code management (superuser-only)
     path('admin/code/create/', views.create_code_explanation, name='create_code_explanation'),

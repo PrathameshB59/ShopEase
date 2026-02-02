@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Quiz: {{ code.title }} - ShopEase Docs{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'documentation/css/code-learning.css' %}">
+<style>
+    .quiz-card { border-radius: 12px; transition: all 0.3s; }
+    .quiz-card:hover { box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+    .choice-btn {
+        display: block; width: 100%; text-align: left;
+        padding: 0.75rem 1rem; margin: 0.5rem 0;
+        border: 2px solid var(--bs-border-color); border-radius: 8px;
+        background: var(--bs-body-bg); color: var(--bs-body-color);
+        cursor: pointer; transition: all 0.2s;
+    }
+    .choice-btn:hover { border-color: #667eea; background: rgba(102,126,234,0.05); }
+    .choice-btn.selected { border-color: #667eea; background: rgba(102,126,234,0.1); }
+    .choice-btn.correct { border-color: #28a745; background: rgba(40,167,69,0.1); }
+    .choice-btn.wrong { border-color: #dc3545; background: rgba(220,53,69,0.1); }
+    .choice-btn:disabled { cursor: default; opacity: 0.8; }
+    .quiz-explanation { display: none; margin-top: 1rem; padding: 1rem; border-radius: 8px; background: rgba(102,126,234,0.05); }
+    .difficulty-badge { font-size: 0.75rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'documentation:doc_home' %}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'documentation:code_index' %}">Code Docs</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'documentation:code_detail' code.slug %}">{{ code.title }}</a></li>
+            <li class="breadcrumb-item active">Quiz</li>
+        </ol>
+    </nav>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2><i class="bi bi-patch-question me-2"></i>Quiz: {{ code.title }}</h2>
+            <p class="text-muted">Test your understanding of this code explanation</p>
+        </div>
+        <div class="text-end">
+            <span class="badge bg-primary fs-6" id="score-badge">{{ correct_count }}/{{ total_questions }}</span>
+            <div class="text-muted small mt-1">Score</div>
+        </div>
+    </div>
+
+    {% if quizzes %}
+    {% for quiz in quizzes %}
+    <div class="card quiz-card mb-4" id="quiz-{{ quiz.id }}">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <h5 class="card-title mb-0">
+                    <span class="text-muted me-2">Q{{ forloop.counter }}.</span>
+                    {{ quiz.question }}
+                </h5>
+                <span class="badge difficulty-badge
+                    {% if quiz.difficulty == 'easy' %}bg-success
+                    {% elif quiz.difficulty == 'medium' %}bg-warning text-dark
+                    {% else %}bg-danger{% endif %}">
+                    {{ quiz.get_difficulty_display }}
+                </span>
+            </div>
+
+            <div class="choices" data-quiz-id="{{ quiz.id }}" data-correct="{{ quiz.correct_answer }}">
+                {% for choice in quiz.choices %}
+                <button class="choice-btn {% if quiz.id in attempts %}disabled{% endif %}"
+                        data-index="{{ forloop.counter0 }}"
+                        {% if quiz.id in attempts %}disabled{% endif %}>
+                    <span class="fw-bold me-2">{{ forloop.counter|add:64|chr }}.</span>
+                    {{ choice }}
+                </button>
+                {% endfor %}
+            </div>
+
+            <div class="quiz-explanation" id="explanation-{{ quiz.id }}"
+                 {% if quiz.id in attempts %}style="display:block"{% endif %}>
+                {% if quiz.explanation %}
+                <i class="bi bi-lightbulb me-1 text-warning"></i>
+                <strong>Explanation:</strong> {{ quiz.explanation }}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+    <div class="text-center mt-4">
+        <a href="{% url 'documentation:quiz_results' code.slug %}" class="btn btn-primary btn-lg">
+            <i class="bi bi-bar-chart me-2"></i>View Results
+        </a>
+        <a href="{% url 'documentation:code_detail' code.slug %}" class="btn btn-outline-secondary btn-lg ms-2">
+            <i class="bi bi-arrow-left me-2"></i>Back to Code
+        </a>
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <i class="bi bi-emoji-neutral" style="font-size:3rem;color:#ccc;"></i>
+        <h4 class="mt-3">No Quiz Available</h4>
+        <p class="text-muted">Quiz questions haven't been added for this explanation yet.</p>
+        <a href="{% url 'documentation:code_detail' code.slug %}" class="btn btn-primary">Back to Code</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.querySelectorAll('.choices').forEach(container => {
+    const quizId = container.dataset.quizId;
+    const buttons = container.querySelectorAll('.choice-btn');
+
+    buttons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            if (this.disabled) return;
+            const selected = parseInt(this.dataset.index);
+
+            // Disable all buttons
+            buttons.forEach(b => { b.disabled = true; b.classList.add('disabled'); });
+
+            // Submit via AJAX
+            fetch('{% url "documentation:submit_quiz" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value
+                        || '{{ csrf_token }}'
+                },
+                body: `quiz_id=${quizId}&selected_answer=${selected}`
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.is_correct) {
+                    btn.classList.add('correct');
+                } else {
+                    btn.classList.add('wrong');
+                    buttons[data.correct_answer]?.classList.add('correct');
+                }
+                // Show explanation
+                const expl = document.getElementById('explanation-' + quizId);
+                if (expl) expl.style.display = 'block';
+
+                // Update score
+                const correct = document.querySelectorAll('.choice-btn.correct').length;
+                const total = document.querySelectorAll('.choices').length;
+                document.getElementById('score-badge').textContent = correct + '/' + total;
+            });
+        });
+    });
+});
+</script>
+{% endblock %}
